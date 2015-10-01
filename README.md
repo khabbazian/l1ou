@@ -1,4 +1,7 @@
-### install.packages("devtools")
-### require(devtools)
-### install_github("khabbazian/l1ou")
-### require(l1ou)
+Install using the devtools package.
+```
+install.packages("devtools")
+require(devtools)
+install_github("khabbazian/l1ou")
+require(l1ou)
+```
