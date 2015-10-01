@@ -1,0 +1,12 @@
+Package: l1ou 
+Version: 0.01
+Author: Mohammad Khabbazian
+Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
+License: GPL (>= 2), ape, lars, grplasso, igraph, Rcpp
+Title: Detecting evolutionary shifts 
+Description: Detecting evolutionary shifts 
+Imports: Rcpp, 
+LinkingTo: Rcpp
+URL: https://github.com/khabbazian/l1ou
+VignetteBuilder: knitr
+Suggests: knitr, testthat, rmarkdown
