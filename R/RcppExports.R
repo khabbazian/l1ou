@@ -13,3 +13,7 @@ get_score_of_placement <- function(str_key) {
     .Call('l1ou_get_score_of_placement', PACKAGE = 'l1ou', str_key)
 }
 
+cmp_sqrt_OU_covariance <- function(edgeList, nTips) {
+    .Call('l1ou_cmp_sqrt_OU_covariance', PACKAGE = 'l1ou', edgeList, nTips)
+}
+

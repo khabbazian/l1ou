@@ -36,3 +36,15 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// cmp_sqrt_OU_covariance
+Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips);
+RcppExport SEXP l1ou_cmp_sqrt_OU_covariance(SEXP edgeListSEXP, SEXP nTipsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type edgeList(edgeListSEXP);
+    Rcpp::traits::input_parameter< int >::type nTips(nTipsSEXP);
+    __result = Rcpp::wrap(cmp_sqrt_OU_covariance(edgeList, nTips));
+    return __result;
+END_RCPP
+}

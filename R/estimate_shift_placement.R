@@ -1,9 +1,9 @@
 # 
 #'Detecting Evolutionary Shifts
 #'
-#'@param tr input x axis 
-#'@param Y input y axis 
-#'@param max.nShifts  maximum number of shifts by default it is half of the number of tips
+#'@param tr the input phylogeny
+#'@param Y the trait vector/matrix where it is labeled by the species names appear as row names
+#'@param max.nShifts  maximum number of shifts; The default value is half the number of tips
 #'@param criterion  which can be c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc")
 #'@param root.model which can be c("OUrandomRoot", "OUfixedRoot")
 #'@param silence  a flag for writing to output
@@ -17,30 +17,22 @@
 #'
 #'@return eModel estimated model
 #'
+#'@details
+#' AICc is introduced in the surface paper
+#'
 #'@examples
 #' 
 #' library("l1ou"); 
 #' library("ape");
+#' data("lizardTraits");
+#' data("lizardTree");
 #'
-#' trFileName = "GA_Anolis_MCC.tre"
-#' 
-#' tr <- read.tree(paste0("data/lizards/", trFileName) );
-#' tr <- reorder(tr, "postorder");
-#' tr <- normalize.tree(tr);
-#' 
-#' responseMatrix <- read.csv("data/lizards/table_s2.csv");
-#' responseMatrix <- responseMatrix[order(responseMatrix[,1]),  ]; 
-#' responseMatrix <- responseMatrix[order(order(tr$tip.label)), ];
-#' 
-#' Y           <- as.matrix( responseMatrix[, 2] );
-#' rownames(Y) <- responseMatrix[, 1];
-#' 
-#' eModel <- est.shift.placement(tr, Y);
+#' Y  <- lizard.traits[,1]; 
+#' eModel <- est.shift.placement(lizard.tree, Y);
 #'
 #' print(eModel$shift.placement);
 #'
 #'@export
-
 est.shift.placement <- function(tr, Y, 
            max.nShifts           = floor(length(tr$tip.label)/2), 
            criterion             = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
@@ -60,8 +52,8 @@ est.shift.placement <- function(tr, Y,
     library("phylolm");
     library("igraph");
 
-    source("linear_alg_OU_covariance.R");
-    source("tools.R");
+    #source("sqrt_OU_covariance.R");
+    #source("tools.R");
 
     ## unifying the types
     Y  <-  as.matrix(Y);
@@ -95,10 +87,10 @@ est.shift.placement <- function(tr, Y,
     stopifnot(nrow(Y) == length(tr$tip.label));
     stopifnot(all( row.names(Y) == tr$tip.label));
 
-    if(l1ou.options$use.saved.scores){
-        library("Rcpp");
-        sourceCpp("placement_score_db.cpp");
-    }
+    #if(l1ou.options$use.saved.scores){
+    #    library("Rcpp");
+    #    sourceCpp("placement_score_db.cpp");
+    #}
 
     if( ncol(Y) == 1 ){  #univariate l1ou
         eModel1 = .est.shift.placement.known.alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
@@ -118,7 +110,6 @@ est.shift.placement <- function(tr, Y,
 
     ## I don't like this way of coding but I have to clear the static db object in the c++ code manually.:S
     ## TODO: can we implement it differently?
-
     if( l1ou.options$use.saved.scores){
         erase_placement_score_db();
     }
@@ -133,10 +124,12 @@ est.shift.placement <- function(tr, Y,
     library("lars");
     if ( est.alpha ){ ## BM model
         X   = generate.design.matrix(tr, "apprX");
-        Cinvh   = t( cmp.OU.covariance(tr, alpha=0)$D ); 
+        #Cinvh   = t( cmp.OU.covariance(tr, alpha=0)$D ); 
+        Cinvh   = t( sqrt.ou.covariance(tr, alpha=0)$D ); 
     } else{           ## OU model
         X   = generate.design.matrix(tr, "orgX", alpha=alpha );
-        Cinvh   = t( cmp.OU.covariance(tr, alpha=alpha)$D ); 
+        #Cinvh   = t( cmp.OU.covariance(tr, alpha=alpha)$D ); 
+        Cinvh   = t( sqrt.ou.covariance(tr, alpha=alpha)$D ); 
     }
 
     to.be.removed   = c(length(tr$edge.length), which(tr$edge.length < opt$edge.length.threshold));
@@ -153,7 +146,7 @@ est.shift.placement <- function(tr, Y,
     Tmp[,-to.be.removed] = sol.path$beta;
     sol.path$beta = Tmp;
 
-    result  = select.best.solution(sol.path, Y, opt);
+    result  = select.best.solution(tr, Y, sol.path, opt);
     eModel  = assign.model(tr, Y, result$shift.placement, opt);
 
     .print.out.param(eModel, opt$silence);
@@ -198,10 +191,12 @@ est.shift.placement <- function(tr, Y,
         X  = matrix(0,0,0);
         if ( est.alpha == TRUE ){
             X   = generate.design.matrix(tr, "apprX");
-            RE  = cmp.OU.covariance(tr,     alpha = 0 );
+            #RE  = cmp.OU.covariance(tr,     alpha = 0 );
+            RE  = sqrt.ou.covariance(tr,     alpha = 0 );
         } else {
             X   = generate.design.matrix(tr, "orgX", alpha=alpha[[i]] );
-            RE  = cmp.OU.covariance(tr,     alpha = alpha[[i]] );
+            #RE  = cmp.OU.covariance(tr,     alpha = alpha[[i]] );
+            RE  = sqrt.ou.covariance(tr,     alpha = alpha[[i]] );
         }
         Cinvh   = t(RE$D); #\Sigma^{-1/2}
         YY[,i]  = Cinvh%*%YY[,i];
@@ -228,7 +223,7 @@ est.shift.placement <- function(tr, Y,
     ##removing the intercept results
     #sol$coefficients     = sol$coefficients[-ncol(grpX), ];
 
-    result  = select.best.solution(sol, Y, opt=opt);
+    result  = select.best.solution(tr, Y, sol, opt=opt);
     eModel  = assign.model(tr, Y, result$shift.placement, opt=opt);
 
     .print.out.param(eModel, opt$silence);
@@ -238,8 +233,12 @@ est.shift.placement <- function(tr, Y,
 cmp.uncertainity <- function(tr, model, nItrs = 100, ...){
 
     library("parallel");
-    source("linear_alg_OU_covariance.R");
-    RE    = cmp.OU.covariance(tr, alpha=model$alpha);
+    source("sqrt.ou.covariance.R");
+    #source("linear_alg_OU_covariance.R");
+
+    #RE    = cmp.OU.covariance(tr, alpha=model$alpha);
+    RE    = sqrt.ou.covariance(tr, alpha=model$alpha);
+
     C.IH  = t(RE$D);
     C.H   = RE$B;
 
@@ -293,7 +292,8 @@ cmp.uncertainity <- function(tr, model, nItrs = 100, ...){
 
 cmp.uncertainity.multivariate <- function(tr, model, nItrs = 100, ...){
 
-    source("linear_alg_OU_covariance.R");
+    #source("linear_alg_OU_covariance.R");
+    source("sqrt.ou.covariance.R");
     library("parallel");
 
     Y = as.matrix(model$Y);
@@ -302,7 +302,8 @@ cmp.uncertainity.multivariate <- function(tr, model, nItrs = 100, ...){
     YY       = Y;
     C.Hlist  = list();
     for( idx in 1:ncol(Y) ){
-        RE    = cmp.OU.covariance(tr, alpha = model$alpha[[idx]] ); 
+        #RE    = cmp.OU.covariance(tr, alpha = model$alpha[[idx]] ); 
+        RE    = sqrt.ou.covariance(tr, alpha = model$alpha[[idx]] ); 
         C.IH  = t(RE$D); 
         C.Hlist[[idx]] = RE$B;
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx]);
@@ -408,7 +409,7 @@ generate.design.matrix <- function(tr, type="apprX", alpha){
     return(X);
 }
 
-select.best.solution <- function(sol.path, Y, opt){
+select.best.solution <- function(tr, Y, sol.path, opt){
 
     nSols   = get.num.solutions(sol.path);
     stopifnot( nSols > 0 );

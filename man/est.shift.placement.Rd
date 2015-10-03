@@ -13,11 +13,11 @@ est.shift.placement(tr, Y, max.nShifts = floor(length(tr$tip.label)/2),
   grp.seq.ub = 5)
 }
 \arguments{
-\item{tr}{input x axis}
+\item{tr}{the input phylogeny}
 
-\item{Y}{input y axis}
+\item{Y}{the trait vector/matrix where it is labeled by the species names appear as row names}
 
-\item{max.nShifts}{maximum number of shifts by default it is half of the number of tips}
+\item{max.nShifts}{maximum number of shifts; The default value is half the number of tips}
 
 \item{criterion}{which can be c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc")}
 
@@ -45,22 +45,17 @@ eModel estimated model
 \description{
 Detecting Evolutionary Shifts
 }
+\details{
+AICc is introduced in the surface paper
+}
 \examples{
 library("l1ou");
-trFileName = "GA_Anolis_MCC.tre"
+library("ape");
+data("lizardTraits");
+data("lizardTree");
 
-tr <- read.tree(paste0("data/lizards/", trFileName) );
-tr <- reorder(tr, "postorder");
-tr <- normalize.tree(tr);
-
-responseMatrix <- read.csv("data/lizards/table_s2.csv");
-responseMatrix <- responseMatrix[order(responseMatrix[,1]),  ];
-responseMatrix <- responseMatrix[order(order(tr$tip.label)), ];
-
-Y           <- as.matrix( responseMatrix[, 2] );
-rownames(Y) <- responseMatrix[, 1];
-
-eModel <- est.shift.placement(tr, Y);
+Y  <- lizard.traits[,1];
+eModel <- est.shift.placement(lizard.tree, Y);
 
 print(eModel$shift.placement);
 }
