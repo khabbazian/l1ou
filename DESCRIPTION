@@ -9,7 +9,7 @@ Description: The l1ou package provides functions for detecting evolutionary shif
 License: GPL (>= 2)
 URL: https://github.com/khabbazian/l1ou
 NeedsCompilation: yes
-Depends: ape, phylolm, lars, igraph
+Depends: R (>= 3.1.0), ape, phylolm, lars, igraph
 Imports: Rcpp
 LinkingTo: Rcpp
 VignetteBuilder: knitr
