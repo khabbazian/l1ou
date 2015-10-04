@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimate_shift_placement.R
 \name{est.shift.placement}
 \alias{est.shift.placement}
-\title{Detecting Evolutionary Shifts}
+\title{Detectes evolutionary shifts}
 \usage{
 est.shift.placement(tr, Y, max.nShifts = floor(length(tr$tip.label)/2),
   criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"),
@@ -13,42 +13,39 @@ est.shift.placement(tr, Y, max.nShifts = floor(length(tr$tip.label)/2),
   grp.seq.ub = 5, l1ou.options = NA)
 }
 \arguments{
-\item{tr}{The input phylogeny}
+\item{tr}{the input phylogeny. It should be an ultermetric tree in postorder.}
 
-\item{Y}{The trait vector/matrix where it is labeled by the species names appear as row names.}
+\item{Y}{the trait vector/matrix where it is labeled by the species names appear as row names. The rownames must match the tips label with the same order.}
 
-\item{max.nShifts}{Maximum number of shifts; The default value is half the number of tips.}
+\item{max.nShifts}{maximum number of shifts; The default value is half the number of tips.}
 
-\item{criterion}{The type if information criterion for model selection.}
+\item{criterion}{the type if information criterion for model selection.}
 
-\item{root.model}{}
+\item{root.model}{the asncestoral state model.}
 
-\item{silence}{A flag for writing to output.}
+\item{silence}{logical. If TRUE, it writes to the output.}
 
-\item{alpha.upper}{By default it is log(2) over the minumum length of branches connected to tips (it is supposed to be non-zero).}
+\item{alpha.upper}{the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero).}
 
-\item{alpha.lower}{By default is 0.}
+\item{alpha.lower}{lower bound value of phylogenetic adaptatio rate.}
 
-\item{standardize}{If TRUE then in multivariate case the inpute traits will be normalized.}
+\item{standardize}{logical. If TRUE, the columns of the trait matrix will be standardized.}
 
-\item{num.top.placements}{By default it is max.nShifts/2.}
+\item{num.top.placements}{an internal argument. It is the number of good shift placement that is chosed for further improvement.}
 
-\item{edge.length.threshold}{The edge length that is considered zero by default 10*.Machine$double.eps.}
+\item{edge.length.threshold}{the minim edge length that is considered non-zero.}
 
-\item{grp.delta}{Parameter to figure out the lambda sequence for grplasso by defualt it is 1/16.}
+\item{grp.delta}{an internal paramaters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
 
-\item{grp.seq.ub}{Parameter to figure out the lambda sequence for grplasso by defualt it is 5.}
+\item{grp.seq.ub}{an internal parameters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
 
-\item{l1ou.options}{If the option object is provided, all the default values will be ignored. It is good for computing bootstrap support}
+\item{l1ou.options}{if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options.}
 }
 \value{
-eModel estimated model
+returns estimated model.
 }
 \description{
-Detecting Evolutionary Shifts
-}
-\details{
-AICc is introduced in the surface paper.
+Detectes evolutionary shifts
 }
 \examples{
 library("l1ou");

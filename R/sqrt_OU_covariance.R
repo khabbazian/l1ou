@@ -1,16 +1,22 @@
 
 #
-#' Nagative square root and square root of covaiance matrix. 
+#' Compute the nagative square root and square root of the phylogeny covaiance matrix. 
 #'
-#'@param tr The input phylogeny
-#'@param alpha The adaptation rate.
-#'@param root.model The model of phylogeny ancestoral state.
+#'@param tr the input ultrametric phylogeny.
+#'@param alpha the adaptation rate for OU model.
+#'@param root.model the model of phylogeny ancestoral state.
 #'
-#'@return Negative square root and square root of the phylogeny covariance matrix.
+#'@return returns negative square root and square root of the phylogeny covariance matrix, i.e. \Sigma^{-1/2} and \Sigma^{1/2}
+#'
+#' library("l1ou");
+#' data("lizardTree");
+#' res = sqrt.ou.covariance(lizard.tree);
 #'
 #'@export
 #'
-sqrt.ou.covariance <- function(tr, alpha=0, root.model = c("OUrandomRoot", "OUfixedRoot")){
+sqrt.ou.covariance <- function(tr, alpha=0, 
+                               root.model = c("OUrandomRoot", "OUfixedRoot")
+                               ){
 
     tr         <- multi2di(tr, random=FALSE);
     root.model <- match.arg(root.model); 

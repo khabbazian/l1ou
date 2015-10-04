@@ -141,12 +141,13 @@ convert.shifts2regions <-function(tr, shift.placement, shift.values){
     return( o.vec );
 }
 
-#' Normalizing branch lengths so that the length of the pathes from the root to all tips sum to one
-#'@param tr An ultrametric phylogeny tree
+#' Normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
+#'@param tr an ultrametric phylogeny tree.
+#'
+#'@return returns normalized phylogeny tree.
 #'
 #'@export
 normalize.tree <- function(tr){
-## assumptions
     stopifnot(is.ultrametric(tr));
 
     nTips  = length(tr$tip.label);
@@ -160,7 +161,6 @@ normalize.tree <- function(tr){
     tr$edge.length = tr$edge.length / Tval;
     return(tr);
 }
-
 
 
 my.plot.tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),

@@ -1,25 +1,22 @@
 # 
-#'Detecting Evolutionary Shifts
+#' Detectes evolutionary shifts
 #'
-#'@param tr The input phylogeny
-#'@param Y The trait vector/matrix where it is labeled by the species names appear as row names.
-#'@param max.nShifts  Maximum number of shifts; The default value is half the number of tips.
-#'@param criterion The type if information criterion for model selection.
-#'@param root.model  
-#'@param silence A flag for writing to output.
-#'@param alpha.upper By default it is log(2) over the minumum length of branches connected to tips (it is supposed to be non-zero). 
-#'@param alpha.lower By default is 0.
-#'@param standardize If TRUE then in multivariate case the inpute traits will be normalized.
-#'@param num.top.placements  By default it is max.nShifts/2.
-#'@param edge.length.threshold The edge length that is considered zero by default 10*.Machine$double.eps.
-#'@param grp.delta  Parameter to figure out the lambda sequence for grplasso by defualt it is 1/16.
-#'@param grp.seq.ub Parameter to figure out the lambda sequence for grplasso by defualt it is 5.
-#'@param l1ou.options If the option object is provided, all the default values will be ignored. It is good for computing bootstrap support
+#'@param tr the input phylogeny. It should be an ultermetric tree in postorder. 
+#'@param Y the trait vector/matrix where it is labeled by the species names appear as row names. The rownames must match the tips label with the same order.
+#'@param max.nShifts  maximum number of shifts; The default value is half the number of tips.
+#'@param criterion the type if information criterion for model selection.
+#'@param root.model the asncestoral state model.
+#'@param silence logical. If TRUE, it writes to the output.
+#'@param alpha.upper the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero). 
+#'@param alpha.lower lower bound value of phylogenetic adaptatio rate.
+#'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
+#'@param num.top.placements  an internal argument. It is the number of good shift placement that is chosed for further improvement.
+#'@param edge.length.threshold the minim edge length that is considered non-zero.
+#'@param grp.delta  an internal paramaters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
+#'@param grp.seq.ub an internal parameters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
+#'@param l1ou.options if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options. 
 #'
-#'@return eModel estimated model
-#'
-#'@details
-#' AICc is introduced in the surface paper.
+#'@return returns estimated model.
 #'
 #'@examples
 #' 
@@ -45,38 +42,22 @@ est.shift.placement <- function(tr, Y,
            l1ou.options          = NA
      ){
 
-
-
-
-## loading required package
-    #library("ape");
-    #library("phylolm");
-    #library("igraph");
-
-    #source("sqrt_OU_covariance.R");
-    #source("tools.R");
-
     ## unifying the types
     Y  <-  as.matrix(Y);
 
     ## setting up options
     if(all(is.na(l1ou.options))){
-        l1ou.options  <-  list();
-
-        l1ou.options$silence               <- silence;
+        l1ou.options                       <-  list();
         l1ou.options$use.saved.scores      <- TRUE;
-
         l1ou.options$max.nShifts           <- max.nShifts;
         l1ou.options$criterion             <- match.arg(criterion);
         l1ou.options$root.model            <- match.arg(root.model);
-
+        l1ou.options$silence               <- silence;
         ##TODO: return warning if estimated alpha is close to its upperbound. What do I mean by close?
         l1ou.options$alpha.upper.bound     <- alpha.upper;
         l1ou.options$alpha.lower.bound     <- alpha.lower;
-
         l1ou.options$edge.length.threshold <- edge.length.threshold;
         l1ou.options$num.top.placements    <- num.top.placements;
-
         l1ou.options$standardize           <- standardize;
         l1ou.options$grp.seq.ub            <- grp.seq.ub;
         l1ou.options$grp.delta             <- grp.delta;
@@ -87,15 +68,9 @@ est.shift.placement <- function(tr, Y,
 
     ##NOTE: checking the assumptions 
     stopifnot(is.ultrametric(tr));
-    #stopifnot(is.binary.tree(tr));
     stopifnot(identical(tr$edge , reorder(tr, "postorder")$edge));
     stopifnot(nrow(Y) == length(tr$tip.label));
     stopifnot(all( row.names(Y) == tr$tip.label));
-
-    #if(l1ou.options$use.saved.scores){
-    #    library("Rcpp");
-    #    sourceCpp("placement_score_db.cpp");
-    #}
 
     if( ncol(Y) == 1 ){  #univariate l1ou
         eModel1 = est.shift.placement.known.alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
@@ -113,7 +88,7 @@ est.shift.placement <- function(tr, Y,
             eModel = eModel1;
     } 
 
-    ## I don't like this way of coding but I have to clear the static db object in the c++ code manually.:S
+    ## I really don't like this way of coding but I have to clear the static db object in the c++ code manually.:S
     ## TODO: can we implement it differently?
     if( l1ou.options$use.saved.scores){
         erase_placement_score_db();
@@ -168,7 +143,6 @@ est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alp
     }
 
     ## standardazing
-    ##NOTE: it turns out that this step is necessary at least for lizard data set.
     if(opt$standardize==TRUE){
         Y  = standardize.matrix(Y);
     }
@@ -177,8 +151,8 @@ est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alp
     X             = generate.design.matrix(tr, "apprX");
 
     ##NOTE: I used to add a column of 1 to take care of intercept. But it turns out that the new design matrix 
-    ##NOTE: cases some problem for grplasso. It takes a lot of memory and it become slower. At some point I should
-    ##NOTE: change the solver.
+    ##NOTE: causes some problem for grplasso(?). It takes a lot of memory and it become slower (have no idea why). 
+    ##NOTE: At some point I should update the group lasso solver. 
 
     ##X             = cbind(X,1);
     ##ncolX         = ncol(X);
@@ -336,14 +310,15 @@ do.backward.selection <- function(tr, Y, shift.placement, opt){
 
 
 #
-#' Information criterion score for given placement
+#' compute the information criterion score for the given placement
 #'
-#'@param tr The input phylogeny
-#'@param Y The trait vector/matrix where it is labeled by the species names appear as row names.
-#'@param shift.placement The position of the shifts.
-#'@param criterion The information criterion.
+#'@param tr the input phylogeny.
+#'@param Y the trait vector/matrix where it is labeled by the species names appear as row names.
+#'@param shift.placement the position of the shifts.
+#'@param criterion the information criterion.
+#'@param root.model the asncestoral state model.
 #'
-#'@return The score of the input model
+#'@return returns the score of the input model
 #'
 #'@examples
 #' 
@@ -610,7 +585,7 @@ run.grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){
         sink();
 
         df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x)>0))/nVariables );
-        df.missing = setdiff(0:max.nShifts, df.vec);
+        df.missing = setdiff(0:opt$max.nShifts, df.vec);
 
         if( length(df.missing) > 0 ){
 
