@@ -141,7 +141,7 @@ convert.shifts2regions <-function(tr, shift.placement, shift.values){
     return( o.vec );
 }
 
-#' Normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
+#' normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
 #'@param tr an ultrametric phylogeny tree.
 #'
 #'@return returns normalized phylogeny tree.

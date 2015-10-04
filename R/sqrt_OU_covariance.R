@@ -1,6 +1,6 @@
 
 #
-#' Compute the nagative square root and square root of the phylogeny covaiance matrix. 
+#' computes the nagative square root and square root of the phylogeny covaiance matrix. 
 #'
 #'@param tr the input ultrametric phylogeny.
 #'@param alpha the adaptation rate for OU model.

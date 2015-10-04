@@ -1,5 +1,5 @@
 #'
-#' Computing the bootstrap support for the detected shift positions
+#' computes the bootstrap support for the detected shift positions
 #'
 #'@param tr The input phylogeny.
 #'@param model It contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.

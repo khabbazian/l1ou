@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimate_shift_placement.R
 \name{est.shift.placement}
 \alias{est.shift.placement}
-\title{Detectes evolutionary shifts}
+\title{detectes evolutionary shifts}
 \usage{
 est.shift.placement(tr, Y, max.nShifts = floor(length(tr$tip.label)/2),
   criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"),
@@ -45,7 +45,7 @@ est.shift.placement(tr, Y, max.nShifts = floor(length(tr$tip.label)/2),
 returns estimated model.
 }
 \description{
-Detectes evolutionary shifts
+detectes evolutionary shifts
 }
 \examples{
 library("l1ou");

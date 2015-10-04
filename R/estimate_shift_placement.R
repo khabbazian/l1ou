@@ -1,5 +1,5 @@
 # 
-#' Detectes evolutionary shifts
+#' detectes evolutionary shifts
 #'
 #'@param tr the input phylogeny. It should be an ultermetric tree in postorder. 
 #'@param Y the trait vector/matrix where it is labeled by the species names appear as row names. The rownames must match the tips label with the same order.
