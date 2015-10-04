@@ -1,35 +1,32 @@
 # 
 #'Detecting Evolutionary Shifts
 #'
-#'@param tr the input phylogeny
-#'@param Y the trait vector/matrix where it is labeled by the species names appear as row names
-#'@param max.nShifts  maximum number of shifts; The default value is half the number of tips
-#'@param criterion  which can be c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc")
-#'@param root.model which can be c("OUrandomRoot", "OUfixedRoot")
-#'@param silence  a flag for writing to output
-#'@param alpha.upper by default is .alpha.upper.bound(tr)
-#'@param alpha.lower by default is 0
-#'@param standardize if TRUE then in multivariate case the inpute traits will be normalized
-#'@param num.top.placements  by default it is max.nShifts/2
-#'@param edge.length.threshold the edge length that should be considerd zero by default 10*.Machine$double.eps
-#'@param grp.delta  input parameter to figure out the lambda sequence for grplasso by defualt it is 1/16
-#'@param grp.seq.ub inpute parameter to figure out the lambda sequence for grplasso by defualt it is 5
+#'@param tr The input phylogeny
+#'@param Y The trait vector/matrix where it is labeled by the species names appear as row names.
+#'@param max.nShifts  Maximum number of shifts; The default value is half the number of tips.
+#'@param criterion The type if information criterion for model selection.
+#'@param root.model  
+#'@param silence A flag for writing to output.
+#'@param alpha.upper By default it is log(2) over the minumum length of branches connected to tips (it is supposed to be non-zero). 
+#'@param alpha.lower By default is 0.
+#'@param standardize If TRUE then in multivariate case the inpute traits will be normalized.
+#'@param num.top.placements  By default it is max.nShifts/2.
+#'@param edge.length.threshold The edge length that is considered zero by default 10*.Machine$double.eps.
+#'@param grp.delta  Parameter to figure out the lambda sequence for grplasso by defualt it is 1/16.
+#'@param grp.seq.ub Parameter to figure out the lambda sequence for grplasso by defualt it is 5.
+#'@param l1ou.options If the option object is provided, all the default values will be ignored. It is good for computing bootstrap support
 #'
 #'@return eModel estimated model
 #'
 #'@details
-#' AICc is introduced in the surface paper
+#' AICc is introduced in the surface paper.
 #'
 #'@examples
 #' 
 #' library("l1ou"); 
-#' library("ape");
-#' data("lizardTraits");
-#' data("lizardTree");
-#'
-#' Y  <- lizard.traits[,1]; 
+#' data("lizardTraits", "lizardTree");
+#' Y      <- lizard.traits[,1]; 
 #' eModel <- est.shift.placement(lizard.tree, Y);
-#'
 #' print(eModel$shift.placement);
 #'
 #'@export
@@ -38,19 +35,23 @@ est.shift.placement <- function(tr, Y,
            criterion             = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
            root.model            = c("OUrandomRoot", "OUfixedRoot"),
            silence               = TRUE,
-           alpha.upper           = .alpha.upper.bound(tr), 
+           alpha.upper           = alpha.upper.bound(tr), 
            alpha.lower           = 0,
            standardize           = TRUE,
            num.top.placements    = max.nShifts/2,
            edge.length.threshold = 10*.Machine$double.eps,
            grp.delta             = 1/16,
-           grp.seq.ub            = 5
+           grp.seq.ub            = 5,
+           l1ou.options          = NA
      ){
 
+
+
+
 ## loading required package
-    library("ape");
-    library("phylolm");
-    library("igraph");
+    #library("ape");
+    #library("phylolm");
+    #library("igraph");
 
     #source("sqrt_OU_covariance.R");
     #source("tools.R");
@@ -59,26 +60,30 @@ est.shift.placement <- function(tr, Y,
     Y  <-  as.matrix(Y);
 
     ## setting up options
-    l1ou.options  <-  list();
+    if(all(is.na(l1ou.options))){
+        l1ou.options  <-  list();
 
-    l1ou.options$silence               <- silence;
-    l1ou.options$use.saved.scores      <- TRUE;
+        l1ou.options$silence               <- silence;
+        l1ou.options$use.saved.scores      <- TRUE;
 
-    l1ou.options$max.nShifts           <- max.nShifts;
-    l1ou.options$criterion             <- match.arg(criterion);
-    l1ou.options$root.model            <- match.arg(root.model);
+        l1ou.options$max.nShifts           <- max.nShifts;
+        l1ou.options$criterion             <- match.arg(criterion);
+        l1ou.options$root.model            <- match.arg(root.model);
 
-    ##TODO: return warning if est alpha is close to its upperbound
-    l1ou.options$alpha.upper.bound     <- alpha.upper;
-    l1ou.options$alpha.lower.bound     <- alpha.lower;
+        ##TODO: return warning if estimated alpha is close to its upperbound. What do I mean by close?
+        l1ou.options$alpha.upper.bound     <- alpha.upper;
+        l1ou.options$alpha.lower.bound     <- alpha.lower;
 
-    l1ou.options$edge.length.threshold <- edge.length.threshold;
-    l1ou.options$num.top.placements    <- num.top.placements;
+        l1ou.options$edge.length.threshold <- edge.length.threshold;
+        l1ou.options$num.top.placements    <- num.top.placements;
 
-    l1ou.options$standardize           <- standardize;
-    l1ou.options$grp.seq.ub            <- grp.seq.ub;
-    l1ou.options$grp.delta             <- grp.delta;
-    l1ou.options$Z                     <- generate.design.matrix(tr, "simpX");
+        l1ou.options$standardize           <- standardize;
+        l1ou.options$grp.seq.ub            <- grp.seq.ub;
+        l1ou.options$grp.delta             <- grp.delta;
+        l1ou.options$Z                     <- generate.design.matrix(tr, "simpX");
+    }
+
+
 
     ##NOTE: checking the assumptions 
     stopifnot(is.ultrametric(tr));
@@ -93,16 +98,16 @@ est.shift.placement <- function(tr, Y,
     #}
 
     if( ncol(Y) == 1 ){  #univariate l1ou
-        eModel1 = .est.shift.placement.known.alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = .est.shift.placement.known.alpha(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
+        eModel1 = est.shift.placement.known.alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
+        eModel  = est.shift.placement.known.alpha(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
         ## in case the first step finds a better solution
         if( eModel$score>eModel1$score )
             eModel = eModel1;
 
     } 
     if( ncol(Y) > 1 ){ #multivariate l1ou
-        eModel1 = .est.shift.placement.known.alpha.multivariate(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = .est.shift.placement.known.alpha.multivariate(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
+        eModel1 = est.shift.placement.known.alpha.multivariate(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
+        eModel  = est.shift.placement.known.alpha.multivariate(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
         ## in case the first step finds a better solution
         if( eModel$score>eModel1$score )
             eModel = eModel1;
@@ -117,18 +122,16 @@ est.shift.placement <- function(tr, Y,
     return(eModel);
 }
 
-.est.shift.placement.known.alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){  
+est.shift.placement.known.alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){  
 
     stopifnot( alpha >=0 );
 
-    library("lars");
+    #library("lars");
     if ( est.alpha ){ ## BM model
         X   = generate.design.matrix(tr, "apprX");
-        #Cinvh   = t( cmp.OU.covariance(tr, alpha=0)$D ); 
         Cinvh   = t( sqrt.ou.covariance(tr, alpha=0)$D ); 
     } else{           ## OU model
         X   = generate.design.matrix(tr, "orgX", alpha=alpha );
-        #Cinvh   = t( cmp.OU.covariance(tr, alpha=alpha)$D ); 
         Cinvh   = t( sqrt.ou.covariance(tr, alpha=alpha)$D ); 
     }
 
@@ -149,12 +152,12 @@ est.shift.placement <- function(tr, Y,
     result  = select.best.solution(tr, Y, sol.path, opt);
     eModel  = assign.model(tr, Y, result$shift.placement, opt);
 
-    .print.out.param(eModel, opt$silence);
+    print.out.param(eModel, opt$silence);
     return(eModel);
 }
 
 
-.est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){
+est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){
     library("grplasso");
     library("magic");
 
@@ -191,11 +194,9 @@ est.shift.placement <- function(tr, Y,
         X  = matrix(0,0,0);
         if ( est.alpha == TRUE ){
             X   = generate.design.matrix(tr, "apprX");
-            #RE  = cmp.OU.covariance(tr,     alpha = 0 );
             RE  = sqrt.ou.covariance(tr,     alpha = 0 );
         } else {
             X   = generate.design.matrix(tr, "orgX", alpha=alpha[[i]] );
-            #RE  = cmp.OU.covariance(tr,     alpha = alpha[[i]] );
             RE  = sqrt.ou.covariance(tr,     alpha = alpha[[i]] );
         }
         Cinvh   = t(RE$D); #\Sigma^{-1/2}
@@ -226,149 +227,14 @@ est.shift.placement <- function(tr, Y,
     result  = select.best.solution(tr, Y, sol, opt=opt);
     eModel  = assign.model(tr, Y, result$shift.placement, opt=opt);
 
-    .print.out.param(eModel, opt$silence);
+    print.out.param(eModel, opt$silence);
     return(eModel);
 }
 
-cmp.uncertainity <- function(tr, model, nItrs = 100, ...){
-
-    library("parallel");
-    source("sqrt.ou.covariance.R");
-    #source("linear_alg_OU_covariance.R");
-
-    #RE    = cmp.OU.covariance(tr, alpha=model$alpha);
-    RE    = sqrt.ou.covariance(tr, alpha=model$alpha);
-
-    C.IH  = t(RE$D);
-    C.H   = RE$B;
-
-    ##NOTE: make sure the same Y used for finding shifts is beeing used here too.
-
-    Y     = model$Y;
-    YY    = C.IH%*%(Y - model$mu );
-
-    detection.vec = rep(0, nrow(tr$edge));
-
-    #for(itr in 1:nItrs){
-    #    YYstar = sample(YY, replace = TRUE);
-    #    Ystar  = (C.H%*%YYstar) + model$mu; 
-    #    eM     = est.shift.placement(tr, Ystar,  
-    #            criterion = model$criterion, 
-    #            root.model     = model$root.model, ...);
-    #    detection.vec[eM$shift.placement] = detection.vec[eM$shift.placement] + 1;
-    #}
-    #return(detection.vec/nItrs);
-
-    shift.placement.list = 
-        mclapply(X=1:nItrs, FUN=function(itr){
-
-        YYstar = sample(YY, replace = TRUE);
-        Ystar  = (C.H%*%YYstar) + model$mu ; 
-
-        eM  <-  tryCatch({
-            est.shift.placement(tr, Ystar,  
-                                criterion = model$criterion, 
-                                root.model     = model$root.model, ...);
-        }, error = function(e) {
-            print("l1OU error, return NA");
-            return(NA); }  );
-
-        if(all(is.na(eM))) {return(NA);}
-        return(eM$shift.placement);
-    }, mc.cores = 20);
-
-    valid.count <- 0;
-    for( i in 1:length(shift.placement.list)){
-        if( all(is.na( shift.placement.list[[i]] )) ){
-            next;
-        }
-        valid.count <- valid.count + 1;
-        detection.vec[ shift.placement.list[[i]] ] = 
-            detection.vec[ shift.placement.list[[i]] ] + 1;
-    }
-
-    return(detection.vec/valid.count);
-}
-
-cmp.uncertainity.multivariate <- function(tr, model, nItrs = 100, ...){
-
-    #source("linear_alg_OU_covariance.R");
-    source("sqrt.ou.covariance.R");
-    library("parallel");
-
-    Y = as.matrix(model$Y);
-    stopifnot( length(model$alpha)     == ncol(Y) );
-
-    YY       = Y;
-    C.Hlist  = list();
-    for( idx in 1:ncol(Y) ){
-        #RE    = cmp.OU.covariance(tr, alpha = model$alpha[[idx]] ); 
-        RE    = sqrt.ou.covariance(tr, alpha = model$alpha[[idx]] ); 
-        C.IH  = t(RE$D); 
-        C.Hlist[[idx]] = RE$B;
-        YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx]);
-    }
-
-    detection.vec = rep(0, nrow(tr$edge));
-
-#    for(itr in 1:nItrs){
-#
-#        Ystar   = YY;
-#        idx.vec = sample(1:nrow(YY), replace = TRUE);
-#        for( idx in 1:ncol(YY) ){
-#            YYstar        = YY[idx.vec, idx];
-#            Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx]; 
-#        }
-#        eM  <-  tryCatch({
-#            est.shift.placement(tr, Ystar,  
-#                                criterion = model$criterion, ...);
-#        }, error = function(e) {
-#            print("l1OU error, return NA");
-#            return(NA); }  );
-#
-#        if(all(is.na(eM))) {next;}
-#
-#        detection.vec[eM$shift.placement] = detection.vec[eM$shift.placement] + 1;
-#    }
-
-    shift.placement.list = 
-        mclapply(X=1:nItrs, FUN=function(itr){
-
-        Ystar   = YY;
-        set.seed( 101 + itr);
-        idx.vec = sample(1:nrow(YY), replace = TRUE);
-        for( idx in 1:ncol(YY) ){
-            YYstar        = YY[idx.vec, idx];
-            Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx]; 
-        }
-        eM  <-  tryCatch({
-            est.shift.placement(tr, Ystar,  
-                                criterion = model$criterion, ...);
-        }, error = function(e) {
-            print("l1OU error, return NA");
-            return(NA); }  );
-
-        if(all(is.na(eM))) {return(NA);}
-        #detection.vec[eM$shift.placement] = detection.vec[eM$shift.placement] + 1;
-        return(eM$shift.placement);
-    }, mc.cores = 20);
-
-    valid.count <- 0;
-    for( i in 1:length(shift.placement.list)){
-        if( all(is.na( shift.placement.list[[i]] )) ){
-            next;
-        }
-        valid.count <- valid.count + 1;
-        detection.vec[ shift.placement.list[[i]] ] = 
-            detection.vec[ shift.placement.list[[i]] ] + 1;
-    }
-
-    return(detection.vec/valid.count);
-}
 
 
 generate.design.matrix <- function(tr, type="apprX", alpha){
-    library("igraph");
+    #library("igraph");
 
     stopifnot( is.ultrametric(tr) );
     stopifnot( sum( 1:length(tr$tip.label) %in% tr$edge[,1]) == 0);
@@ -469,6 +335,44 @@ do.backward.selection <- function(tr, Y, shift.placement, opt){
 }
 
 
+#
+#' Information criterion score for given placement
+#'
+#'@param tr The input phylogeny
+#'@param Y The trait vector/matrix where it is labeled by the species names appear as row names.
+#'@param shift.placement The position of the shifts.
+#'@param criterion The information criterion.
+#'
+#'@return The score of the input model
+#'
+#'@examples
+#' 
+#' library("l1ou"); 
+#' data("lizardTraits", "lizardTree");
+#' Y      <- lizard.traits[,1]; 
+#' eModel <- est.shift.placement(lizard.tree, Y);
+#' ic.score  <- model.ic(lizard.tree, eModel$Y, eModel$shift.placement, criterion="pBIC");
+#' print(ic.score);
+#'
+#'@export
+model.ic <- function(tr, Y, shift.placement, 
+                     criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+                     root.model = c("OUrandomRoot", "OUfixedRoot")
+                     ){
+    opt = list();
+
+    #TODO: use arg.match
+    opt$criterion         <- match.arg(criterion);
+    opt$root.model        <- match.arg(root.model);
+    opt$alpha.upper.bound <- alpha.upper.bound(tr);
+    opt$alpha.lower.bound <- 0;
+    opt$Z                 <- generate.design.matrix(tr, "simpX");
+    opt$use.saved.scores  <- FALSE;
+
+    score = cmp.model.score(tr, Y, shift.placement, opt);
+    return(score);
+}
+
 cmp.model.score <-function(tr, Y, shift.placement, opt){
 
     shift.placement = correct.unidentifiability(tr, shift.placement, opt);
@@ -480,19 +384,20 @@ cmp.model.score <-function(tr, Y, shift.placement, opt){
             return(score);
         }
     }
+    ic = opt$criterion;
 
     Y       = as.matrix(Y);
     nEdges  = length(tr$edge.length);
     nTips   = length(tr$tip.label);
     nShifts = length(shift.placement);
 
-    if( opt$criterion == "BIC"){
+    if( ic == "BIC"){
         df.1  = log(nEdges-1)*(nShifts);
         df.2  = log(nTips)*(nShifts + 3);
-    } else if( opt$criterion == "AIC"){
+    } else if( ic == "AIC"){
         df.1  = 2*nShifts;
         df.2  = 2*3;
-    } else if( opt$criterion == "AICc"){
+    } else if( ic == "AICc"){
         ## AICc implemented in SURFACE
         p = nShifts + (nShifts + 2)*ncol(Y);
         N = nTips*ncol(Y);
@@ -501,17 +406,17 @@ cmp.model.score <-function(tr, Y, shift.placement, opt){
         if( p > N-2)
             return(Inf);
         df.2 = 0;
-    } else if( opt$criterion == "mBIC"){
+    } else if( ic == "mBIC"){
         res =  cmp.mBIC.df(tr, shift.placement, opt);  
         df.1 = res$df.1;
         df.2 = res$df.2;
-    } else if( opt$criterion == "pBICess"){
+    } else if( ic == "pBICess"){
         score = cmp.pBICess(tr, Y, shift.placement, opt) ;
         if( opt$use.saved.scores){
             add.placement.score.to.list(shift.placement, score);
         }
         return( score );
-    } else if( opt$criterion == "pBIC"){
+    } else if( ic == "pBIC"){
         score = cmp.pBIC(tr, Y, shift.placement, opt) ;
         if( opt$use.saved.scores){
             add.placement.score.to.list(shift.placement, score);
@@ -681,7 +586,7 @@ assign.model <- function(tr, Y, shift.placement, opt){
     return( list(Y=Y, shift.placement=shift.placement, shift.values=shift.values,
                 optimums=optimums, nShifts=length(shift.placement), alpha=alpha, 
                 sigma2=sigma2, intercept=intercept, mu = mu, score=score,
-                l1ou.opt=opt) );
+                l1ou.options=opt) );
 }
 
 run.grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){

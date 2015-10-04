@@ -7,37 +7,39 @@
 est.shift.placement(tr, Y, max.nShifts = floor(length(tr$tip.label)/2),
   criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"),
   root.model = c("OUrandomRoot", "OUfixedRoot"), silence = TRUE,
-  alpha.upper = .alpha.upper.bound(tr), alpha.lower = 0,
+  alpha.upper = alpha.upper.bound(tr), alpha.lower = 0,
   standardize = TRUE, num.top.placements = max.nShifts/2,
   edge.length.threshold = 10 * .Machine$double.eps, grp.delta = 1/16,
-  grp.seq.ub = 5)
+  grp.seq.ub = 5, l1ou.options = NA)
 }
 \arguments{
-\item{tr}{the input phylogeny}
+\item{tr}{The input phylogeny}
 
-\item{Y}{the trait vector/matrix where it is labeled by the species names appear as row names}
+\item{Y}{The trait vector/matrix where it is labeled by the species names appear as row names.}
 
-\item{max.nShifts}{maximum number of shifts; The default value is half the number of tips}
+\item{max.nShifts}{Maximum number of shifts; The default value is half the number of tips.}
 
-\item{criterion}{which can be c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc")}
+\item{criterion}{The type if information criterion for model selection.}
 
-\item{root.model}{which can be c("OUrandomRoot", "OUfixedRoot")}
+\item{root.model}{}
 
-\item{silence}{a flag for writing to output}
+\item{silence}{A flag for writing to output.}
 
-\item{alpha.upper}{by default is .alpha.upper.bound(tr)}
+\item{alpha.upper}{By default it is log(2) over the minumum length of branches connected to tips (it is supposed to be non-zero).}
 
-\item{alpha.lower}{by default is 0}
+\item{alpha.lower}{By default is 0.}
 
-\item{standardize}{if TRUE then in multivariate case the inpute traits will be normalized}
+\item{standardize}{If TRUE then in multivariate case the inpute traits will be normalized.}
 
-\item{num.top.placements}{by default it is max.nShifts/2}
+\item{num.top.placements}{By default it is max.nShifts/2.}
 
-\item{edge.length.threshold}{the edge length that should be considerd zero by default 10*.Machine$double.eps}
+\item{edge.length.threshold}{The edge length that is considered zero by default 10*.Machine$double.eps.}
 
-\item{grp.delta}{input parameter to figure out the lambda sequence for grplasso by defualt it is 1/16}
+\item{grp.delta}{Parameter to figure out the lambda sequence for grplasso by defualt it is 1/16.}
 
-\item{grp.seq.ub}{inpute parameter to figure out the lambda sequence for grplasso by defualt it is 5}
+\item{grp.seq.ub}{Parameter to figure out the lambda sequence for grplasso by defualt it is 5.}
+
+\item{l1ou.options}{If the option object is provided, all the default values will be ignored. It is good for computing bootstrap support}
 }
 \value{
 eModel estimated model
@@ -46,17 +48,13 @@ eModel estimated model
 Detecting Evolutionary Shifts
 }
 \details{
-AICc is introduced in the surface paper
+AICc is introduced in the surface paper.
 }
 \examples{
 library("l1ou");
-library("ape");
-data("lizardTraits");
-data("lizardTree");
-
-Y  <- lizard.traits[,1];
+data("lizardTraits", "lizardTree");
+Y      <- lizard.traits[,1];
 eModel <- est.shift.placement(lizard.tree, Y);
-
 print(eModel$shift.placement);
 }
 

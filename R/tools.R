@@ -21,7 +21,7 @@ get.placement.score.from.list <- function(shift.placement){
 
 
 
-.print.out.param <- function(eModel, silence){
+print.out.param <- function(eModel, silence){
     if ( silence == FALSE)
         print( paste0( "EST: alpha: ", eModel$alpha, " sigma2: ",  
                  eModel$sigma2, " gamma: ", eModel$sigma2/(2*eModel$alpha),
@@ -72,7 +72,7 @@ correct.unidentifiability <- function(tr, shift.placement, opt){
 
 
 
-.alpha.upper.bound <- function(tr){
+alpha.upper.bound <- function(tr){
     nTips       = length(tr$tip.label);
     #eLenSorted  = sort(tr$edge.length[which(tr$edge[,2] < nTips)]); 
     #topMinLen   = ceiling( length(eLenSorted)*(5/100) );
@@ -141,7 +141,10 @@ convert.shifts2regions <-function(tr, shift.placement, shift.values){
     return( o.vec );
 }
 
-
+#' Normalizing branch lengths so that the length of the pathes from the root to all tips sum to one
+#'@param tr An ultrametric phylogeny tree
+#'
+#'@export
 normalize.tree <- function(tr){
 ## assumptions
     stopifnot(is.ultrametric(tr));
