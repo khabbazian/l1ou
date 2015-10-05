@@ -30,7 +30,7 @@ The results of sequential and parellel runs are not necessarly equal.
 library("l1ou");
 data("lizardTraits", "lizardTree");
 Y      <- lizard.traits[,1];
-eModel <- est_shift_configuration(lizard.tree, Y);
+eModel <- estimate_shift_configuration(lizard.tree, Y);
 res    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
 print(res);
 }

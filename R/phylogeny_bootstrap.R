@@ -15,7 +15,7 @@
 #' library("l1ou"); 
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
-#' eModel <- est_shift_configuration(lizard.tree, Y);
+#' eModel <- estimate_shift_configuration(lizard.tree, Y);
 #' res    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
 #' print(res);
 #'
@@ -50,7 +50,7 @@ bootstrap_support_univariate <- function(tr, model, nItrs, multicore=FALSE, nCor
         for(itr in 1:nItrs){
             YYstar = sample(YY, replace = TRUE);
             Ystar  = (C.H%*%YYstar) + model$mu; 
-            eM     = est_shift_configuration(tr, Ystar, l1ou.options = model$l1ou.options);
+            eM     = estimate_shift_configuration(tr, Ystar, l1ou.options = model$l1ou.options);
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1;
         }
         return(detection.vec/nItrs);
@@ -64,7 +64,7 @@ bootstrap_support_univariate <- function(tr, model, nItrs, multicore=FALSE, nCor
                      Ystar  = (C.H%*%YYstar) + model$mu ; 
 
                      eM  <-  tryCatch({
-                         est_shift_configuration(tr, Ystar, l1ou.options =model$l1ou.options);
+                         estimate_shift_configuration(tr, Ystar, l1ou.options =model$l1ou.options);
                      }, error = function(e) {
                          print("l1OU error, return NA");
                          return(NA); }  );
@@ -112,7 +112,7 @@ bootstrap_support_multivariate <- function(tr, model, nItrs, multicore=FALSE, nC
                 Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx]; 
             }
             eM  <-  tryCatch({
-                est_shift_configuration(tr, Ystar,  l1ou.options=model$l1ou.options);
+                estimate_shift_configuration(tr, Ystar,  l1ou.options=model$l1ou.options);
             }, error = function(e) {
                 print("l1OU error, return NA");
                 return(NA); }  );
@@ -132,7 +132,7 @@ bootstrap_support_multivariate <- function(tr, model, nItrs, multicore=FALSE, nC
                          Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx]; 
                      }
                      eM  <-  tryCatch({
-                         est_shift_configuration(tr, Ystar, l1ou.options = model$l1ou.options);
+                         estimate_shift_configuration(tr, Ystar, l1ou.options = model$l1ou.options);
                      }, error = function(e) {
                          print("l1OU error, return NA");
                          return(NA); }  );

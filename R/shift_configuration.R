@@ -6,7 +6,7 @@
 #'@param max.nShifts  maximum number of shifts; The default value is half the number of tips.
 #'@param criterion the type if information criterion for model selection.
 #'@param root.model the asncestoral state model.
-#'@param silence logical. If TRUE, it writes to the output.
+#'@param quietly logical. If FALSE, it writes to the output.
 #'@param alpha.upper the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero). 
 #'@param alpha.lower lower bound value of phylogenetic adaptatio rate.
 #'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
@@ -23,15 +23,15 @@
 #' library("l1ou"); 
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
-#' eModel <- est_shift_configuration(lizard.tree, Y);
+#' eModel <- estimate_shift_configuration(lizard.tree, Y);
 #' print(eModel$shift.configuration);
 #'
 #'@export
-est_shift_configuration <- function(tr, Y, 
+estimate_shift_configuration <- function(tr, Y, 
            max.nShifts           = floor(length(tr$tip.label)/2), 
            criterion             = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
            root.model            = c("OUrandomRoot", "OUfixedRoot"),
-           silence               = TRUE,
+           quietly               = TRUE,
            alpha.upper           = alpha_upper_bound(tr), 
            alpha.lower           = 0,
            standardize           = TRUE,
@@ -52,7 +52,7 @@ est_shift_configuration <- function(tr, Y,
         l1ou.options$max.nShifts           <- max.nShifts;
         l1ou.options$criterion             <- match.arg(criterion);
         l1ou.options$root.model            <- match.arg(root.model);
-        l1ou.options$silence               <- silence;
+        l1ou.options$quietly               <- quietly;
         ##TODO: return warning if estimated alpha is close to its upperbound. What do I mean by close?
         l1ou.options$alpha_upper_bound     <- alpha.upper;
         l1ou.options$alpha.lower.bound     <- alpha.lower;
@@ -73,16 +73,16 @@ est_shift_configuration <- function(tr, Y,
     stopifnot(all( row.names(Y) == tr$tip.label));
 
     if( ncol(Y) == 1 ){  #univariate l1ou
-        eModel1 = est_shift_configuration_known_alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = est_shift_configuration_known_alpha(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
+        eModel1 = estimate_shift_configuration_known_alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
+        eModel  = estimate_shift_configuration_known_alpha(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
         ## in case the first step finds a better solution
         if( eModel$score>eModel1$score )
             eModel = eModel1;
 
     } 
     if( ncol(Y) > 1 ){ #multivariate l1ou
-        eModel1 = est_shift_configuration_known_alpha_multivariate(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = est_shift_configuration_known_alpha_multivariate(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
+        eModel1 = estimate_shift_configuration_known_alpha_multivariate(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
+        eModel  = estimate_shift_configuration_known_alpha_multivariate(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
         ## in case the first step finds a better solution
         if( eModel$score>eModel1$score )
             eModel = eModel1;
@@ -97,7 +97,7 @@ est_shift_configuration <- function(tr, Y,
     return(eModel);
 }
 
-est_shift_configuration_known_alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){  
+estimate_shift_configuration_known_alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){  
 
     stopifnot( alpha >=0 );
 
@@ -127,12 +127,12 @@ est_shift_configuration_known_alpha <- function(tr, Y, alpha=0, est.alpha=FALSE,
     result  = select_best_solution(tr, Y, sol.path, opt);
     eModel  = assign_model(tr, Y, result$shift.configuration, opt);
 
-    print_out(eModel, opt$silence);
+    print_out(eModel, opt$quietly);
     return(eModel);
 }
 
 
-est_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){
+estimate_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){
     library("grplasso");
     library("magic");
 
@@ -201,7 +201,7 @@ est_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0, est
     result  = select_best_solution(tr, Y, sol, opt=opt);
     eModel  = assign_model(tr, Y, result$shift.configuration, opt=opt);
 
-    print_out(eModel, opt$silence);
+    print_out(eModel, opt$quietly);
     return(eModel);
 }
 
@@ -325,7 +325,7 @@ do_backward_selection <- function(tr, Y, shift.configuration, opt){
 #' library("l1ou"); 
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
-#' eModel <- est_shift_configuration(lizard.tree, Y);
+#' eModel <- estimate_shift_configuration(lizard.tree, Y);
 #' ic.score  <- model_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
 #' print(ic.score);
 #'

@@ -28,7 +28,7 @@ compute the information criterion score for the given configuration
 library("l1ou");
 data("lizardTraits", "lizardTree");
 Y      <- lizard.traits[,1];
-eModel <- est_shift_configuration(lizard.tree, Y);
+eModel <- estimate_shift_configuration(lizard.tree, Y);
 ic.score  <- model_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
 print(ic.score);
 }
