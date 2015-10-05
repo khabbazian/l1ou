@@ -12,19 +12,19 @@ DataBase db;
 std::hash<std::string> myHash;
 
 // [[Rcpp::export]]
-void add_placement_score_to_db(std::string str_key, double value){
+void add_configuration_score_to_db(std::string str_key, double value){
     auto key = myHash(str_key);
     db[key]  = value;
 }
 
 
 // [[Rcpp::export]]
-void erase_placement_score_db(){
+void erase_configuration_score_db(){
     db.erase(db.begin(), db.end());
 }
  
 // [[Rcpp::export]]
-Rcpp::List get_score_of_placement(std::string str_key){
+Rcpp::List get_score_of_configuration(std::string str_key){
     bool   valid = 0;
     double value = 0;
 

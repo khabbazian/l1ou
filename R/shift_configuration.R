@@ -10,7 +10,7 @@
 #'@param alpha.upper the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero). 
 #'@param alpha.lower lower bound value of phylogenetic adaptatio rate.
 #'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
-#'@param num.top.placements  an internal argument. It is the number of good shift placement that is chosed for further improvement.
+#'@param num.top.configurations  an internal argument. It is the number of good shift configuration that is chosed for further improvement.
 #'@param edge.length.threshold the minim edge length that is considered non-zero.
 #'@param grp.delta  an internal paramaters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
 #'@param grp.seq.ub an internal parameters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
@@ -23,19 +23,19 @@
 #' library("l1ou"); 
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
-#' eModel <- est.shift.placement(lizard.tree, Y);
-#' print(eModel$shift.placement);
+#' eModel <- est_shift_configuration(lizard.tree, Y);
+#' print(eModel$shift.configuration);
 #'
 #'@export
-est.shift.placement <- function(tr, Y, 
+est_shift_configuration <- function(tr, Y, 
            max.nShifts           = floor(length(tr$tip.label)/2), 
            criterion             = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
            root.model            = c("OUrandomRoot", "OUfixedRoot"),
            silence               = TRUE,
-           alpha.upper           = alpha.upper.bound(tr), 
+           alpha.upper           = alpha_upper_bound(tr), 
            alpha.lower           = 0,
            standardize           = TRUE,
-           num.top.placements    = max.nShifts/2,
+           num.top.configurations    = max.nShifts/2,
            edge.length.threshold = 10*.Machine$double.eps,
            grp.delta             = 1/16,
            grp.seq.ub            = 5,
@@ -54,14 +54,14 @@ est.shift.placement <- function(tr, Y,
         l1ou.options$root.model            <- match.arg(root.model);
         l1ou.options$silence               <- silence;
         ##TODO: return warning if estimated alpha is close to its upperbound. What do I mean by close?
-        l1ou.options$alpha.upper.bound     <- alpha.upper;
+        l1ou.options$alpha_upper_bound     <- alpha.upper;
         l1ou.options$alpha.lower.bound     <- alpha.lower;
         l1ou.options$edge.length.threshold <- edge.length.threshold;
-        l1ou.options$num.top.placements    <- num.top.placements;
+        l1ou.options$num.top.configurations    <- num.top.configurations;
         l1ou.options$standardize           <- standardize;
         l1ou.options$grp.seq.ub            <- grp.seq.ub;
         l1ou.options$grp.delta             <- grp.delta;
-        l1ou.options$Z                     <- generate.design.matrix(tr, "simpX");
+        l1ou.options$Z                     <- generate_design_matrix(tr, "simpX");
     }
 
 
@@ -73,16 +73,16 @@ est.shift.placement <- function(tr, Y,
     stopifnot(all( row.names(Y) == tr$tip.label));
 
     if( ncol(Y) == 1 ){  #univariate l1ou
-        eModel1 = est.shift.placement.known.alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = est.shift.placement.known.alpha(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
+        eModel1 = est_shift_configuration_known_alpha(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
+        eModel  = est_shift_configuration_known_alpha(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
         ## in case the first step finds a better solution
         if( eModel$score>eModel1$score )
             eModel = eModel1;
 
     } 
     if( ncol(Y) > 1 ){ #multivariate l1ou
-        eModel1 = est.shift.placement.known.alpha.multivariate(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = est.shift.placement.known.alpha.multivariate(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
+        eModel1 = est_shift_configuration_known_alpha_multivariate(tr, Y, est.alpha=TRUE,      opt=l1ou.options);
+        eModel  = est_shift_configuration_known_alpha_multivariate(tr, Y, alpha=eModel1$alpha, opt=l1ou.options);
         ## in case the first step finds a better solution
         if( eModel$score>eModel1$score )
             eModel = eModel1;
@@ -91,23 +91,23 @@ est.shift.placement <- function(tr, Y,
     ## I really don't like this way of coding but I have to clear the static db object in the c++ code manually.:S
     ## TODO: can we implement it differently?
     if( l1ou.options$use.saved.scores){
-        erase_placement_score_db();
+        erase_configuration_score_db();
     }
 
     return(eModel);
 }
 
-est.shift.placement.known.alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){  
+est_shift_configuration_known_alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){  
 
     stopifnot( alpha >=0 );
 
     #library("lars");
     if ( est.alpha ){ ## BM model
-        X   = generate.design.matrix(tr, "apprX");
-        Cinvh   = t( sqrt.ou.covariance(tr, alpha=0)$D ); 
+        X   = generate_design_matrix(tr, "apprX");
+        Cinvh   = t( sqrt_OU_covariance(tr, alpha=0)$D ); 
     } else{           ## OU model
-        X   = generate.design.matrix(tr, "orgX", alpha=alpha );
-        Cinvh   = t( sqrt.ou.covariance(tr, alpha=alpha)$D ); 
+        X   = generate_design_matrix(tr, "orgX", alpha=alpha );
+        Cinvh   = t( sqrt_OU_covariance(tr, alpha=alpha)$D ); 
     }
 
     to.be.removed   = c(length(tr$edge.length), which(tr$edge.length < opt$edge.length.threshold));
@@ -124,15 +124,15 @@ est.shift.placement.known.alpha <- function(tr, Y, alpha=0, est.alpha=FALSE, opt
     Tmp[,-to.be.removed] = sol.path$beta;
     sol.path$beta = Tmp;
 
-    result  = select.best.solution(tr, Y, sol.path, opt);
-    eModel  = assign.model(tr, Y, result$shift.placement, opt);
+    result  = select_best_solution(tr, Y, sol.path, opt);
+    eModel  = assign_model(tr, Y, result$shift.configuration, opt);
 
-    print.out.param(eModel, opt$silence);
+    print_out(eModel, opt$silence);
     return(eModel);
 }
 
 
-est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){
+est_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0, est.alpha=FALSE, opt){
     library("grplasso");
     library("magic");
 
@@ -144,11 +144,11 @@ est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alp
 
     ## standardazing
     if(opt$standardize==TRUE){
-        Y  = standardize.matrix(Y);
+        Y  = standardize_matrix(Y);
     }
 
     nVariables    = ncol(Y);
-    X             = generate.design.matrix(tr, "apprX");
+    X             = generate_design_matrix(tr, "apprX");
 
     ##NOTE: I used to add a column of 1 to take care of intercept. But it turns out that the new design matrix 
     ##NOTE: causes some problem for grplasso(?). It takes a lot of memory and it become slower (have no idea why). 
@@ -167,11 +167,11 @@ est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alp
     for( i in 1:ncol(YY)){
         X  = matrix(0,0,0);
         if ( est.alpha == TRUE ){
-            X   = generate.design.matrix(tr, "apprX");
-            RE  = sqrt.ou.covariance(tr,     alpha = 0 );
+            X   = generate_design_matrix(tr, "apprX");
+            RE  = sqrt_OU_covariance(tr,     alpha = 0 );
         } else {
-            X   = generate.design.matrix(tr, "orgX", alpha=alpha[[i]] );
-            RE  = sqrt.ou.covariance(tr,     alpha = alpha[[i]] );
+            X   = generate_design_matrix(tr, "orgX", alpha=alpha[[i]] );
+            RE  = sqrt_OU_covariance(tr,     alpha = alpha[[i]] );
         }
         Cinvh   = t(RE$D); #\Sigma^{-1/2}
         YY[,i]  = Cinvh%*%YY[,i];
@@ -188,7 +188,7 @@ est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alp
     #grpX = cbind(grpX,1);
     #grpIdx = c(grpIdx, NA);
 
-    sol    = run.grplasso(grpX, grpY, nVariables, grpIdx, opt);
+    sol    = run_grplasso(grpX, grpY, nVariables, grpIdx, opt);
 
     #Tmp                  = matrix(0, np+1, ncol(sol$coefficients));
     Tmp                  = matrix(0, np, ncol(sol$coefficients));
@@ -198,16 +198,16 @@ est.shift.placement.known.alpha.multivariate <- function(tr, Y, alpha=0, est.alp
     ##removing the intercept results
     #sol$coefficients     = sol$coefficients[-ncol(grpX), ];
 
-    result  = select.best.solution(tr, Y, sol, opt=opt);
-    eModel  = assign.model(tr, Y, result$shift.placement, opt=opt);
+    result  = select_best_solution(tr, Y, sol, opt=opt);
+    eModel  = assign_model(tr, Y, result$shift.configuration, opt=opt);
 
-    print.out.param(eModel, opt$silence);
+    print_out(eModel, opt$silence);
     return(eModel);
 }
 
 
 
-generate.design.matrix <- function(tr, type="apprX", alpha){
+generate_design_matrix <- function(tr, type="apprX", alpha){
     #library("igraph");
 
     stopifnot( is.ultrametric(tr) );
@@ -249,72 +249,72 @@ generate.design.matrix <- function(tr, type="apprX", alpha){
     return(X);
 }
 
-select.best.solution <- function(tr, Y, sol.path, opt){
+select_best_solution <- function(tr, Y, sol.path, opt){
 
-    nSols   = get.num.solutions(sol.path);
+    nSols   = get_num_solutions(sol.path);
     stopifnot( nSols > 0 );
 
     score.vec  = idx.vec = numeric();
-    prevshift.placement = NA;
-    placement.list = list();
+    prevshift.configuration = NA;
+    configuration.list = list();
     for(idx in 1:nSols) {
 
-        shift.placement = get.shift.placement(sol.path, idx, Y);
-        shift.placement = correct.unidentifiability(tr, shift.placement, opt);
+        shift.configuration = get_shift_configuration(sol.path, idx, Y);
+        shift.configuration = correct_unidentifiability(tr, shift.configuration, opt);
 
-        if ( length(shift.placement) >= opt$max.nShifts    )  { break;}
-        if ( setequal(shift.placement, prevshift.placement ) ){ next; }
+        if ( length(shift.configuration) >= opt$max.nShifts    )  { break;}
+        if ( setequal(shift.configuration, prevshift.configuration ) ){ next; }
 
-        score = cmp.model.score(tr, Y, shift.placement, opt);
+        score = cmp_model_score(tr, Y, shift.configuration, opt);
 
-        placement.list[[idx]] = shift.placement;
+        configuration.list[[idx]] = shift.configuration;
         score.vec             = c(score.vec, score);
         idx.vec               = c(idx.vec, idx);
 
-        prevshift.placement   = shift.placement;
+        prevshift.configuration   = shift.configuration;
     }
 
     idx.vec   = idx.vec[sort(score.vec, index.return=TRUE)$ix];
     min.score = Inf;   
     min.idx   = NA;
 
-    for( i in 1:min(opt$num.top.placements, length(idx.vec)) ){ 
+    for( i in 1:min(opt$num.top.configurations, length(idx.vec)) ){ 
         if ( is.na(idx.vec[[i]]) ){ break; }
-        res = do.backward.selection(tr, Y, placement.list[[ idx.vec[[i]]  ]], opt);
+        res = do_backward_selection(tr, Y, configuration.list[[ idx.vec[[i]]  ]], opt);
         if ( min.score > res$score){
             min.score       = res$score;
-            shift.placement = res$shift.placement;
+            shift.configuration = res$shift.configuration;
         }
     }
-    return ( list(score=min.score, shift.placement=shift.placement) );
+    return ( list(score=min.score, shift.configuration=shift.configuration) );
 }
 
-do.backward.selection <- function(tr, Y, shift.placement, opt){
+do_backward_selection <- function(tr, Y, shift.configuration, opt){
 
-    shift.placement = sort(shift.placement, decreasing = TRUE);
-    org.score       = cmp.model.score(tr, Y, shift.placement, opt);
+    shift.configuration = sort(shift.configuration, decreasing = TRUE);
+    org.score       = cmp_model_score(tr, Y, shift.configuration, opt);
 
-    if( length(shift.placement) < 3 ) { 
-        return(list(score=org.score, shift.placement=shift.placement)); 
+    if( length(shift.configuration) < 3 ) { 
+        return(list(score=org.score, shift.configuration=shift.configuration)); 
     }  
-    for( sp in shift.placement){
-        new.placement = setdiff(shift.placement, sp);
-        new.score     = cmp.model.score(tr, Y, new.placement, opt);      
+    for( sp in shift.configuration){
+        new.configuration = setdiff(shift.configuration, sp);
+        new.score     = cmp_model_score(tr, Y, new.configuration, opt);      
         if ( new.score <= org.score){
-            shift.placement = new.placement;
+            shift.configuration = new.configuration;
             org.score       = new.score;
         }
     }
-    return(list(score=org.score, shift.placement=shift.placement));
+    return(list(score=org.score, shift.configuration=shift.configuration));
 }
 
 
 #
-#' compute the information criterion score for the given placement
+#' compute the information criterion score for the given configuration
 #'
 #'@param tr the input phylogeny.
 #'@param Y the trait vector/matrix where it is labeled by the species names appear as row names.
-#'@param shift.placement the position of the shifts.
+#'@param shift.configuration the position of the shifts.
 #'@param criterion the information criterion.
 #'@param root.model the asncestoral state model.
 #'
@@ -325,12 +325,12 @@ do.backward.selection <- function(tr, Y, shift.placement, opt){
 #' library("l1ou"); 
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
-#' eModel <- est.shift.placement(lizard.tree, Y);
-#' ic.score  <- model.ic(lizard.tree, eModel$Y, eModel$shift.placement, criterion="pBIC");
+#' eModel <- est_shift_configuration(lizard.tree, Y);
+#' ic.score  <- model_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
 #' print(ic.score);
 #'
 #'@export
-model.ic <- function(tr, Y, shift.placement, 
+model_ic <- function(tr, Y, shift.configuration, 
                      criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
                      root.model = c("OUrandomRoot", "OUfixedRoot")
                      ){
@@ -339,22 +339,22 @@ model.ic <- function(tr, Y, shift.placement,
     #TODO: use arg.match
     opt$criterion         <- match.arg(criterion);
     opt$root.model        <- match.arg(root.model);
-    opt$alpha.upper.bound <- alpha.upper.bound(tr);
+    opt$alpha_upper_bound <- alpha_upper_bound(tr);
     opt$alpha.lower.bound <- 0;
-    opt$Z                 <- generate.design.matrix(tr, "simpX");
+    opt$Z                 <- generate_design_matrix(tr, "simpX");
     opt$use.saved.scores  <- FALSE;
 
-    score = cmp.model.score(tr, Y, shift.placement, opt);
+    score = cmp_model_score(tr, Y, shift.configuration, opt);
     return(score);
 }
 
-cmp.model.score <-function(tr, Y, shift.placement, opt){
+cmp_model_score <-function(tr, Y, shift.configuration, opt){
 
-    shift.placement = correct.unidentifiability(tr, shift.placement, opt);
+    shift.configuration = correct_unidentifiability(tr, shift.configuration, opt);
 
     if(opt$use.saved.scores){
         ##if it's been already computed
-        score = get.placement.score.from.list(shift.placement);
+        score = get_configuration_score_to_list(shift.configuration);
         if(!is.na(score)){
             return(score);
         }
@@ -364,7 +364,7 @@ cmp.model.score <-function(tr, Y, shift.placement, opt){
     Y       = as.matrix(Y);
     nEdges  = length(tr$edge.length);
     nTips   = length(tr$tip.label);
-    nShifts = length(shift.placement);
+    nShifts = length(shift.configuration);
 
     if( ic == "BIC"){
         df.1  = log(nEdges-1)*(nShifts);
@@ -382,26 +382,26 @@ cmp.model.score <-function(tr, Y, shift.placement, opt){
             return(Inf);
         df.2 = 0;
     } else if( ic == "mBIC"){
-        res =  cmp.mBIC.df(tr, shift.placement, opt);  
+        res =  cmp_mBIC_df(tr, shift.configuration, opt);  
         df.1 = res$df.1;
         df.2 = res$df.2;
     } else if( ic == "pBICess"){
-        score = cmp.pBICess(tr, Y, shift.placement, opt) ;
+        score = cmp_pBICess(tr, Y, shift.configuration, opt) ;
         if( opt$use.saved.scores){
-            add.placement.score.to.list(shift.placement, score);
+            add_configuration_score_to_list(shift.configuration, score);
         }
         return( score );
     } else if( ic == "pBIC"){
-        score = cmp.pBIC(tr, Y, shift.placement, opt) ;
+        score = cmp_pBIC(tr, Y, shift.configuration, opt) ;
         if( opt$use.saved.scores){
-            add.placement.score.to.list(shift.placement, score);
+            add_configuration_score_to_list(shift.configuration, score);
         }
         return( score );
     } 
 
     score = df.1;
     for( i in 1:ncol(Y)){
-        fit   = my.phylolm.interface(tr, Y[,i], shift.placement, opt);
+        fit   = my_phylolm_interface(tr, Y[,i], shift.configuration, opt);
         if ( all( is.na( fit) ) ){
             return(Inf);
             #return(NA);
@@ -410,62 +410,62 @@ cmp.model.score <-function(tr, Y, shift.placement, opt){
     }
 
     if( opt$use.saved.scores){
-        add.placement.score.to.list(shift.placement, score);
+        add_configuration_score_to_list(shift.configuration, score);
     }
     return(score);
 }
 
-my.phylolm.interface <- function(tr, Y, shift.placement, opt){
+my_phylolm_interface <- function(tr, Y, shift.configuration, opt){
 
-    preds = cbind(1, opt$Z[ ,shift.placement]);
+    preds = cbind(1, opt$Z[ ,shift.configuration]);
 
     options(warn = -1);
     #fit <- try( phylolm(Y~preds-1, phy=tr, model=opt$root.model) );
     #fit <- try( phylolm( Y~preds-1, phy=tr, model=opt$root.model, 
     #        starting.value = max(1, opt$alpha.lower.bound),
-    #        upper.bound    = opt$alpha.upper.bound, 
+    #        upper.bound    = opt$alpha_upper_bound, 
     #        lower.bound    = opt$alpha.lower.bound ) );  
 
     fit    <-  try( phylolm(Y~preds-1, phy=tr, model=opt$root.model,
                             lower.bound    = opt$alpha.lower.bound, 
-                            upper.bound    = opt$alpha.upper.bound ) );
+                            upper.bound    = opt$alpha_upper_bound ) );
 
     options(warn = 0);
 
     if(class(fit) == "try-error"){ 
       warning( paste0( "phylolm internal error. returning NA; \n
-                     num shifts: ", length(shift.placement)) );
+                     num shifts: ", length(shift.configuration)) );
       return(NA);
     }
 
     return(fit);
 }
 
-cmp.mBIC.df <- function(tr, shift.placement, opt){
+cmp_mBIC_df <- function(tr, shift.configuration, opt){
 ## we assume that tree is of post order.
 
-    shift.placement = sort(shift.placement);
+    shift.configuration = sort(shift.configuration);
     nTips           = length(tr$tip.label);
-    nShifts         = length(shift.placement);
+    nShifts         = length(shift.configuration);
 
     df.1 =  0; 
     ## pen for the alpha sigma2 and intercept
     df.2 =  3*log(nTips);
 
     if(nShifts > 0 ){
-        ## pen for shift placement
+        ## pen for shift configuration
         df.1 = (2*nShifts - 1) *log(nTips);
         ## pen for alpha sigma2 and intercept
         df.2 = 3*log(nTips);
 
         all.covered.tips = numeric();
-        for(eIdx in shift.placement){
+        for(eIdx in shift.configuration){
             covered.tips = which( opt$Z[,eIdx] > 0 );
             nUniqueTips  = length( setdiff(covered.tips, all.covered.tips) );
             all.covered.tips = union(covered.tips, all.covered.tips);
 
             ## this must not happen if the input is an 
-            ## identifiable placement and the tree is in post order.
+            ## identifiable configuration and the tree is in post order.
             stopifnot( nUniqueTips > 0);
             df.2 = df.2 + log(nUniqueTips); 
         }
@@ -476,21 +476,21 @@ cmp.mBIC.df <- function(tr, shift.placement, opt){
     return( list(df.1=df.1, df.2=df.2) );
 }
 
-cmp.pBICess <- function(tr, Y, shift.placement, opt){
+cmp_pBICess <- function(tr, Y, shift.configuration, opt){
 
-    nShifts = length(shift.placement);
+    nShifts = length(shift.configuration);
     nEdges  = length(tr$edge[,1]);
     nTips   = length(tr$tip.label);
 
     df.1  = 2*(nShifts)*log(nEdges-1);
     score = df.1;
     for(i in 1:ncol(Y)){
-        fit  = my.phylolm.interface(tr, Y[,i], shift.placement, opt);
+        fit  = my_phylolm_interface(tr, Y[,i], shift.configuration, opt);
         if( all( is.na(fit) ) ){
            #return(NA);
            return(Inf);
         }
-        ess  = effective.sample.size(tr, edges=shift.placement, model="OUfixedRoot", 
+        ess  = effective.sample.size(tr, edges=shift.configuration, model="OUfixedRoot", 
                  parameters=list(alpha=fit$optpar), FALSE, FALSE);
 
         df.2  = 3*log(nTips+1) + sum(log(ess+1));
@@ -499,9 +499,9 @@ cmp.pBICess <- function(tr, Y, shift.placement, opt){
     return( score );
 }
 
-cmp.pBIC <- function(tr, Y, shift.placement, opt){
+cmp_pBIC <- function(tr, Y, shift.configuration, opt){
 
-    nShifts = length(shift.placement);
+    nShifts = length(shift.configuration);
     nEdges  = length(tr$edge[,1]);
     nTips   = length(tr$tip.label);
 
@@ -509,7 +509,7 @@ cmp.pBIC <- function(tr, Y, shift.placement, opt){
     score   = df.1;
 
     for(i in 1:ncol(Y)){
-        fit   = my.phylolm.interface(tr, Y[,i], shift.placement, opt);
+        fit   = my_phylolm_interface(tr, Y[,i], shift.configuration, opt);
         if( all( is.na(fit) ) ){
            #return(NA);
            return(Inf);
@@ -522,7 +522,7 @@ cmp.pBIC <- function(tr, Y, shift.placement, opt){
 }
 
 
-assign.model <- function(tr, Y, shift.placement, opt){
+assign_model <- function(tr, Y, shift.configuration, opt){
 
     Y       = as.matrix(Y);
     nEdges  = length(tr$edge.length);
@@ -534,10 +534,10 @@ assign.model <- function(tr, Y, shift.placement, opt){
 
     for(i in 1:ncol(Y)){
 
-        nShifts = length(shift.placement);
-        fit     = my.phylolm.interface(tr, as.matrix(Y[,i]), shift.placement, opt);
+        nShifts = length(shift.configuration);
+        fit     = my_phylolm_interface(tr, as.matrix(Y[,i]), shift.configuration, opt);
         if ( all( is.na(fit) ) ){
-            stop("model score is NA in assign.model function! this should not happen");
+            stop("model score is NA in assign_model function! this should not happen");
         }
 
         alpha   = c(alpha,  fit$optpar);
@@ -549,22 +549,22 @@ assign.model <- function(tr, Y, shift.placement, opt){
         shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)]);
 
         optimums.tmp = rep(fit$coefficients[[1]], nEdges);
-        if( length(shift.placement) > 0 )
-            optimums.tmp = convert.shifts2regions(tr, shift.placement, 
+        if( length(shift.configuration) > 0 )
+            optimums.tmp = convert_shifts2regions(tr, shift.configuration, 
                                        fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]]; 
 
         optimums = cbind(optimums, optimums.tmp);
     }
-    score = cmp.model.score (tr, Y, shift.placement, opt);
+    score = cmp_model_score (tr, Y, shift.configuration, opt);
 
     ##NOTE: adding the trait which used to detect shift positions
-    return( list(Y=Y, shift.placement=shift.placement, shift.values=shift.values,
-                optimums=optimums, nShifts=length(shift.placement), alpha=alpha, 
+    return( list(Y=Y, shift.configuration=shift.configuration, shift.values=shift.values,
+                optimums=optimums, nShifts=length(shift.configuration), alpha=alpha, 
                 sigma2=sigma2, intercept=intercept, mu = mu, score=score,
                 l1ou.options=opt) );
 }
 
-run.grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){
+run_grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){
 
 
     delta      = opt$grp.delta;

@@ -2,17 +2,17 @@
 
 
 lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) };
-my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")); }
+#my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")); }
 
 
-add.placement.score.to.list  <- function(shift.placement, score){
-    shift.placement = sort(shift.placement);
-    add_placement_score_to_db(paste0(shift.placement, collapse=" "), score);
+add_configuration_score_to_list  <- function(shift.configuration, score){
+    shift.configuration = sort(shift.configuration);
+    add_configuration_score_to_db(paste0(shift.configuration, collapse=" "), score);
 }
 
-get.placement.score.from.list <- function(shift.placement){
-    shift.placement = sort(shift.placement);
-    res = get_score_of_placement(paste0(shift.placement, collapse=" "));
+get_configuration_score_to_list <- function(shift.configuration){
+    shift.configuration = sort(shift.configuration);
+    res = get_score_of_configuration(paste0(shift.configuration, collapse=" "));
     if( res$valid == FALSE){
         return(NA);
     }
@@ -21,7 +21,7 @@ get.placement.score.from.list <- function(shift.placement){
 
 
 
-print.out.param <- function(eModel, silence){
+print_out <- function(eModel, silence){
     if ( silence == FALSE)
         print( paste0( "EST: alpha: ", eModel$alpha, " sigma2: ",  
                  eModel$sigma2, " gamma: ", eModel$sigma2/(2*eModel$alpha),
@@ -32,7 +32,7 @@ print.out.param <- function(eModel, silence){
 
 
 
-standardize.matrix <- function(Y){
+standardize_matrix <- function(Y){
     for(i in 1:ncol(Y)){
         Y[,i] = Y[,i] - mean(Y[,i]);
     }
@@ -42,37 +42,37 @@ standardize.matrix <- function(Y){
 
 
 
-correct.unidentifiability <- function(tr, shift.placement, opt){
+correct_unidentifiability <- function(tr, shift.configuration, opt){
 
-    if( length(shift.placement) < 2)  { return(shift.placement); }
-    shift.placement = sort(shift.placement);
+    if( length(shift.configuration) < 2)  { return(shift.configuration); }
+    shift.configuration = sort(shift.configuration);
     nTips    = length(tr$tip.label);
     nN       = nrow(opt$Z);
 
     all.covered.tips = numeric();
-    for(sp in shift.placement){
+    for(sp in shift.configuration){
         covered.tips = which( opt$Z[,sp] > 0 );
         nUniqueTips = length( setdiff(covered.tips, all.covered.tips) );
         if ( nUniqueTips == 0 )
-            shift.placement = setdiff(shift.placement, sp);
+            shift.configuration = setdiff(shift.configuration, sp);
         all.covered.tips = union(covered.tips, all.covered.tips);
     }
 
-    while ( length(shift.placement) > 1 ) {
+    while ( length(shift.configuration) > 1 ) {
         coverage = c();
-        for(sp in shift.placement)
+        for(sp in shift.configuration)
             coverage = union( coverage, which(opt$Z[,sp] > 0) );
 
         if( length( setdiff(1:nN, coverage) ) == 0 ){
-            shift.placement = shift.placement[-which.max(shift.placement)];
+            shift.configuration = shift.configuration[-which.max(shift.configuration)];
         } else { break; }
     }
-    return(shift.placement);
+    return(shift.configuration);
 }
 
 
 
-alpha.upper.bound <- function(tr){
+alpha_upper_bound <- function(tr){
     nTips       = length(tr$tip.label);
     #eLenSorted  = sort(tr$edge.length[which(tr$edge[,2] < nTips)]); 
     #topMinLen   = ceiling( length(eLenSorted)*(5/100) );
@@ -82,7 +82,7 @@ alpha.upper.bound <- function(tr){
 
 
 
-get.num.solutions <- function(sol.path){
+get_num_solutions <- function(sol.path){
     if ( grepl("lars",sol.path$call)[[1]]  ){
         return ( length(sol.path$beta[,1]) );
     } 
@@ -93,28 +93,28 @@ get.num.solutions <- function(sol.path){
     stop(paste0(match.call(), ":undefined solver!"));
 }
 
-get.shift.placement <- function(sol.path, index, Y, tidx=1){
+get_shift_configuration <- function(sol.path, index, Y, tidx=1){
     if ( grepl("lars",sol.path$call)[[1]]  ){
         beta      = sol.path$beta[index,];
-        shift.placement  = which( abs(beta) > 0 );
+        shift.configuration  = which( abs(beta) > 0 );
     } else if( any( grepl("grplasso",sol.path$call) ) ){
         beta  = sol.path$coefficients[, index];
         lIdx  = length(beta)/ncol(Y);
-        #shift.placement  = which( abs(beta[ (1+(tidx-1)*lIdx):(tidx*lIdx) ]) > 0 );
+        #shift.configuration  = which( abs(beta[ (1+(tidx-1)*lIdx):(tidx*lIdx) ]) > 0 );
         ##NOTE: in case, in a group of variables some are zero and some non-zero i consider all as non-zero
-        shift.placement  = which( rowSums(matrix(abs(beta),nrow=lIdx)) > 0 ) ;
+        shift.configuration  = which( rowSums(matrix(abs(beta),nrow=lIdx)) > 0 ) ;
     } else {  
         stop(paste0(match.call(), ":undefined solver!"));
     }
 
-    return(shift.placement);
+    return(shift.configuration);
 }
 
 
 
-convert.shifts2regions <-function(tr, shift.placement, shift.values){
+convert_shifts2regions <-function(tr, shift.configuration, shift.values){
 
-    stopifnot( length(shift.placement) == length(shift.values) );
+    stopifnot( length(shift.configuration) == length(shift.values) );
 
     nTips   = length(tr$tip.label);
     nEdges  = length(tr$edge.length);
@@ -122,9 +122,9 @@ convert.shifts2regions <-function(tr, shift.placement, shift.values){
     o.vec = rep(0, nEdges);
 
     options(warn = -1);
-    if( length(shift.placement) > 0)
-    for(itr in 1:length(shift.placement) ){
-        eIdx     = shift.placement[[itr]];
+    if( length(shift.configuration) > 0)
+    for(itr in 1:length(shift.configuration) ){
+        eIdx     = shift.configuration[[itr]];
         vIdx     = tr$edge[eIdx, 2];
 
         o.vec.tmp = rep(0, nEdges);
@@ -147,7 +147,7 @@ convert.shifts2regions <-function(tr, shift.placement, shift.values){
 #'@return returns normalized phylogeny tree.
 #'
 #'@export
-normalize.tree <- function(tr){
+normalize_tree <- function(tr){
     stopifnot(is.ultrametric(tr));
 
     nTips  = length(tr$tip.label);
@@ -163,7 +163,7 @@ normalize.tree <- function(tr){
 }
 
 
-my.plot.tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
+l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
         out.fn="unnamed", show.el=FALSE, intercept = 0,
         edge.labels=numeric(), plotme=T, 
         el.center=FALSE, nomargins = TRUE, el.cex=0.5, ...){
@@ -210,7 +210,7 @@ my.plot.tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
     return(edgecol);
 }
 
-my.plot.phylo <- function(tr, Y, eModel, title.str="", enable.cross=FALSE, ...){
+l1ou_plot_phylo <- function(tr, Y, eModel, title.str="", enable.cross=FALSE, ...){
 
     Y = as.matrix(Y);
     stopifnot(identical(rownames(Y), tr$tip.label));
@@ -221,24 +221,24 @@ my.plot.phylo <- function(tr, Y, eModel, title.str="", enable.cross=FALSE, ...){
         edge.labels = rep(NA, length(eModel$opt.val));
         if ( enable.cross == TRUE){
             if( eModel$nShifts > 0 )
-                edge.labels[ eModel$shift.placement ] = "X";
+                edge.labels[ eModel$shift.configuration ] = "X";
         } else{
-            edge.labels[ eModel$shift.placement ] = round(eModel$shift.values, digits = 2);
+            edge.labels[ eModel$shift.configuration ] = round(eModel$shift.values, digits = 2);
         }
-        my.plot.tree(tr, eModel$opt.val, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=3, ...);
+        l1ou_plot_tree(tr, eModel$opt.val, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=3, ...);
     } else {
         edge.labels = rep(NA, length(eModel$opt.val));
         if ( enable.cross == TRUE){
             if( eModel$nShifts > 0 )
-                edge.labels[ eModel$shift.placement ] = "X";
-                my.plot.tree(tr, eModel$opt.val[,1], show.el=TRUE, 
+                edge.labels[ eModel$shift.configuration ] = "X";
+                l1ou_plot_tree(tr, eModel$opt.val[,1], show.el=TRUE, 
                         edge.labels = edge.labels, nomargins = FALSE, 
                         el.center=TRUE, ...);
         } else {
           if( eModel$nShifts > 0 )
-              edge.labels[ eModel$shift.placement ] = 
+              edge.labels[ eModel$shift.configuration ] = 
                   apply( round(eModel$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
-          my.plot.tree(tr, eModel$opt.val[,1], show.el=TRUE, 
+          l1ou_plot_tree(tr, eModel$opt.val[,1], show.el=TRUE, 
                        edge.labels = edge.labels, nomargins = FALSE, ...);
           
         }
@@ -254,15 +254,4 @@ my.plot.phylo <- function(tr, Y, eModel, title.str="", enable.cross=FALSE, ...){
     }
 }
 
-
-assign.color <- function(theRef){
-    colvec    = rainbow( length(unique(theRef)) )
-        col = rep(0, length(unique(theRef)));
-    i = 1;
-    for (itr in unique(theRef)){
-        col[which(theRef==itr)] = colvec[[i]];
-        i = i + 1;
-    }
-    return(col);
-}
 

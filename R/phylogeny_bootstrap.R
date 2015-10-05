@@ -15,28 +15,28 @@
 #' library("l1ou"); 
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
-#' eModel <- est.shift.placement(lizard.tree, Y);
-#' res    <- bootstrap.support(lizard.tree, eModel, nItrs=2);
+#' eModel <- est_shift_configuration(lizard.tree, Y);
+#' res    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
 #' print(res);
 #'
 #'@export
-bootstrap.support <- function(tr, model, nItrs=100, multicore=FALSE, nCores = 2){
+bootstrap_support <- function(tr, model, nItrs=100, multicore=FALSE, nCores = 2){
 
     if(multicore){
         library("parallel");
     }
 
     if(ncol(model$Y)==1){
-        return(bootstrap.support.univariate(tr=tr, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores));
+        return(bootstrap_support_univariate(tr=tr, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores));
     }
     if(ncol(model$Y)>1){
-        return(bootstrap.support.multivariate(tr=tr, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores));
+        return(bootstrap_support_multivariate(tr=tr, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores));
     }
 }
 
-bootstrap.support.univariate <- function(tr, model, nItrs, multicore=FALSE, nCores=2){
+bootstrap_support_univariate <- function(tr, model, nItrs, multicore=FALSE, nCores=2){
 
-    RE    = sqrt.ou.covariance(tr, alpha=model$alpha);
+    RE    = sqrt_OU_covariance(tr, alpha=model$alpha);
 
     C.IH  = t(RE$D);
     C.H   = RE$B;
@@ -50,13 +50,13 @@ bootstrap.support.univariate <- function(tr, model, nItrs, multicore=FALSE, nCor
         for(itr in 1:nItrs){
             YYstar = sample(YY, replace = TRUE);
             Ystar  = (C.H%*%YYstar) + model$mu; 
-            eM     = est.shift.placement(tr, Ystar, l1ou.options = model$l1ou.options);
-            detection.vec[eM$shift.placement] = detection.vec[eM$shift.placement] + 1;
+            eM     = est_shift_configuration(tr, Ystar, l1ou.options = model$l1ou.options);
+            detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1;
         }
         return(detection.vec/nItrs);
     }
 
-    shift.placement.list = 
+    shift.configuration.list = 
         mclapply(X=1:nItrs, FUN=function(itr){
 
                      set.seed( 101 + itr);
@@ -64,29 +64,29 @@ bootstrap.support.univariate <- function(tr, model, nItrs, multicore=FALSE, nCor
                      Ystar  = (C.H%*%YYstar) + model$mu ; 
 
                      eM  <-  tryCatch({
-                         est.shift.placement(tr, Ystar, l1ou.options =model$l1ou.options);
+                         est_shift_configuration(tr, Ystar, l1ou.options =model$l1ou.options);
                      }, error = function(e) {
                          print("l1OU error, return NA");
                          return(NA); }  );
 
                      if(all(is.na(eM))) {return(NA);}
-                     return(eM$shift.placement);
+                     return(eM$shift.configuration);
            }, mc.cores = nCores);
 
     valid.count <- 0;
-    for( i in 1:length(shift.placement.list)){
-        if( all(is.na( shift.placement.list[[i]] )) ){
+    for( i in 1:length(shift.configuration.list)){
+        if( all(is.na( shift.configuration.list[[i]] )) ){
             next;
         }
         valid.count <- valid.count + 1;
-        detection.vec[ shift.placement.list[[i]] ] = 
-            detection.vec[ shift.placement.list[[i]] ] + 1;
+        detection.vec[ shift.configuration.list[[i]] ] = 
+            detection.vec[ shift.configuration.list[[i]] ] + 1;
     }
 
     return(detection.vec/valid.count);
 }
 
-bootstrap.support.multivariate <- function(tr, model, nItrs, multicore=FALSE, nCores=2){
+bootstrap_support_multivariate <- function(tr, model, nItrs, multicore=FALSE, nCores=2){
 
     Y = as.matrix(model$Y);
     stopifnot( length(model$alpha) == ncol(Y) );
@@ -94,7 +94,7 @@ bootstrap.support.multivariate <- function(tr, model, nItrs, multicore=FALSE, nC
     YY        = Y;
     C.Hlist   = list();
     for( idx in 1:ncol(Y) ){
-        RE    = sqrt.ou.covariance(tr, alpha = model$alpha[[idx]] ); 
+        RE    = sqrt_OU_covariance(tr, alpha = model$alpha[[idx]] ); 
         C.IH  = t(RE$D); 
         C.Hlist[[idx]] = RE$B;
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx]);
@@ -112,17 +112,17 @@ bootstrap.support.multivariate <- function(tr, model, nItrs, multicore=FALSE, nC
                 Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx]; 
             }
             eM  <-  tryCatch({
-                est.shift.placement(tr, Ystar,  l1ou.options=model$l1ou.options);
+                est_shift_configuration(tr, Ystar,  l1ou.options=model$l1ou.options);
             }, error = function(e) {
                 print("l1OU error, return NA");
                 return(NA); }  );
 
             if(all(is.na(eM))) {next;}
-            detection.vec[eM$shift.placement] = detection.vec[eM$shift.placement] + 1;
+            detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1;
         }
     }
 
-    shift.placement.list = 
+    shift.configuration.list = 
         mclapply(X=1:nItrs, FUN=function(itr){
                      Ystar   = YY;
                      set.seed( 101 + itr);
@@ -132,23 +132,23 @@ bootstrap.support.multivariate <- function(tr, model, nItrs, multicore=FALSE, nC
                          Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx]; 
                      }
                      eM  <-  tryCatch({
-                         est.shift.placement(tr, Ystar, l1ou.options = model$l1ou.options);
+                         est_shift_configuration(tr, Ystar, l1ou.options = model$l1ou.options);
                      }, error = function(e) {
                          print("l1OU error, return NA");
                          return(NA); }  );
 
                      if(all(is.na(eM))) {return(NA);}
-                     return(eM$shift.placement);
+                     return(eM$shift.configuration);
                 }, mc.cores = nCores);
 
     valid.count <- 0;
-    for( i in 1:length(shift.placement.list)){
-        if( all(is.na( shift.placement.list[[i]] )) ){
+    for( i in 1:length(shift.configuration.list)){
+        if( all(is.na( shift.configuration.list[[i]] )) ){
             next;
         }
         valid.count <- valid.count + 1;
-        detection.vec[ shift.placement.list[[i]] ] = 
-            detection.vec[ shift.placement.list[[i]] ] + 1;
+        detection.vec[ shift.configuration.list[[i]] ] = 
+            detection.vec[ shift.configuration.list[[i]] ] + 1;
     }
 
     return(detection.vec/valid.count);
