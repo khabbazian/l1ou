@@ -142,6 +142,7 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0
         stopifnot(ncol(Y) == length(alpha));
     }
 
+    orgY  = Y;
     ## standardazing
     if(opt$standardize==TRUE){
         Y  = standardize_matrix(Y);
@@ -198,8 +199,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0
     ##removing the intercept results
     #sol$coefficients     = sol$coefficients[-ncol(grpX), ];
 
-    result  = select_best_solution(tr, Y, sol, opt=opt);
-    eModel  = assign_model(tr, Y, result$shift.configuration, opt=opt);
+    result  = select_best_solution(tr, orgY, sol, opt=opt);
+    eModel  = assign_model(tr, orgY, result$shift.configuration, opt=opt);
 
     print_out(eModel, opt$quietly);
     return(eModel);
