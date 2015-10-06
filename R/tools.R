@@ -241,27 +241,27 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
     layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))));
 
     if ( ncol(Y) == 1){
-        edge.labels = rep(NA, length(model$opt.val));
+        edge.labels = rep(NA, length(model$optimums));
         if ( enable.cross == TRUE){
             if( model$nShifts > 0 )
                 edge.labels[ model$shift.configuration ] = "X";
         } else{
             edge.labels[ model$shift.configuration ] = round(model$shift.values, digits = 2);
         }
-        l1ou_plot_tree(tr, model$opt.val, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=3, ...);
+        l1ou_plot_tree(tr, model$optimums, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=2, ...);
     } else {
-        edge.labels = rep(NA, length(model$opt.val));
+        edge.labels = rep(NA, length(model$optimums));
         if ( enable.cross == TRUE){
             if( model$nShifts > 0 )
                 edge.labels[ model$shift.configuration ] = "X";
-                l1ou_plot_tree(tr, model$opt.val[,1], show.el=TRUE, 
+                l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, 
                         edge.labels = edge.labels, nomargins = FALSE, 
                         el.center=TRUE, ...);
         } else {
           if( model$nShifts > 0 )
               edge.labels[ model$shift.configuration ] = 
                   apply( round(model$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
-          l1ou_plot_tree(tr, model$opt.val[,1], show.el=TRUE, 
+          l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, 
                        edge.labels = edge.labels, nomargins = FALSE, ...);
           
         }

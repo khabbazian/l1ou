@@ -1,11 +1,11 @@
 #'
 #' computes the bootstrap support for the detected shift positions
 #'
-#'@param tr The input phylogeny.
-#'@param model It contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.
-#'@param nItrs Maximum number of shifts; The default value is half the number of tips.
-#'@param multicore If TRUE, it runs nCores processes in parallel. See details. 
-#'@param nCores The desire number of parallel process.
+#'@param tr the input phylogeny.
+#'@param model it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.
+#'@param nItrs maximum number of shifts; The default value is half the number of tips.
+#'@param multicore logical. If TRUE, it runs nCores processes in parallel. See details. 
+#'@param nCores the desire number of parallel process.
 #'@return detection rate vector.
 #'
 #'@details The results of sequential and parellel runs are not necessarly equal.

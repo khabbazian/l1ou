@@ -7,15 +7,15 @@
 bootstrap_support(tr, model, nItrs = 100, multicore = FALSE, nCores = 2)
 }
 \arguments{
-\item{tr}{The input phylogeny.}
+\item{tr}{the input phylogeny.}
 
-\item{model}{It contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.}
+\item{model}{it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.}
 
-\item{nItrs}{Maximum number of shifts; The default value is half the number of tips.}
+\item{nItrs}{maximum number of shifts; The default value is half the number of tips.}
 
-\item{multicore}{If TRUE, it runs nCores processes in parallel. See details.}
+\item{multicore}{logical. If TRUE, it runs nCores processes in parallel. See details.}
 
-\item{nCores}{The desire number of parallel process.}
+\item{nCores}{the desire number of parallel process.}
 }
 \value{
 detection rate vector.
