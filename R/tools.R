@@ -93,6 +93,8 @@ get_num_solutions <- function(sol.path){
     stop(paste0(match.call(), ":undefined solver!"));
 }
 
+
+
 get_shift_configuration <- function(sol.path, index, Y, tidx=1){
     if ( grepl("lars",sol.path$call)[[1]]  ){
         beta      = sol.path$beta[index,];
@@ -210,35 +212,56 @@ l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
     return(edgecol);
 }
 
-l1ou_plot_phylo <- function(tr, Y, eModel, title.str="", enable.cross=FALSE, ...){
 
-    Y = as.matrix(Y);
+#'
+#' plots the tree and trait(s)
+#'
+#'@param tr the input phylogeny.
+#'@param model it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.
+#'@param title.str the title for each trait.
+#'@param enable.cross logical. If TRUE, annotates each shift by X.
+#'@param ... extra parameters for plot.phylo 
+#'
+#'@details the results of sequential and parallel runs are not necessary equal.
+#'
+#'@examples
+#' 
+#' library("l1ou"); 
+#' data("lizardTraits", "lizardTree");
+#' Y      <- lizard.traits[,1]; 
+#' eModel <- estimate_shift_configuration(lizard.tree, Y);
+#' l1ou_plot_phylo(lizard.tree, eModel, "PC1");
+#'
+#'@export
+l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.cross=FALSE, ...){
+
+    Y = as.matrix(model$Y);
     stopifnot(identical(rownames(Y), tr$tip.label));
 
     layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))));
 
     if ( ncol(Y) == 1){
-        edge.labels = rep(NA, length(eModel$opt.val));
+        edge.labels = rep(NA, length(model$opt.val));
         if ( enable.cross == TRUE){
-            if( eModel$nShifts > 0 )
-                edge.labels[ eModel$shift.configuration ] = "X";
+            if( model$nShifts > 0 )
+                edge.labels[ model$shift.configuration ] = "X";
         } else{
-            edge.labels[ eModel$shift.configuration ] = round(eModel$shift.values, digits = 2);
+            edge.labels[ model$shift.configuration ] = round(model$shift.values, digits = 2);
         }
-        l1ou_plot_tree(tr, eModel$opt.val, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=3, ...);
+        l1ou_plot_tree(tr, model$opt.val, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=3, ...);
     } else {
-        edge.labels = rep(NA, length(eModel$opt.val));
+        edge.labels = rep(NA, length(model$opt.val));
         if ( enable.cross == TRUE){
-            if( eModel$nShifts > 0 )
-                edge.labels[ eModel$shift.configuration ] = "X";
-                l1ou_plot_tree(tr, eModel$opt.val[,1], show.el=TRUE, 
+            if( model$nShifts > 0 )
+                edge.labels[ model$shift.configuration ] = "X";
+                l1ou_plot_tree(tr, model$opt.val[,1], show.el=TRUE, 
                         edge.labels = edge.labels, nomargins = FALSE, 
                         el.center=TRUE, ...);
         } else {
-          if( eModel$nShifts > 0 )
-              edge.labels[ eModel$shift.configuration ] = 
-                  apply( round(eModel$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
-          l1ou_plot_tree(tr, eModel$opt.val[,1], show.el=TRUE, 
+          if( model$nShifts > 0 )
+              edge.labels[ model$shift.configuration ] = 
+                  apply( round(model$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
+          l1ou_plot_tree(tr, model$opt.val[,1], show.el=TRUE, 
                        edge.labels = edge.labels, nomargins = FALSE, ...);
           
         }

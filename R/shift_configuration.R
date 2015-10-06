@@ -5,15 +5,15 @@
 #'@param Y the trait vector/matrix where it is labeled by the species names appear as row names. The rownames must match the tips label with the same order.
 #'@param max.nShifts  maximum number of shifts; The default value is half the number of tips.
 #'@param criterion the type if information criterion for model selection.
-#'@param root.model the asncestoral state model.
+#'@param root.model the ancestral state model.
 #'@param quietly logical. If FALSE, it writes to the output.
 #'@param alpha.upper the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero). 
-#'@param alpha.lower lower bound value of phylogenetic adaptatio rate.
+#'@param alpha.lower lower bound value of phylogenetic adaptation rate.
 #'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
-#'@param num.top.configurations  an internal argument. It is the number of good shift configuration that is chosed for further improvement.
+#'@param num.top.configurations  an internal argument. It is the number of good shift configuration that is chosen for further improvement.
 #'@param edge.length.threshold the minim edge length that is considered non-zero.
-#'@param grp.delta  an internal paramaters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
-#'@param grp.seq.ub an internal parameters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
+#'@param grp.delta  an internal parameter. The input lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
+#'@param grp.seq.ub an internal parameter. The input lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
 #'@param l1ou.options if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options. 
 #'
 #'@return returns estimated model.
@@ -24,7 +24,7 @@
 #' data("lizardTraits", "lizardTree");
 #' Y      <- lizard.traits[,1]; 
 #' eModel <- estimate_shift_configuration(lizard.tree, Y);
-#' print(eModel$shift.configuration);
+#' l1ou_plot_phylo(lizard.tree, eModel, "PC1");
 #'
 #'@export
 estimate_shift_configuration <- function(tr, Y, 
@@ -537,7 +537,7 @@ assign_model <- function(tr, Y, shift.configuration, opt){
         nShifts = length(shift.configuration);
         fit     = my_phylolm_interface(tr, as.matrix(Y[,i]), shift.configuration, opt);
         if ( all( is.na(fit) ) ){
-            stop("model score is NA in assign_model function! this should not happen");
+            stop("model score is NA in assign_model function! This should not happen");
         }
 
         alpha   = c(alpha,  fit$optpar);
@@ -639,7 +639,7 @@ run_grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){
     df.missing = setdiff(0:opt$max.nShifts, df.vec);
     for(dfm in df.missing){
         warning( paste0( "There are no solutions with ", dfm , " number of shifts
-                        in the solution path of grplasso. you may  want to chanage grp.delta and 
+                        in the solution path of grplasso. You may want to change grp.delta and 
                         grp.seq" ) );
     }
     return(sol);

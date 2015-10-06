@@ -10,7 +10,7 @@
 #'
 #' library("l1ou");
 #' data("lizardTree");
-#' res <- sqrt_OU_covariance(lizard.tree);
+#' result <- sqrt_OU_covariance(lizard.tree);
 #'
 #'@export
 #'

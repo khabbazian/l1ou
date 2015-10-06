@@ -2,6 +2,7 @@
 
 export(bootstrap_support)
 export(estimate_shift_configuration)
+export(l1ou_plot_phylo)
 export(model_ic)
 export(normalize_tree)
 export(sqrt_OU_covariance)

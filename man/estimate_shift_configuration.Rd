@@ -22,23 +22,23 @@ estimate_shift_configuration(tr, Y,
 
 \item{criterion}{the type if information criterion for model selection.}
 
-\item{root.model}{the asncestoral state model.}
+\item{root.model}{the ancestral state model.}
 
 \item{quietly}{logical. If FALSE, it writes to the output.}
 
 \item{alpha.upper}{the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero).}
 
-\item{alpha.lower}{lower bound value of phylogenetic adaptatio rate.}
+\item{alpha.lower}{lower bound value of phylogenetic adaptation rate.}
 
 \item{standardize}{logical. If TRUE, the columns of the trait matrix will be standardized.}
 
-\item{num.top.configurations}{an internal argument. It is the number of good shift configuration that is chosed for further improvement.}
+\item{num.top.configurations}{an internal argument. It is the number of good shift configuration that is chosen for further improvement.}
 
 \item{edge.length.threshold}{the minim edge length that is considered non-zero.}
 
-\item{grp.delta}{an internal paramaters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
+\item{grp.delta}{an internal parameter. The input lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
 
-\item{grp.seq.ub}{an internal parameters. The inpute lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
+\item{grp.seq.ub}{an internal parameter. The input lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
 
 \item{l1ou.options}{if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options.}
 }
@@ -53,6 +53,6 @@ library("l1ou");
 data("lizardTraits", "lizardTree");
 Y      <- lizard.traits[,1];
 eModel <- estimate_shift_configuration(lizard.tree, Y);
-print(eModel$shift.configuration);
+l1ou_plot_phylo(lizard.tree, eModel, "PC1");
 }
 

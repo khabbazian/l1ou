@@ -29,9 +29,9 @@ The results of sequential and parellel runs are not necessarly equal.
 \examples{
 library("l1ou");
 data("lizardTraits", "lizardTree");
-Y      <- lizard.traits[,1];
-eModel <- estimate_shift_configuration(lizard.tree, Y);
-res    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
-print(res);
+Y         <- lizard.traits[,1];
+eModel    <- estimate_shift_configuration(lizard.tree, Y);
+result    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
+print(result);
 }
 

@@ -19,7 +19,7 @@ returns negative square root and square root of the phylogeny covariance matrix,
 
 library("l1ou");
 data("lizardTree");
-res <- sqrt_OU_covariance(lizard.tree);
+result <- sqrt_OU_covariance(lizard.tree);
 }
 \description{
 computes the nagative square root and square root of the phylogeny covaiance matrix.
