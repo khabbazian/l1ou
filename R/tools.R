@@ -168,7 +168,7 @@ normalize_tree <- function(tr){
 l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
         out.fn="unnamed", show.el=FALSE, intercept = 0,
         edge.labels=numeric(), plotme=T, 
-        el.center=FALSE, nomargins = TRUE, el.cex=0.5, ...){
+        el.center=FALSE, nomargins = TRUE, el.cex=1, ...){
 
     if( length(opt.val) > 0 ){
         nConvReg  = length(unique(opt.val));
