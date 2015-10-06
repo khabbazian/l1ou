@@ -25,10 +25,11 @@ plots the tree and trait(s)
 the results of sequential and parallel runs are not necessary equal.
 }
 \examples{
-library("l1ou");
-data("lizardTraits", "lizardTree");
-Y      <- lizard.traits[,1];
+data("lizard.traits", "lizard.tree");
+Y <- lizard.traits[,1];
 eModel <- estimate_shift_configuration(lizard.tree, Y);
-l1ou_plot_phylo(lizard.tree, eModel, "PC1");
+ew <- rep(1,198) # the tree has 198 edges
+ew[eModel$shift.configuration] <- 3
+l1ou_plot_phylo(lizard.tree, eModel, "PC1",cex=0.5, label.offset=0.02, edge.width=ew);
 }
 

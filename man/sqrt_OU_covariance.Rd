@@ -4,8 +4,8 @@
 \alias{sqrt_OU_covariance}
 \title{computes the nagative square root and square root of the phylogeny covaiance matrix.}
 \usage{
-sqrt_OU_covariance(tr, alpha = 0, root.model = c("OUrandomRoot",
-  "OUfixedRoot"))
+sqrt_OU_covariance(tr, alpha = 0, root.model = c("OUfixedRoot",
+  "OUrandomRoot"))
 }
 \arguments{
 \item{tr}{the input ultrametric phylogeny.}
@@ -16,12 +16,17 @@ sqrt_OU_covariance(tr, alpha = 0, root.model = c("OUrandomRoot",
 }
 \value{
 returns negative square root and square root of the phylogeny covariance matrix, i.e. \eqn{ \Sigma^{-1/2} } and \eqn{ \Sigma^{1/2}}.
-
-library("l1ou");
-data("lizardTree");
-result <- sqrt_OU_covariance(lizard.tree);
 }
 \description{
 computes the nagative square root and square root of the phylogeny covaiance matrix.
+}
+\examples{
+library("l1ou")
+data("lizard.tree")
+res <- sqrt_OU_covariance(lizard.tree);
+Sigma <- vcv(lizard.tree)
+dimnames(Sigma) <- NULL
+all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma) , Sigma) # TRUE
+all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma) , solve(Sigma)) # TRUE
 }
 

@@ -2,33 +2,33 @@
 % Please edit documentation in R/phylogeny_bootstrap.R
 \name{bootstrap_support}
 \alias{bootstrap_support}
-\title{computes the bootstrap support for the detected shift positions}
+\title{computes the bootstrap support for the detected shift positions.}
 \usage{
 bootstrap_support(tr, model, nItrs = 100, multicore = FALSE, nCores = 2)
 }
 \arguments{
-\item{tr}{the input phylogeny.}
+\item{tr}{a phylogeny of class 'phylo'.}
 
-\item{model}{it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.}
+\item{model}{object returned by function estimate_shift_configuration. It should contain the estimated shift configuration.}
 
-\item{nItrs}{maximum number of shifts; The default value is half the number of tips.}
+\item{nItrs}{number of iterations (bootstrap replicates).}
 
 \item{multicore}{logical. If TRUE, it runs nCores processes in parallel. See details.}
 
-\item{nCores}{the desire number of parallel process.}
+\item{nCores}{desired number of parallel processes.}
 }
 \value{
-detection rate vector.
+vector of size the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge.
 }
 \description{
-computes the bootstrap support for the detected shift positions
+computes the bootstrap support for the detected shift positions.
 }
 \details{
-The results of sequential and parellel runs are not necessarly equal.
+The results of sequential and parallel runs are not necessarily equal, because different seeds might be used for different bootstrap replicates.
+        To change options, like the information criterion or maximum allowed number of shifts, modify model$opt.
 }
 \examples{
-library("l1ou");
-data("lizardTraits", "lizardTree");
+data(lizard.traits, lizard.tree);
 Y         <- lizard.traits[,1];
 eModel    <- estimate_shift_configuration(lizard.tree, Y);
 result    <- bootstrap_support(lizard.tree, eModel, nItrs=2);

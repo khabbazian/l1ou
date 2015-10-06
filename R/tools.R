@@ -191,7 +191,7 @@ l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
     }else{edgecol="black";}
 
     if(!plotme){
-    return(edgecol);
+        return(edgecol);
     }
 
 
@@ -226,15 +226,17 @@ l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
 #'
 #'@examples
 #' 
-#' library("l1ou"); 
-#' data("lizardTraits", "lizardTree");
-#' Y      <- lizard.traits[,1]; 
+#' data("lizard.traits", "lizard.tree");
+#' Y <- lizard.traits[,1];
 #' eModel <- estimate_shift_configuration(lizard.tree, Y);
-#' l1ou_plot_phylo(lizard.tree, eModel, "PC1");
+#' ew <- rep(1,198) # the tree has 198 edges
+#' ew[eModel$shift.configuration] <- 3
+#' l1ou_plot_phylo(lizard.tree, eModel, "PC1",cex=0.5, label.offset=0.02, edge.width=ew);
 #'
 #'@export
 l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.cross=FALSE, ...){
 
+    ##TODO: accept color vector from users.
     Y = as.matrix(model$Y);
     stopifnot(identical(rownames(Y), tr$tip.label));
 
@@ -248,21 +250,21 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
         } else{
             edge.labels[ model$shift.configuration ] = round(model$shift.values, digits = 2);
         }
-        l1ou_plot_tree(tr, model$optimums, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE,...);
+        l1ou_plot_tree(tr, model$optimums, show.el=TRUE, edge.labels = edge.labels, ...);
     } else {
         edge.labels = rep(NA, length(model$optimums));
         if ( enable.cross == TRUE){
             if( model$nShifts > 0 )
                 edge.labels[ model$shift.configuration ] = "X";
                 l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, 
-                        edge.labels = edge.labels, nomargins = FALSE, 
+                        edge.labels = edge.labels,  
                         el.center=TRUE, ...);
         } else {
           if( model$nShifts > 0 )
               edge.labels[ model$shift.configuration ] = 
                   apply( round(model$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
           l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, 
-                       edge.labels = edge.labels, nomargins = FALSE, ...);
+                       edge.labels = edge.labels, ...);
           
         }
     }

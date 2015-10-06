@@ -20,11 +20,13 @@
 #'
 #'@examples
 #' 
-#' library("l1ou"); 
-#' data("lizardTraits", "lizardTree");
-#' Y      <- lizard.traits[,1]; 
+#' data("lizard.traits", "lizard.tree");
+#' Y = lizard.traits[,1];
 #' eModel <- estimate_shift_configuration(lizard.tree, Y);
-#' l1ou_plot_phylo(lizard.tree, eModel, "PC1");
+#' ew <- rep(1, 198) # the tree has 198 edges
+#' ew[eModel$shift.configuration] <- 3
+#' l1ou_plot_phylo(lizard.tree, eModel, "PC1", cex=0.5, label.offset=0.02, edge.width=ew);
+#'
 #'
 #'@export
 estimate_shift_configuration <- function(tr, Y, 
@@ -104,10 +106,10 @@ estimate_shift_configuration_known_alpha <- function(tr, Y, alpha=0, est.alpha=F
     #library("lars");
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tr, "apprX");
-        Cinvh   = t( sqrt_OU_covariance(tr, alpha=0)$D ); 
+        Cinvh   = t( sqrt_OU_covariance(tr, alpha=0)$sqrtInvSigma ); 
     } else{           ## OU model
         X   = generate_design_matrix(tr, "orgX", alpha=alpha );
-        Cinvh   = t( sqrt_OU_covariance(tr, alpha=alpha)$D ); 
+        Cinvh   = t( sqrt_OU_covariance(tr, alpha=alpha)$sqrtInvSigma ); 
     }
 
     to.be.removed   = c(length(tr$edge.length), which(tr$edge.length < opt$edge.length.threshold));
@@ -173,7 +175,7 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tr, Y, alpha=0
             X   = generate_design_matrix(tr, "orgX", alpha=alpha[[i]] );
             RE  = sqrt_OU_covariance(tr,     alpha = alpha[[i]] );
         }
-        Cinvh   = t(RE$D); #\Sigma^{-1/2}
+        Cinvh   = t(RE$sqrtInvSigma); #\Sigma^{-1/2}
         YY[,i]  = Cinvh%*%YY[,i];
         grpX    = adiag(grpX, Cinvh%*%X);  
     }
@@ -323,20 +325,19 @@ do_backward_selection <- function(tr, Y, shift.configuration, opt){
 #'@examples
 #' 
 #' library("l1ou"); 
-#' data("lizardTraits", "lizardTree");
-#' Y      <- lizard.traits[,1]; 
+#' data("lizard.traits", "lizard.tree");
+#' Y <- lizard.traits[,1]; 
 #' eModel <- estimate_shift_configuration(lizard.tree, Y);
-#' ic.score  <- model_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
+#' ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
 #' print(ic.score);
 #'
 #'@export
-model_ic <- function(tr, Y, shift.configuration, 
+configuration_ic <- function(tr, Y, shift.configuration, 
                      criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
                      root.model = c("OUrandomRoot", "OUfixedRoot")
                      ){
     opt = list();
 
-    #TODO: use arg.match
     opt$criterion         <- match.arg(criterion);
     opt$root.model        <- match.arg(root.model);
     opt$alpha_upper_bound <- alpha_upper_bound(tr);

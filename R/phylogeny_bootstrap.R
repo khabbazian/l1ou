@@ -13,11 +13,12 @@
 #'
 #'@examples
 #' 
-#' data(lizardTraits, lizardTree);
+#' data(lizard.traits, lizard.tree);
 #' Y         <- lizard.traits[,1]; 
 #' eModel    <- estimate_shift_configuration(lizard.tree, Y);
 #' result    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
 #' print(result);
+#'
 #'
 #'@export
 bootstrap_support <- function(tr, model, nItrs=100, multicore=FALSE, nCores = 2){
@@ -38,8 +39,8 @@ bootstrap_support_univariate <- function(tr, model, nItrs, multicore=FALSE, nCor
 
     RE    = sqrt_OU_covariance(tr, alpha=model$alpha);
 
-    C.IH  = t(RE$D);
-    C.H   = RE$B;
+    C.IH  = t(RE$sqrtInvSigma);
+    C.H   = RE$sqrtSigma;
 
     Y     = model$Y;
     YY    = C.IH%*%(Y - model$mu );
@@ -95,8 +96,8 @@ bootstrap_support_multivariate <- function(tr, model, nItrs, multicore=FALSE, nC
     C.Hlist   = list();
     for( idx in 1:ncol(Y) ){
         RE    = sqrt_OU_covariance(tr, alpha = model$alpha[[idx]] ); 
-        C.IH  = t(RE$D); 
-        C.Hlist[[idx]] = RE$B;
+        C.IH  = t(RE$sqrtInvSigma); 
+        C.Hlist[[idx]] = RE$sqrtSigma;
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx]);
     }
 
