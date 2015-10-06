@@ -1,19 +1,19 @@
 #'
-#' computes the bootstrap support for the detected shift positions
+#' computes the bootstrap support for the detected shift positions.
 #'
-#'@param tr the input phylogeny.
-#'@param model it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.
-#'@param nItrs maximum number of shifts; The default value is half the number of tips.
+#'@param tr a phylogeny of class 'phylo'.
+#'@param model object returned by function estimate_shift_configuration. It should contain the estimated shift configuration. 
+#'@param nItrs number of iterations (bootstrap replicates).
 #'@param multicore logical. If TRUE, it runs nCores processes in parallel. See details. 
-#'@param nCores the desire number of parallel process.
-#'@return detection rate vector.
+#'@param nCores desired number of parallel processes.
+#'@return vector of size the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge. 
 #'
-#'@details The results of sequential and parellel runs are not necessarly equal.
+#'@details The results of sequential and parallel runs are not necessarily equal, because different seeds might be used for different bootstrap replicates.
+#'         To change options, like the information criterion or maximum allowed number of shifts, modify model$opt.
 #'
 #'@examples
 #' 
-#' library("l1ou"); 
-#' data("lizardTraits", "lizardTree");
+#' data(lizardTraits, lizardTree);
 #' Y         <- lizard.traits[,1]; 
 #' eModel    <- estimate_shift_configuration(lizard.tree, Y);
 #' result    <- bootstrap_support(lizard.tree, eModel, nItrs=2);

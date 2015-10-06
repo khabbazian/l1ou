@@ -248,7 +248,7 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
         } else{
             edge.labels[ model$shift.configuration ] = round(model$shift.values, digits = 2);
         }
-        l1ou_plot_tree(tr, model$optimums, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE, edge.width=2, ...);
+        l1ou_plot_tree(tr, model$optimums, show.el=TRUE, edge.labels = edge.labels, nomargins=FALSE,...);
     } else {
         edge.labels = rep(NA, length(model$optimums));
         if ( enable.cross == TRUE){

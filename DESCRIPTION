@@ -2,9 +2,9 @@ Package: l1ou
 Version: 0.02
 Date: 2015-10-05
 Title: Detecting evolutionary shifts 
-Author: Mohammad Khabbazian [aut], Cecile Ane [aut]
+Author: Mohammad Khabbazian [aut], Cecile Ane [ctb]
 Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
-Description: The l1ou package provides functions for detecting evolutionary shifts under OU model. L1ou is based on solving regularized linear regression models. 
+Description: The l1ou package provides functions for detecting evolutionary shifts under the OU model. L1ou is based on solving regularized linear regression models. 
 License: GPL (>= 3)
 URL: https://github.com/khabbazian/l1ou
 NeedsCompilation: yes

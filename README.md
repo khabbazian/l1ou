@@ -5,6 +5,11 @@ require(devtools)
 install_github("khabbazian/l1ou")
 require(l1ou)
 ```
+
+```
+It can be installed from source file.
+```
+
 ### License
 
 This package is free software; you can redistribute it and/or modify it
