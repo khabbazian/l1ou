@@ -38,7 +38,7 @@ estimate_shift_configuration <- function(tr, Y,
            alpha.lower           = 0,
            standardize           = TRUE,
            num.top.configurations    = max.nShifts/2,
-           edge.length.threshold = 10*.Machine$double.eps,
+           edge.length.threshold = .Machine$double.eps,
            grp.delta             = 1/16,
            grp.seq.ub            = 5,
            l1ou.options          = NA
@@ -320,7 +320,7 @@ do_backward_selection <- function(tr, Y, shift.configuration, opt){
 #'@param criterion the information criterion.
 #'@param root.model the asncestoral state model.
 #'
-#'@return returns the score of the input model
+#'@return returns the score of a shift configuration
 #'
 #'@examples
 #' 
@@ -330,6 +330,8 @@ do_backward_selection <- function(tr, Y, shift.configuration, opt){
 #' eModel <- estimate_shift_configuration(lizard.tree, Y);
 #' ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
 #' print(ic.score);
+#'
+#'@seealso \code{\link{estimate_shift_configuration}} 
 #'
 #'@export
 configuration_ic <- function(tr, Y, shift.configuration, 

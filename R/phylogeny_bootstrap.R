@@ -1,5 +1,5 @@
 #'
-#' computes the bootstrap support for the detected shift positions.
+#' computes the bootstrap support for the detected shift configuration 
 #'
 #'@param tr a phylogeny of class 'phylo'.
 #'@param model object returned by function estimate_shift_configuration. It should contain the estimated shift configuration. 
@@ -14,18 +14,18 @@
 #'@examples
 #' 
 #' data(lizard.traits, lizard.tree);
-#' Y         <- lizard.traits[,1]; 
-#' eModel    <- estimate_shift_configuration(lizard.tree, Y);
-#' result    <- bootstrap_support(lizard.tree, eModel, nItrs=2);
+#' Y <- lizard.traits[,1]; 
+#' eModel <- estimate_shift_configuration(lizard.tree, Y);
+#' result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2);
 #' print(result);
 #'
+#'@seealso   \code{\link{estimate_shift_configuration}}
 #'
 #'@export
-bootstrap_support <- function(tr, model, nItrs=100, multicore=FALSE, nCores = 2){
+l1ou_bootstrap_support <- function(tr, model, nItrs=100, multicore=FALSE, nCores = 2){
 
-    if(multicore){
-        library("parallel");
-    }
+    if(multicore)
+        multicore = require("parallel");
 
     if(ncol(model$Y)==1){
         return(bootstrap_support_univariate(tr=tr, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores));

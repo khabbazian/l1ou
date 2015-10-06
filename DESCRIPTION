@@ -1,10 +1,10 @@
 Package: l1ou 
-Version: 0.02
+Version: 0.03
 Date: 2015-10-05
-Title: Detecting evolutionary shifts 
+Title: Tools for detecting past changes in the expected mean trait values and studying trait evolution from comparative data
 Author: Mohammad Khabbazian [aut], Cecile Ane [ctb]
 Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
-Description: The l1ou package provides functions for detecting evolutionary shifts under the OU model. L1ou is based on solving regularized linear regression models. 
+Description: The 1ou package provides functions to study trait evolution from comparative data and detect past changes in the expected mean trait values. It uses the Ornstein-Uhlenbeck process, which can model a changing adaptive landscape over time and over lineages. Detection of evolutionary shifts in trait evolution from extant taxa is motivated by the study of convergent evolution, or to correlate shifts in traits with habitat changes or with changes in other phenotypes.
 License: GPL (>= 3)
 URL: https://github.com/khabbazian/l1ou
 NeedsCompilation: yes

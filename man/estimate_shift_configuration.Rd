@@ -9,9 +9,9 @@ estimate_shift_configuration(tr, Y,
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
   "OUfixedRoot"), quietly = TRUE, alpha.upper = alpha_upper_bound(tr),
   alpha.lower = 0, standardize = TRUE,
-  num.top.configurations = max.nShifts/2, edge.length.threshold = 10 *
-  .Machine$double.eps, grp.delta = 1/16, grp.seq.ub = 5,
-  l1ou.options = NA)
+  num.top.configurations = max.nShifts/2,
+  edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
+  grp.seq.ub = 5, l1ou.options = NA)
 }
 \arguments{
 \item{tr}{the input phylogeny. It should be an ultermetric tree in postorder.}
