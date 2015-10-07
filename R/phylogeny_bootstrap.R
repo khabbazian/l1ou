@@ -1,12 +1,12 @@
 #'
 #' computes the bootstrap support for the detected shift configuration 
 #'
-#'@param tr a phylogeny of class 'phylo'.
-#'@param model object returned by function estimate_shift_configuration. It should contain the estimated shift configuration. 
-#'@param nItrs number of iterations (bootstrap replicates).
+#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths and tip labels.
+#'@param model the object generetes by function estimate_shift_configuration. 
+#'@param nItrs number of independent iterations (bootstrap independent replicates).
 #'@param multicore logical. If TRUE, it runs nCores processes in parallel. See details. 
 #'@param nCores desired number of parallel processes.
-#'@return vector of size the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge. 
+#'@return vector of size of the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge. 
 #'
 #'@details The results of sequential and parallel runs are not necessarily equal, because different seeds might be used for different bootstrap replicates.
 #'         To change options, like the information criterion or maximum allowed number of shifts, modify model$opt.

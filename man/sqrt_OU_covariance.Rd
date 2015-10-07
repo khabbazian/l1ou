@@ -8,14 +8,15 @@ sqrt_OU_covariance(tr, alpha = 0, root.model = c("OUfixedRoot",
   "OUrandomRoot"))
 }
 \arguments{
-\item{tr}{the input ultrametric phylogeny.}
+\item{tr}{an ultrametric phylogenetic tree of type phylo with branch lengths.}
 
 \item{alpha}{the adaptation rate for OU model.}
 
 \item{root.model}{the model of phylogeny ancestoral state.}
 }
 \value{
-returns negative square root and square root of the phylogeny covariance matrix, i.e. \eqn{ \Sigma^{-1/2} } and \eqn{ \Sigma^{1/2}}.
+\item{sqrtSigma}{square root of phylogeny covariance matrix}.
+\item{sqrtInvSigma}{inverse square root of phylogeny covariance matrix.}
 }
 \description{
 computes the nagative square root and square root of the phylogeny covaiance matrix.

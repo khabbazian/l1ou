@@ -1,22 +1,32 @@
 # 
 #' detectes evolutionary shifts
 #'
-#'@param tr the input phylogeny. It should be an ultermetric tree in postorder. 
-#'@param Y the trait vector/matrix where it is labeled by the species names appear as row names. The rownames must match the tips label with the same order.
-#'@param max.nShifts  maximum number of shifts; The default value is half the number of tips.
-#'@param criterion the type if information criterion for model selection.
-#'@param root.model the ancestral state model.
+#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths.
+#'@param Y the trait vector/matrix where it is labeled by the species names. The names must match the tip labels with the same order.
+#'@param max.nShifts  an upper bound for number shifts; The default value is half the number of tips.
+#'@param criterion an information criterion for model selection.
+#'@param root.model a model for ancestral state.
 #'@param quietly logical. If FALSE, it writes to the output.
-#'@param alpha.upper the upper bound value of phylogenetic adaptation rate for computing maximum likelihood estimation. By default it is log(2) over the minimum length of branches connected to tips (they are supposed to be non-zero). 
-#'@param alpha.lower lower bound value of phylogenetic adaptation rate.
+#'@param alpha.upper an upper bound for phylogenetic adaptation rate. By default it is log(2) over the minimum branch length connected to tips. 
+#'@param alpha.lower a lower bound for phylogenetic adaptation rate.
 #'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
-#'@param num.top.configurations  an internal argument. It is the number of good shift configuration that is chosen for further improvement.
-#'@param edge.length.threshold the minim edge length that is considered non-zero.
+#'@param num.top.configurations  an internal argument. It is the number of the shift configuration that is chosen for further improvement.
+#'@param edge.length.threshold a minimum edge length that is considered non-zero.
 #'@param grp.delta  an internal parameter. The input lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
 #'@param grp.seq.ub an internal parameter. The input lambda sequence for grplasso will be lamda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
 #'@param l1ou.options if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options. 
-#'
-#'@return returns estimated model.
+#'@return 
+#' \item{Y}{the input trait vector/matrix.}
+#' \item{shift.configuration}{estimated position of shifts, i.e. indicies of edges where the estimated shifts occurs.}
+#' \item{shift.values}{estimates of shift values.}
+#' \item{nShifts}{estimate of number of shifts.}
+#' \item{optimums}{a vector of size number of edges in the tree where each entry is the optimum value of the trait on the along the corresponding edge. In multivariate it is a matrix where each row corresponds to an edge.}
+#' \item{alpha}{the maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}.}
+#' \item{sigma2}{the maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}.}
+#' \item{mu}{the fitted values.}
+#' \item{residuals}{raw residuals.}
+#' \item{score}{the information criterion value of the estimated shift configuration.}
+#' \item{l1ou.options}{the list of options that are used.}
 #'
 #'@examples
 #' 
@@ -90,12 +100,11 @@ estimate_shift_configuration <- function(tr, Y,
             eModel = eModel1;
     } 
 
-    ## I really don't like this way of coding but I have to clear the static db object in the c++ code manually.:S
-    ## TODO: can we implement it differently?
+    ## I really don't like this way of coding but I have to clear the static db object in the cpp code here. 
+    ## TODO: can it be implemented differently?
     if( l1ou.options$use.saved.scores){
         erase_configuration_score_db();
     }
-
     return(eModel);
 }
 
@@ -314,13 +323,13 @@ do_backward_selection <- function(tr, Y, shift.configuration, opt){
 #
 #' compute the information criterion score for the given configuration
 #'
-#'@param tr the input phylogeny.
+#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths.
 #'@param Y the trait vector/matrix where it is labeled by the species names appear as row names.
-#'@param shift.configuration the position of the shifts.
+#'@param shift.configuration the shift positions, i.e. indicies of edges where the estimated shifts occurs.
 #'@param criterion the information criterion.
 #'@param root.model the asncestoral state model.
 #'
-#'@return returns the score of a shift configuration
+#'@return the information criterion value of the shift configuration.
 #'
 #'@examples
 #' 
@@ -431,13 +440,11 @@ my_phylolm_interface <- function(tr, Y, shift.configuration, opt){
 
     fit    <-  try( phylolm(Y~preds-1, phy=tr, model=opt$root.model,
                             lower.bound    = opt$alpha.lower.bound, 
-                            upper.bound    = opt$alpha_upper_bound ) );
-
+                            upper.bound    = opt$alpha_upper_bound ), silent = TRUE);
     options(warn = 0);
 
     if(class(fit) == "try-error"){ 
-      warning( paste0( "phylolm internal error. returning NA; \n
-                     num shifts: ", length(shift.configuration)) );
+      warning( paste0( "phylolm internal error. returning NA; num shifts: ", length(shift.configuration)) );
       return(NA);
     }
 
@@ -531,7 +538,7 @@ assign_model <- function(tr, Y, shift.configuration, opt){
     nEdges  = length(tr$edge.length);
     nTips   = length(tr$tip.label);
 
-    mu = alpha = sigma2 = numeric();
+    resi = mu = alpha = sigma2 = numeric();
     shift.values = optimums = numeric();
     intercept    = optimums.tmp = numeric();
 
@@ -547,6 +554,7 @@ assign_model <- function(tr, Y, shift.configuration, opt){
         sigma2  = c(sigma2, fit$sigma2);
         ## E[Y]
         mu      = cbind(mu, fit$fitted.values);
+        resi    = cbind(resi, fit$residuals);
 
         intercept      = c(intercept, fit$coefficients[[1]]);
         shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)]);
@@ -561,10 +569,18 @@ assign_model <- function(tr, Y, shift.configuration, opt){
     score = cmp_model_score (tr, Y, shift.configuration, opt);
 
     ##NOTE: adding the trait which used to detect shift positions
-    return( list(Y=Y, shift.configuration=shift.configuration, shift.values=shift.values,
-                optimums=optimums, nShifts=length(shift.configuration), alpha=alpha, 
-                sigma2=sigma2, intercept=intercept, mu = mu, score=score,
-                l1ou.options=opt) );
+    return( list(Y=Y, 
+                 shift.configuration=shift.configuration, 
+                 shift.values=shift.values,
+                 nShifts=length(shift.configuration), 
+                 optimums=optimums, 
+                 alpha=alpha, 
+                 sigma2=sigma2, 
+                 intercept=intercept, 
+                 mu = mu, 
+                 residuals = resi,
+                 score=score,
+                 l1ou.options=opt) );
 }
 
 run_grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){

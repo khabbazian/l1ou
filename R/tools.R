@@ -144,9 +144,9 @@ convert_shifts2regions <-function(tr, shift.configuration, shift.values){
 }
 
 #' normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
-#'@param tr an ultrametric phylogeny tree.
+#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths.
 #'
-#'@return returns normalized phylogeny tree.
+#'@return the normalized phylogeny tree.
 #'
 #'@export
 normalize_tree <- function(tr){
@@ -216,14 +216,14 @@ l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
 #'
 #' plots the tree and trait(s)
 #'
-#'@param tr the input phylogeny.
-#'@param model it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.
-#'@param title.str the title for each trait.
+#'@param tr a phylogenetic tree of type phylo.
+#'@param model the returned object from \code{\link{estimate_shift_configuration}}.
+#'@param title.str a title for each trait.
 #'@param enable.cross logical. If TRUE, annotates each shift by X.
 #'@param ... extra parameters for plot.phylo 
 #'
 #'@details the results of sequential and parallel runs are not necessary equal.
-#'
+#'@return none.
 #'@examples
 #' 
 #' data("lizard.traits", "lizard.tree");
@@ -239,7 +239,6 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
     ##TODO: accept color vector from users.
     Y = as.matrix(model$Y);
     stopifnot(identical(rownames(Y), tr$tip.label));
-
     layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))));
 
     if ( ncol(Y) == 1){
@@ -256,15 +255,12 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
         if ( enable.cross == TRUE){
             if( model$nShifts > 0 )
                 edge.labels[ model$shift.configuration ] = "X";
-                l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, 
-                        edge.labels = edge.labels,  
-                        el.center=TRUE, ...);
+            l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, edge.labels = edge.labels, el.center=TRUE, ...);
         } else {
           if( model$nShifts > 0 )
               edge.labels[ model$shift.configuration ] = 
                   apply( round(model$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
-          l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, 
-                       edge.labels = edge.labels, ...);
+          l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, edge.labels = edge.labels, ...);
           
         }
     }
@@ -279,4 +275,55 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
     }
 }
 
+
+fancy.plot <- function(tr, model, enable.cross=FALSE){
+
+    ##TODO: test me!
+    shift.configuration = sort( model$shift.configuration , decreasing = T)
+    nShifts             = model$nShifts;
+    nEdges              = length(tr$edge.length);
+
+    Y = as.matrix(model$Y);
+    stopifnot(identical(rownames(Y), tr$tip.label));
+
+    layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))), width=c(2,1,1,1,1));
+
+    #pallet assings a color to each shift
+    pallet     = c(sample(rainbow(nShifts)), "gray");
+
+    edgecol = rep(palet[nShifts+1], nEdges);
+    counter = 1;
+    for( shift in model$shift.configuration){
+        edgecol[[shift]] = pallet[[counter]];
+        tips = which(model$Z[ , shift]>0);
+        for( tip in tips){
+            edgecol[ which( Z[tip, ] > 0) ] = pallet[[counter]];
+        }
+        counter = counter + 1;
+    }
+
+    plot.phylo(tr, edge.color=edgecol, ...);
+
+    if ( enable.cross == TRUE){
+        if( model$nShifts > 0 )
+            edge.labels[ model$shift.configuration ] = "X";
+    } else{
+        edge.labels[ shift.configuration ] = round(model$shift.values, digits = 2);
+    }
+    edgelabels(edge.labels, adj = c(0.5, -0.25), cex=el.cex, frame = "none", bg="lightblue");
+
+    nTips = length(tr$tip.label);
+    barcol = rep("gray", nTips);
+
+    for(i in 1:nTips){
+        barcol[[i]]  = edgecol[  which( tr$edge[,2] == i)  ];
+    }
+
+    par(mar=c(0,3,0,0))
+    for(i in 1:ncol(Y)){
+        normy = (Y[,i] - mean(Y[,i]))/sd(Y[,i]);
+        barplot (as.vector(normy), border=FALSE, col=barcol, horiz = TRUE, names.arg = "", xaxt = "n");
+        axis(1, at = range(normy), labels = round(range(normy), digits = 2));
+    }
+}
 

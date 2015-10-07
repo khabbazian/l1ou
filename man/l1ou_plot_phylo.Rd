@@ -8,15 +8,18 @@ l1ou_plot_phylo(tr, model, title.str = paste(1:ncol(model$Y)),
   enable.cross = FALSE, ...)
 }
 \arguments{
-\item{tr}{the input phylogeny.}
+\item{tr}{a phylogenetic tree of type phylo.}
 
-\item{model}{it contains estimated shift positions and also the input configuration. You may want to change model$opt to run with different options.}
+\item{model}{the returned object from \code{\link{estimate_shift_configuration}}.}
 
-\item{title.str}{the title for each trait.}
+\item{title.str}{a title for each trait.}
 
 \item{enable.cross}{logical. If TRUE, annotates each shift by X.}
 
 \item{...}{extra parameters for plot.phylo}
+}
+\value{
+none.
 }
 \description{
 plots the tree and trait(s)

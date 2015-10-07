@@ -2,11 +2,13 @@
 #
 #' computes the nagative square root and square root of the phylogeny covaiance matrix. 
 #'
-#'@param tr the input ultrametric phylogeny.
+#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths.
 #'@param alpha the adaptation rate for OU model.
 #'@param root.model the model of phylogeny ancestoral state.
 #'
-#'@return returns negative square root and square root of the phylogeny covariance matrix, i.e. \eqn{ \Sigma^{-1/2} } and \eqn{ \Sigma^{1/2}}.
+#'@return 
+#' \item{sqrtSigma}{square root of phylogeny covariance matrix}.
+#' \item{sqrtInvSigma}{inverse square root of phylogeny covariance matrix.}
 #'
 #'@examples
 #'
