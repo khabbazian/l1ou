@@ -4,13 +4,13 @@
 \alias{l1ou_bootstrap_support}
 \title{computes the bootstrap support for the detected shift configuration}
 \usage{
-l1ou_bootstrap_support(tr, model, nItrs = 100, multicore = FALSE,
+l1ou_bootstrap_support(tree, model, nItrs = 100, multicore = FALSE,
   nCores = 2)
 }
 \arguments{
-\item{tr}{an ultrametric phylogenetic tree of type phylo with branch lengths and tip labels.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 
-\item{model}{the object generetes by function estimate_shift_configuration.}
+\item{model}{the object genereted by function estimate_shift_configuration.}
 
 \item{nItrs}{number of independent iterations (bootstrap independent replicates).}
 
@@ -29,11 +29,11 @@ The results of sequential and parallel runs are not necessarily equal, because d
         To change options, like the information criterion or maximum allowed number of shifts, modify model$opt.
 }
 \examples{
-data(lizard.traits, lizard.tree);
-Y <- lizard.traits[,1];
-eModel <- estimate_shift_configuration(lizard.tree, Y);
-result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2);
-print(result);
+data(lizard.traits, lizard.tree)
+Y <- lizard.traits[,1]
+eModel <- estimate_shift_configuration(lizard.tree, Y)
+result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2)
+print(result)
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}

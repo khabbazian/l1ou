@@ -4,12 +4,12 @@
 \alias{configuration_ic}
 \title{compute the information criterion score for the given configuration}
 \usage{
-configuration_ic(tr, Y, shift.configuration, criterion = c("pBIC", "pBICess",
-  "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
+configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
+  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
   "OUfixedRoot"))
 }
 \arguments{
-\item{tr}{an ultrametric phylogenetic tree of type phylo with branch lengths.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 
 \item{Y}{the trait vector/matrix where it is labeled by the species names appear as row names.}
 

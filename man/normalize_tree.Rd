@@ -4,10 +4,10 @@
 \alias{normalize_tree}
 \title{normalizes the branch lengths so that the distance from the root to all tips are equal to one.}
 \usage{
-normalize_tree(tr)
+normalize_tree(tree)
 }
 \arguments{
-\item{tr}{an ultrametric phylogenetic tree of type phylo with branch lengths.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 }
 \value{
 the normalized phylogeny tree.

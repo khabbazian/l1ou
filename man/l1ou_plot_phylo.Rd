@@ -4,19 +4,19 @@
 \alias{l1ou_plot_phylo}
 \title{plots the tree and trait(s)}
 \usage{
-l1ou_plot_phylo(tr, model, title.str = paste(1:ncol(model$Y)),
+l1ou_plot_phylo(tree, model, title.str = paste(1:ncol(model$Y)),
   enable.cross = FALSE, ...)
 }
 \arguments{
-\item{tr}{a phylogenetic tree of type phylo.}
+\item{tree}{a phylogenetic tree of class phylo.}
 
 \item{model}{the returned object from \code{\link{estimate_shift_configuration}}.}
 
 \item{title.str}{a title for each trait.}
 
-\item{enable.cross}{logical. If TRUE, annotates each shift by X.}
+\item{enable.cross}{logical. If TRUE, annotates each shift with an X.}
 
-\item{...}{extra parameters for plot.phylo}
+\item{...}{further arguments to be passed on to plot.phylo}
 }
 \value{
 none.
@@ -28,11 +28,11 @@ plots the tree and trait(s)
 the results of sequential and parallel runs are not necessary equal.
 }
 \examples{
-data("lizard.traits", "lizard.tree");
-Y <- lizard.traits[,1];
-eModel <- estimate_shift_configuration(lizard.tree, Y);
+data("lizard.traits", "lizard.tree")
+Y <- lizard.traits[,1]
+eModel <- estimate_shift_configuration(lizard.tree, Y)
 ew <- rep(1,198) # the tree has 198 edges
 ew[eModel$shift.configuration] <- 3
-l1ou_plot_phylo(lizard.tree, eModel, "PC1",cex=0.5, label.offset=0.02, edge.width=ew);
+l1ou_plot_phylo(lizard.tree, eModel, "PC1",cex=0.5, label.offset=0.02, edge.width=ew)
 }
 

@@ -2,29 +2,29 @@
 % Please edit documentation in R/sqrt_OU_covariance.R
 \name{sqrt_OU_covariance}
 \alias{sqrt_OU_covariance}
-\title{computes the nagative square root and square root of the phylogeny covaiance matrix.}
+\title{computes the negative square root and square root of the phylogeny covariance matrix.}
 \usage{
-sqrt_OU_covariance(tr, alpha = 0, root.model = c("OUfixedRoot",
+sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
   "OUrandomRoot"))
 }
 \arguments{
-\item{tr}{an ultrametric phylogenetic tree of type phylo with branch lengths.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 
-\item{alpha}{the adaptation rate for OU model.}
+\item{alpha}{the adaptation rate for the OU model.}
 
-\item{root.model}{the model of phylogeny ancestoral state.}
+\item{root.model}{an ancestral state model at the root.}
 }
 \value{
-\item{sqrtSigma}{square root of phylogeny covariance matrix}.
-\item{sqrtInvSigma}{inverse square root of phylogeny covariance matrix.}
+\item{sqrtSigma}{square root of the phylogeny covariance matrix}.
+\item{sqrtInvSigma}{inverse square root of the phylogeny covariance matrix.}
 }
 \description{
-computes the nagative square root and square root of the phylogeny covaiance matrix.
+computes the negative square root and square root of the phylogeny covariance matrix.
 }
 \examples{
 library("l1ou")
 data("lizard.tree")
-res <- sqrt_OU_covariance(lizard.tree);
+res <- sqrt_OU_covariance(lizard.tree)
 Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
 all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma) , Sigma) # TRUE

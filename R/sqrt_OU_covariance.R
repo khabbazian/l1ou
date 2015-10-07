@@ -1,20 +1,20 @@
 
 #
-#' computes the nagative square root and square root of the phylogeny covaiance matrix. 
+#' computes the negative square root and square root of the phylogeny covariance matrix. 
 #'
-#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths.
-#'@param alpha the adaptation rate for OU model.
-#'@param root.model the model of phylogeny ancestoral state.
+#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
+#'@param alpha the adaptation rate for the OU model.
+#'@param root.model an ancestral state model at the root.
 #'
 #'@return 
-#' \item{sqrtSigma}{square root of phylogeny covariance matrix}.
-#' \item{sqrtInvSigma}{inverse square root of phylogeny covariance matrix.}
+#' \item{sqrtSigma}{square root of the phylogeny covariance matrix}.
+#' \item{sqrtInvSigma}{inverse square root of the phylogeny covariance matrix.}
 #'
 #'@examples
 #'
 #' library("l1ou")
 #' data("lizard.tree")
-#' res <- sqrt_OU_covariance(lizard.tree);
+#' res <- sqrt_OU_covariance(lizard.tree)
 #' Sigma <- vcv(lizard.tree)
 #' dimnames(Sigma) <- NULL
 #' all.equal(res$sqrtSigma %*% t(res$sqrtSigma) , Sigma) # TRUE
@@ -22,16 +22,16 @@
 #'
 #'@export
 #'
-sqrt_OU_covariance <- function(tr, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot") ){
+sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot") ){
 
-    tr         <- multi2di(tr, random=FALSE);
+    tree         <- multi2di(tree, random=FALSE);
     root.model <- match.arg(root.model); 
-    tr         <- reorder(tr, "prun");
+    tree         <- reorder(tree, "prun");
 
     if ( alpha > 0){
-        tre <- transf.branch.lengths(tr, model=root.model, parameters=list(alpha=alpha))$tree;
+        tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree;
     } else{
-        tre <- tr;
+        tre <- tree;
         if( root.model == "OUrandomRoot"){
             warning("when alpha is zero the model should be OUfixedRoot, so I switched to the OUfixedRoot");
         }
@@ -39,7 +39,7 @@ sqrt_OU_covariance <- function(tr, alpha=0, root.model = c("OUfixedRoot", "OUran
 
 
     my.edge.list <- cbind(tre$edge-1, tre$edge.length); 
-    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tr$tip.label));
+    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label));
     return(result);
 }
 

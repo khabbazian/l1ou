@@ -42,11 +42,11 @@ standardize_matrix <- function(Y){
 
 
 
-correct_unidentifiability <- function(tr, shift.configuration, opt){
+correct_unidentifiability <- function(tree, shift.configuration, opt){
 
     if( length(shift.configuration) < 2)  { return(shift.configuration); }
     shift.configuration = sort(shift.configuration);
-    nTips    = length(tr$tip.label);
+    nTips    = length(tree$tip.label);
     nN       = nrow(opt$Z);
 
     all.covered.tips = numeric();
@@ -72,12 +72,12 @@ correct_unidentifiability <- function(tr, shift.configuration, opt){
 
 
 
-alpha_upper_bound <- function(tr){
-    nTips       = length(tr$tip.label);
-    #eLenSorted  = sort(tr$edge.length[which(tr$edge[,2] < nTips)]); 
+alpha_upper_bound <- function(tree){
+    nTips       = length(tree$tip.label);
+    #eLenSorted  = sort(tree$edge.length[which(tree$edge[,2] < nTips)]); 
     #topMinLen   = ceiling( length(eLenSorted)*(5/100) );
     #return( log(2)/median(eLenSorted[1:topMinLen]) );
-    return( log(2)/min(tr$edge.length[which(tr$edge[,2] < nTips)]) );
+    return( log(2)/min(tree$edge.length[which(tree$edge[,2] < nTips)]) );
 }
 
 
@@ -114,20 +114,20 @@ get_shift_configuration <- function(sol.path, index, Y, tidx=1){
 
 
 
-convert_shifts2regions <-function(tr, shift.configuration, shift.values){
+convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 
     stopifnot( length(shift.configuration) == length(shift.values) );
 
-    nTips   = length(tr$tip.label);
-    nEdges  = length(tr$edge.length);
-    g       = graph.edgelist(tr$edge, directed = TRUE);
+    nTips   = length(tree$tip.label);
+    nEdges  = length(tree$edge.length);
+    g       = graph.edgelist(tree$edge, directed = TRUE);
     o.vec = rep(0, nEdges);
 
     options(warn = -1);
     if( length(shift.configuration) > 0)
     for(itr in 1:length(shift.configuration) ){
         eIdx     = shift.configuration[[itr]];
-        vIdx     = tr$edge[eIdx, 2];
+        vIdx     = tree$edge[eIdx, 2];
 
         o.vec.tmp = rep(0, nEdges);
 
@@ -144,28 +144,28 @@ convert_shifts2regions <-function(tr, shift.configuration, shift.values){
 }
 
 #' normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
-#'@param tr an ultrametric phylogenetic tree of type phylo with branch lengths.
+#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
 #'
 #'@return the normalized phylogeny tree.
 #'
 #'@export
-normalize_tree <- function(tr){
-    stopifnot(is.ultrametric(tr));
+normalize_tree <- function(tree){
+    stopifnot(is.ultrametric(tree));
 
-    nTips  = length(tr$tip.label);
+    nTips  = length(tree$tip.label);
     rNode  = nTips + 1; 
-    nEdges = Nedge(tr);
+    nEdges = Nedge(tree);
 
-    g        = graph.edgelist(tr$edge, directed = TRUE);
+    g        = graph.edgelist(tree$edge, directed = TRUE);
     root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode="out", output="epath")$epath;
 
-    Tval     = sum(tr$edge.length[root2tip[[1]] ]);
-    tr$edge.length = tr$edge.length / Tval;
-    return(tr);
+    Tval     = sum(tree$edge.length[root2tip[[1]] ]);
+    tree$edge.length = tree$edge.length / Tval;
+    return(tree);
 }
 
 
-l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
+l1ou_plot_tree <-function(tree, opt.val=numeric(), plot.title="", colvec=c(),
         out.fn="unnamed", show.el=FALSE, intercept = 0,
         edge.labels=numeric(), plotme=T, 
         el.center=FALSE, nomargins = TRUE, el.cex=1, ...){
@@ -195,7 +195,7 @@ l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
     }
 
 
-    plot.phylo(tr, edge.color=edgecol, no.margin=nomargins, ...);
+    plot.phylo(tree, edge.color=edgecol, no.margin=nomargins, ...);
     title(plot.title, cex=0.8 );
     if(show.el==TRUE){
         if ( length( edge.labels) > 0  ){
@@ -216,29 +216,29 @@ l1ou_plot_tree <-function(tr, opt.val=numeric(), plot.title="", colvec=c(),
 #'
 #' plots the tree and trait(s)
 #'
-#'@param tr a phylogenetic tree of type phylo.
+#'@param tree a phylogenetic tree of class phylo.
 #'@param model the returned object from \code{\link{estimate_shift_configuration}}.
 #'@param title.str a title for each trait.
-#'@param enable.cross logical. If TRUE, annotates each shift by X.
-#'@param ... extra parameters for plot.phylo 
+#'@param enable.cross logical. If TRUE, annotates each shift with an X.
+#'@param ... further arguments to be passed on to plot.phylo 
 #'
 #'@details the results of sequential and parallel runs are not necessary equal.
 #'@return none.
 #'@examples
 #' 
-#' data("lizard.traits", "lizard.tree");
-#' Y <- lizard.traits[,1];
-#' eModel <- estimate_shift_configuration(lizard.tree, Y);
+#' data("lizard.traits", "lizard.tree")
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
 #' ew <- rep(1,198) # the tree has 198 edges
 #' ew[eModel$shift.configuration] <- 3
-#' l1ou_plot_phylo(lizard.tree, eModel, "PC1",cex=0.5, label.offset=0.02, edge.width=ew);
+#' l1ou_plot_phylo(lizard.tree, eModel, "PC1",cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
-l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.cross=FALSE, ...){
+l1ou_plot_phylo <- function(tree, model, title.str=paste(1:ncol(model$Y)), enable.cross=FALSE, ...){
 
     ##TODO: accept color vector from users.
     Y = as.matrix(model$Y);
-    stopifnot(identical(rownames(Y), tr$tip.label));
+    stopifnot(identical(rownames(Y), tree$tip.label));
     layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))));
 
     if ( ncol(Y) == 1){
@@ -249,18 +249,18 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
         } else{
             edge.labels[ model$shift.configuration ] = round(model$shift.values, digits = 2);
         }
-        l1ou_plot_tree(tr, model$optimums, show.el=TRUE, edge.labels = edge.labels, ...);
+        l1ou_plot_tree(tree, model$optimums, show.el=TRUE, edge.labels = edge.labels, ...);
     } else {
         edge.labels = rep(NA, length(model$optimums));
         if ( enable.cross == TRUE){
             if( model$nShifts > 0 )
                 edge.labels[ model$shift.configuration ] = "X";
-            l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, edge.labels = edge.labels, el.center=TRUE, ...);
+            l1ou_plot_tree(tree, model$optimums[,1], show.el=TRUE, edge.labels = edge.labels, el.center=TRUE, ...);
         } else {
           if( model$nShifts > 0 )
               edge.labels[ model$shift.configuration ] = 
                   apply( round(model$shift.values,2), 1, function(x) paste0(x, collapse = ", "));
-          l1ou_plot_tree(tr, model$optimums[,1], show.el=TRUE, edge.labels = edge.labels, ...);
+          l1ou_plot_tree(tree, model$optimums[,1], show.el=TRUE, edge.labels = edge.labels, ...);
           
         }
     }
@@ -276,15 +276,15 @@ l1ou_plot_phylo <- function(tr, model, title.str=paste(1:ncol(model$Y)), enable.
 }
 
 
-fancy.plot <- function(tr, model, enable.cross=FALSE){
+fancy.plot <- function(tree, model, enable.cross=FALSE){
 
     ##TODO: test me!
     shift.configuration = sort( model$shift.configuration , decreasing = T)
     nShifts             = model$nShifts;
-    nEdges              = length(tr$edge.length);
+    nEdges              = length(tree$edge.length);
 
     Y = as.matrix(model$Y);
-    stopifnot(identical(rownames(Y), tr$tip.label));
+    stopifnot(identical(rownames(Y), tree$tip.label));
 
     layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))), width=c(2,1,1,1,1));
 
@@ -302,7 +302,7 @@ fancy.plot <- function(tr, model, enable.cross=FALSE){
         counter = counter + 1;
     }
 
-    plot.phylo(tr, edge.color=edgecol, ...);
+    plot.phylo(tree, edge.color=edgecol, ...);
 
     if ( enable.cross == TRUE){
         if( model$nShifts > 0 )
@@ -312,11 +312,11 @@ fancy.plot <- function(tr, model, enable.cross=FALSE){
     }
     edgelabels(edge.labels, adj = c(0.5, -0.25), cex=el.cex, frame = "none", bg="lightblue");
 
-    nTips = length(tr$tip.label);
+    nTips = length(tree$tip.label);
     barcol = rep("gray", nTips);
 
     for(i in 1:nTips){
-        barcol[[i]]  = edgecol[  which( tr$edge[,2] == i)  ];
+        barcol[[i]]  = edgecol[  which( tree$edge[,2] == i)  ];
     }
 
     par(mar=c(0,3,0,0))
