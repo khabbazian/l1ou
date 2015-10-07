@@ -4,8 +4,7 @@ The 1ou package provides functions to study trait evolution from comparative dat
 
 . 
 ---
-references:
-  title: Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
+references: Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
   author: M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane
 ---
 
