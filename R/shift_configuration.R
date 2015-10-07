@@ -37,6 +37,9 @@
 #' ew[eModel$shift.configuration] <- 3
 #' l1ou_plot_phylo(lizard.tree, eModel, "PC1", cex=0.5, label.offset=0.02, edge.width=ew);
 #'
+#'@references
+#'
+#' M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
 #'
 #'@export
 estimate_shift_configuration <- function(tr, Y, 
