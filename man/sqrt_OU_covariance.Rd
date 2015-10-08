@@ -15,7 +15,7 @@ sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
 \item{root.model}{an ancestral state model at the root.}
 }
 \value{
-\item{sqrtSigma}{square root of the phylogeny covariance matrix}.
+\item{sqrtSigma}{square root of the phylogeny covariance matrix.}
 \item{sqrtInvSigma}{inverse square root of the phylogeny covariance matrix.}
 }
 \description{

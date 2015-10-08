@@ -64,7 +64,7 @@ Y = lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 ew <- rep(1, 198) # the tree has 198 edges
 ew[eModel$shift.configuration] <- 3
-l1ou_plot_phylo(lizard.tree, eModel, "PC1", cex=0.5, label.offset=0.02, edge.width=ew)
+l1ou_plot_phylo(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \references{
 M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models

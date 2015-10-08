@@ -2,7 +2,7 @@
 % Please edit documentation in R/shift_configuration.R
 \name{configuration_ic}
 \alias{configuration_ic}
-\title{compute the information criterion score for the given configuration}
+\title{computes the information criterion score for the given configuration}
 \usage{
 configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
@@ -23,7 +23,7 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 the information criterion value of the shift configuration.
 }
 \description{
-compute the information criterion score for the given configuration
+computes the information criterion score for the given configuration
 }
 \examples{
 library("l1ou");
