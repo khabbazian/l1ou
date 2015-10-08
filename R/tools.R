@@ -276,6 +276,7 @@ l1ou_plot_phylo <- function(tree, model, title.str=paste(1:ncol(model$Y)), enabl
 }
 
 
+#'@export
 fancy.plot <- function(tree, model, enable.cross=FALSE){
 
     ##TODO: test me!
