@@ -2,7 +2,7 @@
 % Please edit documentation in R/shift_configuration.R
 \name{estimate_shift_configuration}
 \alias{estimate_shift_configuration}
-\title{detects evolutionary shifts}
+\title{detects evolutionary shifts in one or multiple traits}
 \usage{
 estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
@@ -16,13 +16,13 @@ estimate_shift_configuration(tree, Y,
 \arguments{
 \item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 
-\item{Y}{the trait vector/matrix. The row names of the data must be in the same order as the tip labels.}
+\item{Y}{the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
 
 \item{max.nShifts}{an upper bound for the number shifts. The default value is half the number of tips.}
 
 \item{criterion}{an information criterion for model selection.}
 
-\item{root.model}{an ancestral state model at root.}
+\item{root.model}{an ancestral state model at the root.}
 
 \item{quietly}{logical. If FALSE, it writes to the output.}
 
@@ -56,7 +56,7 @@ estimate_shift_configuration(tree, Y,
 \item{l1ou.options}{the list of options that are used.}
 }
 \description{
-detects evolutionary shifts
+detects evolutionary shifts in one or multiple traits
 }
 \examples{
 data("lizard.traits", "lizard.tree")

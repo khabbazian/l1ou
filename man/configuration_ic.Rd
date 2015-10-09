@@ -11,13 +11,13 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 \arguments{
 \item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 
-\item{Y}{the trait vector/matrix where it is labeled by the species names appear as row names.}
+\item{Y}{the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
 
-\item{shift.configuration}{the shift positions, i.e. indicies of edges where the estimated shifts occurs.}
+\item{shift.configuration}{the shift positions, i.e. indices of edges where the estimated shifts occur.}
 
 \item{criterion}{the information criterion.}
 
-\item{root.model}{the asncestoral state model.}
+\item{root.model}{an ancestral state model at the root.}
 }
 \value{
 the information criterion value of the shift configuration.

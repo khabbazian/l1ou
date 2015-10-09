@@ -10,7 +10,7 @@ normalize_tree(tree)
 \item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 }
 \value{
-the normalized phylogeny tree.
+the normalized phylogenentic tree.
 }
 \description{
 normalizes the branch lengths so that the distance from the root to all tips are equal to one.

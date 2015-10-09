@@ -146,7 +146,7 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 #' normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
 #'
-#'@return the normalized phylogeny tree.
+#'@return the normalized phylogenentic tree.
 #'
 #'@export
 normalize_tree <- function(tree){

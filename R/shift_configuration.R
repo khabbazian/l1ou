@@ -1,11 +1,11 @@
 # 
-#' detects evolutionary shifts
+#' detects evolutionary shifts in one or multiple traits
 #'
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
-#'@param Y the trait vector/matrix. The row names of the data must be in the same order as the tip labels.
+#'@param Y the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
 #'@param max.nShifts  an upper bound for the number shifts. The default value is half the number of tips.
 #'@param criterion an information criterion for model selection.
-#'@param root.model an ancestral state model at root.
+#'@param root.model an ancestral state model at the root.
 #'@param quietly logical. If FALSE, it writes to the output.
 #'@param alpha.upper an upper bound for the phylogenetic adaptation rate. By default it is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower a lower bound for the phylogenetic adaptation rate.
@@ -327,10 +327,10 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #' computes the information criterion score for the given configuration
 #'
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
-#'@param Y the trait vector/matrix where it is labeled by the species names appear as row names.
-#'@param shift.configuration the shift positions, i.e. indicies of edges where the estimated shifts occurs.
+#'@param Y the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
+#'@param shift.configuration the shift positions, i.e. indices of edges where the estimated shifts occur.
 #'@param criterion the information criterion.
-#'@param root.model the asncestoral state model.
+#'@param root.model an ancestral state model at the root.
 #'
 #'@return the information criterion value of the shift configuration.
 #'
