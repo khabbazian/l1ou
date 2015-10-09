@@ -4,7 +4,7 @@
 \alias{plot_l1ou}
 \title{plots the tree and trait(s)}
 \usage{
-plot_l1ou(tree, model, pallet = NA, ...)
+plot_l1ou(tree, model, pallet = NA, bar.axis = TRUE, ...)
 }
 \arguments{
 \item{tree}{a phylogenetic tree of class phylo.}
@@ -12,6 +12,8 @@ plot_l1ou(tree, model, pallet = NA, ...)
 \item{model}{the returned object from \code{\link{estimate_shift_configuration}}.}
 
 \item{pallet}{a color vector of size number of shifts plus one. The last element is the background color.}
+
+\item{bar.axis}{logical. If TRUE, it plots axis for trait range.}
 
 \item{...}{further arguments to be passed on to plot.phylo}
 }
