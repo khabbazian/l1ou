@@ -13,7 +13,7 @@ void one_step(const int i1, const int i2, const int e1, const int e2,
         Rcpp::NumericVector &tips, 
         Rcpp::NumericMatrix &F, Rcpp::NumericMatrix &G, 
         Rcpp::NumericMatrix &D, Rcpp::NumericMatrix &B,
-        double &rootEdge){
+        double &rootEdge, int &lastParentIdx){
 
     const int nEdges = edgeList.nrow();
 
@@ -33,11 +33,13 @@ void one_step(const int i1, const int i2, const int e1, const int e2,
     const double t2 = edgeList(e2,2);
 
     int e3 = -1; // -1 means root index
-    for(int i=0; i<nEdges; ++i) 
+    //since the tree is in pruning order, we just need to start the search from the latest position.
+    for(int i=lastParentIdx; i<nEdges; ++i) 
         if( edgeList(i,1) == i3){
             e3 = i;
             break;
         }
+    lastParentIdx = e3;
 
     double t3;
     if (e3 == -1)
@@ -85,10 +87,11 @@ Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips){
     for(int i=0; i<tips.size(); ++i)
         tips(i) = i+1;
 
-    int counter = 0;
+    int counter = 0, lastParentIdx = 0;;
     double rootEdge = 0;
     for(int i=0; i<edgeList.nrow() && tips.size() > 1; i+=2)
-        one_step( edgeList(i,1), edgeList(i+1,1), i, i+1, counter++, nTips, edgeList, tips, F, G, D, B, rootEdge);
+        one_step( edgeList(i,1), edgeList(i+1,1), i, i+1, counter++, 
+                nTips, edgeList, tips, F, G, D, B, rootEdge, lastParentIdx);
     
     for(int i=0; i<F.nrow(); ++i){
         D(i,counter) = F(i,tips[0])/std::sqrt(rootEdge);
