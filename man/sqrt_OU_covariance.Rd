@@ -27,8 +27,8 @@ data("lizard.tree")
 res <- sqrt_OU_covariance(lizard.tree)
 Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
-all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma) , Sigma) # TRUE
-all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma) , solve(Sigma)) # TRUE
+stopifnot( all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma) , Sigma) ) # TRUE
+stopifnot( all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma) , solve(Sigma)) ) # TRUE
 }
 \references{
 M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models

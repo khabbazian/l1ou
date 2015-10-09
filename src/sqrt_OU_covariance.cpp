@@ -4,11 +4,11 @@
 using namespace Rcpp;
 typedef Matrix<REALSXP> NumericMatrix;
 
-#define RASSERT(condition){if(!(condition)){throw std::range_error(std::string("internal error!@")+__FILE__+":"+std::to_string((long long)__LINE__));}}
+#define RASSERT(condition){if(!(condition)){throw std::range_error(std::string("internal error!@")+__FILE__);}}
 
 // [[Rcpp::plugins(cpp11)]]
-
-void one_step(const int i1, const int i2, const int counter, const int nTips,
+void one_step(const int i1, const int i2, const int e1, const int e2,
+        const int counter, const int nTips,
         Rcpp::NumericMatrix &edgeList, //the third column contains lengths
         Rcpp::NumericVector &tips, 
         Rcpp::NumericMatrix &F, Rcpp::NumericMatrix &G, 
@@ -17,12 +17,12 @@ void one_step(const int i1, const int i2, const int counter, const int nTips,
 
     const int nEdges = edgeList.nrow();
 
-    int e1=-1, e2=-1;
-    for (int i=0; i<nEdges; ++i)
-        if (edgeList(i,1) == i1)
-            e1 = i;
-        else if (edgeList(i,1) == i2)
-            e2 = i;
+    //int e1=-1, e2=-1;
+    //for (int i=0; i<nEdges; ++i)
+    //    if (edgeList(i,1) == i1)
+    //        e1 = i;
+    //    else if (edgeList(i,1) == i2)
+    //        e2 = i;
 
     RASSERT( e1!=-1 && e2!=-1 );
 
@@ -81,12 +81,14 @@ Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips){
     Rcpp::NumericMatrix B(nTips,nTips);
 
     Rcpp::NumericVector tips(nTips);
-    std::iota(tips.begin(),tips.end(),1);
+    //std::iota(tips.begin(),tips.end(),1);
+    for(int i=0; i<tips.size(); ++i)
+        tips(i) = i+1;
 
     int counter = 0;
     double rootEdge = 0;
     for(int i=0; i<edgeList.nrow() && tips.size() > 1; i+=2)
-        one_step( edgeList(i,1), edgeList(i+1,1), counter++, nTips, edgeList, tips, F, G, D, B, rootEdge);
+        one_step( edgeList(i,1), edgeList(i+1,1), i, i+1, counter++, nTips, edgeList, tips, F, G, D, B, rootEdge);
     
     for(int i=0; i<F.nrow(); ++i){
         D(i,counter) = F(i,tips[0])/std::sqrt(rootEdge);
