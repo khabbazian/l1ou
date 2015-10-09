@@ -171,6 +171,7 @@ normalize_tree <- function(tree){
 #'@param tree a phylogenetic tree of class phylo.
 #'@param model the returned object from \code{\link{estimate_shift_configuration}}.
 #'@param pallet a color vector of size number of shifts plus one. The last element is the background color.
+#'@param bar.axis logical. If TRUE, it plots axis for trait range. 
 #'@param ... further arguments to be passed on to plot.phylo 
 #'
 #'@details the results of sequential and parallel runs are not necessary equal.
@@ -186,7 +187,7 @@ normalize_tree <- function(tree){
 #'
 #'@export
 #'
-plot_l1ou <- function(tree, model, pallet=NA, ...){
+plot_l1ou <- function(tree, model, pallet=NA, bar.axis=TRUE, ...){
 
     stopifnot(identical(tree$edge , reorder(tree, "postorder")$edge));
 
@@ -194,6 +195,8 @@ plot_l1ou <- function(tree, model, pallet=NA, ...){
     nShifts             = model$nShifts;
     nEdges              = length(tree$edge.length);
 
+    if(bar.axis)
+        par(oma=c(3,0,0,3))
     Y = as.matrix(model$Y);
     stopifnot(identical(rownames(Y), tree$tip.label));
 
@@ -229,10 +232,10 @@ plot_l1ou <- function(tree, model, pallet=NA, ...){
         barcol[[i]]  = edgecol[  which( tree$edge[,2] == i)  ];
     }
 
-    par(mar=c(3,3,0,0))
     for(i in 1:ncol(Y)){
         normy = (Y[,i] - mean(Y[,i]))/sd(Y[,i]);
         barplot (as.vector(normy), border=FALSE, col=barcol, horiz = TRUE, names.arg = "", xaxt = "n");
-        axis(1, at = range(normy), labels = round(range(normy), digits = 2));
+        if(bar.axis)
+            axis(1, at = range(normy), labels = round(range(normy), digits = 2));
     }
 }
