@@ -1,6 +1,6 @@
 
 #
-#' computes the negative square root and square root of the phylogeny covariance matrix. 
+#' computes the negative square root and square root of the phylogeny covariance matrix in linear time complexity.
 #'
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
 #'@param alpha the adaptation rate for the OU model.
@@ -20,8 +20,10 @@
 #' all.equal(res$sqrtSigma %*% t(res$sqrtSigma) , Sigma) # TRUE
 #' all.equal(res$sqrtInvSigma %*% t(res$sqrtInvSigma) , solve(Sigma)) # TRUE
 #'
-#'@export
+#'@references
+#' M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
 #'
+#'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot") ){
 
     tree         <- multi2di(tree, random=FALSE);
