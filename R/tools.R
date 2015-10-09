@@ -170,6 +170,7 @@ normalize_tree <- function(tree){
 #'
 #'@param tree a phylogenetic tree of class phylo.
 #'@param model the returned object from \code{\link{estimate_shift_configuration}}.
+#'@param pallet a color vector of size number of shifts plus one. The last element is the background color.
 #'@param ... further arguments to be passed on to plot.phylo 
 #'
 #'@details the results of sequential and parallel runs are not necessary equal.
@@ -181,11 +182,11 @@ normalize_tree <- function(tree){
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
 #' ew <- rep(1,198) # the tree has 198 edges
 #' ew[eModel$shift.configuration] <- 3
-#' l1ou_plot_phylo(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
 #'
-l1ou_plot_phylo <- function(tree, model, ...){
+plot_l1ou <- function(tree, model, pallet=NA, ...){
 
     stopifnot(identical(tree$edge , reorder(tree, "postorder")$edge));
 
@@ -198,8 +199,10 @@ l1ou_plot_phylo <- function(tree, model, ...){
 
     layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))), width=c(2,1,1,1,1));
 
-    #pallet assings a color to each shift
-    pallet  = c(sample(rainbow(nShifts)), "gray");
+    if(is.na(pallet)){
+           pallet  = c(sample(rainbow(nShifts)), "gray");
+    }
+    stopifnot(length(pallet)==model$nShifts+1);
 
     edgecol = rep(pallet[nShifts+1], nEdges);
     counter = 1;
@@ -226,7 +229,7 @@ l1ou_plot_phylo <- function(tree, model, ...){
         barcol[[i]]  = edgecol[  which( tree$edge[,2] == i)  ];
     }
 
-    #par(mar=c(0,3,0,0))
+    par(mar=c(0,3,0,0))
     for(i in 1:ncol(Y)){
         normy = (Y[,i] - mean(Y[,i]))/sd(Y[,i]);
         barplot (as.vector(normy), border=FALSE, col=barcol, horiz = TRUE, names.arg = "", xaxt = "n");

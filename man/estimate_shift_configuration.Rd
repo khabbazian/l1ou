@@ -36,9 +36,9 @@ estimate_shift_configuration(tree, Y,
 
 \item{edge.length.threshold}{a minimum edge length that is considered non-zero.}
 
-\item{grp.delta}{an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
+\item{grp.delta}{an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
 
-\item{grp.seq.ub}{an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).}
+\item{grp.seq.ub}{an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
 
 \item{l1ou.options}{if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options.}
 }
@@ -64,7 +64,7 @@ Y = lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 ew <- rep(1, 198) # the tree has 198 edges
 ew[eModel$shift.configuration] <- 3
-l1ou_plot_phylo(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \references{
 M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models

@@ -13,7 +13,7 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 
 \item{Y}{the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
 
-\item{shift.configuration}{the shift positions, i.e. indices of edges where the estimated shifts occur.}
+\item{shift.configuration}{the shift positions, i.e. indices of the edges where the estimated shifts occur.}
 
 \item{criterion}{the information criterion.}
 

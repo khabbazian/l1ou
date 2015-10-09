@@ -12,8 +12,8 @@
 #'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
 #'@param num.top.configurations  an internal argument corresponding to the number of the shift configurations that is chosen for further improvement.
 #'@param edge.length.threshold a minimum edge length that is considered non-zero.
-#'@param grp.delta  an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
-#'@param grp.seq.ub an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^ (0, grp.seq.ub, grp.delta) ).
+#'@param grp.delta  an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
+#'@param grp.seq.ub an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
 #'@param l1ou.options if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options. 
 #'@return 
 #' \item{Y}{the input trait vector/matrix.}
@@ -35,7 +35,7 @@
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
 #' ew <- rep(1, 198) # the tree has 198 edges
 #' ew[eModel$shift.configuration] <- 3
-#' l1ou_plot_phylo(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@references
 #'
@@ -328,7 +328,7 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #'
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
 #'@param Y the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
-#'@param shift.configuration the shift positions, i.e. indices of edges where the estimated shifts occur.
+#'@param shift.configuration the shift positions, i.e. indices of the edges where the estimated shifts occur.
 #'@param criterion the information criterion.
 #'@param root.model an ancestral state model at the root.
 #'
