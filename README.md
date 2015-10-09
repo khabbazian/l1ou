@@ -10,3 +10,4 @@ require(devtools)
 install_github("khabbazian/l1ou")
 require(l1ou)
 ```
+Windows users need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
