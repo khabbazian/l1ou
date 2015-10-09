@@ -139,14 +139,13 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
         o.vec = o.vec + o.vec.tmp; 
     }
     options(warn = 0);
-
     return( o.vec );
 }
 
 #' normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
-#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
+#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.
 #'
-#'@return the normalized phylogenentic tree.
+#'@return the normalized phylogenetic tree.
 #'
 #'@export
 normalize_tree <- function(tree){
@@ -170,11 +169,10 @@ normalize_tree <- function(tree){
 #'
 #'@param tree a phylogenetic tree of class phylo.
 #'@param model the returned object from \code{\link{estimate_shift_configuration}}.
-#'@param pallet a color vector of size number of shifts plus one. The last element is the background color.
-#'@param bar.axis logical. If TRUE, it plots axis for trait range. 
+#'@param pallet a color vector of size number of the shifts plus one. The last element is the background color.
+#'@param bar.axis logical. If TRUE, it plots axis for trait(s) range. 
 #'@param ... further arguments to be passed on to plot.phylo 
 #'
-#'@details the results of sequential and parallel runs are not necessary equal.
 #'@return none.
 #'@examples
 #' 

@@ -9,13 +9,13 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
   "OUfixedRoot"))
 }
 \arguments{
-\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.}
 
-\item{Y}{the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
+\item{Y}{a trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
 
-\item{shift.configuration}{the shift positions, i.e. indices of the edges where the estimated shifts occur.}
+\item{shift.configuration}{shift positions, i.e. indices of the edges where the shifts occur.}
 
-\item{criterion}{the information criterion.}
+\item{criterion}{an information criterion.}
 
 \item{root.model}{an ancestral state model at the root.}
 }
@@ -26,12 +26,15 @@ the information criterion value of the shift configuration.
 computes the information criterion score for the given configuration
 }
 \examples{
-library("l1ou");
-data("lizard.traits", "lizard.tree");
-Y <- lizard.traits[,1];
-eModel <- estimate_shift_configuration(lizard.tree, Y);
-ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
-print(ic.score);
+library("l1ou")
+data("lizard.traits", "lizard.tree")
+Y <- lizard.traits[,1]
+eModel <- estimate_shift_configuration(lizard.tree, Y)
+ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
+print(ic.score)
+}
+\references{
+M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}

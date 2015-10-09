@@ -7,10 +7,10 @@
 normalize_tree(tree)
 }
 \arguments{
-\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.}
 }
 \value{
-the normalized phylogenentic tree.
+the normalized phylogenetic tree.
 }
 \description{
 normalizes the branch lengths so that the distance from the root to all tips are equal to one.

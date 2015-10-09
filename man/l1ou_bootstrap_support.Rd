@@ -2,7 +2,7 @@
 % Please edit documentation in R/phylogeny_bootstrap.R
 \name{l1ou_bootstrap_support}
 \alias{l1ou_bootstrap_support}
-\title{computes the bootstrap support for the detected shift configuration}
+\title{computes the bootstrap support for the detected shift configuration.}
 \usage{
 l1ou_bootstrap_support(tree, model, nItrs = 100, multicore = FALSE,
   nCores = 2)
@@ -10,9 +10,9 @@ l1ou_bootstrap_support(tree, model, nItrs = 100, multicore = FALSE,
 \arguments{
 \item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
 
-\item{model}{the object genereted by function estimate_shift_configuration.}
+\item{model}{the object output of \code{\link{estimate_shift_configuration}}.}
 
-\item{nItrs}{number of independent iterations (bootstrap independent replicates).}
+\item{nItrs}{the number of independent iterations (bootstrap independent replicates).}
 
 \item{multicore}{logical. If TRUE, it runs nCores processes in parallel. See details.}
 
@@ -22,7 +22,7 @@ l1ou_bootstrap_support(tree, model, nItrs = 100, multicore = FALSE,
 vector of size of the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge.
 }
 \description{
-computes the bootstrap support for the detected shift configuration
+computes the bootstrap support for the detected shift configuration.
 }
 \details{
 The results of sequential and parallel runs are not necessarily equal, because different seeds might be used for different bootstrap replicates.

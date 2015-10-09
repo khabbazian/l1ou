@@ -11,9 +11,9 @@ plot_l1ou(tree, model, pallet = NA, bar.axis = TRUE, ...)
 
 \item{model}{the returned object from \code{\link{estimate_shift_configuration}}.}
 
-\item{pallet}{a color vector of size number of shifts plus one. The last element is the background color.}
+\item{pallet}{a color vector of size number of the shifts plus one. The last element is the background color.}
 
-\item{bar.axis}{logical. If TRUE, it plots axis for trait range.}
+\item{bar.axis}{logical. If TRUE, it plots axis for trait(s) range.}
 
 \item{...}{further arguments to be passed on to plot.phylo}
 }
@@ -22,9 +22,6 @@ none.
 }
 \description{
 plots the tree and trait(s)
-}
-\details{
-the results of sequential and parallel runs are not necessary equal.
 }
 \examples{
 data("lizard.traits", "lizard.tree")

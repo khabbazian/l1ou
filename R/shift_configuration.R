@@ -1,30 +1,30 @@
 # 
-#' detects evolutionary shifts in one or multiple traits
+#' detects evolutionary shifts in one or multiple traits.
 #'
-#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
-#'@param Y the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
-#'@param max.nShifts  an upper bound for the number shifts. The default value is half the number of tips.
-#'@param criterion an information criterion for model selection.
+#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.
+#'@param Y a trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
+#'@param max.nShifts an upper bound for the number of shifts. The default value is half the number of tips.
+#'@param criterion an information criterion for the model selection.
 #'@param root.model an ancestral state model at the root.
 #'@param quietly logical. If FALSE, it writes to the output.
-#'@param alpha.upper an upper bound for the phylogenetic adaptation rate. By default it is log(2) over the minimum branch length connected to tips. 
+#'@param alpha.upper an upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower a lower bound for the phylogenetic adaptation rate.
 #'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
 #'@param num.top.configurations  an internal argument corresponding to the number of the shift configurations that is chosen for further improvement.
-#'@param edge.length.threshold a minimum edge length that is considered non-zero.
+#'@param edge.length.threshold the minimum edge length that is considered non-zero.
 #'@param grp.delta  an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
 #'@param grp.seq.ub an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
-#'@param l1ou.options if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options. 
+#'@param l1ou.options if the option object is provided, all the default values will be ignored. 
 #'@return 
 #' \item{Y}{the input trait vector/matrix.}
 #' \item{shift.configuration}{estimated position of shifts, i.e. indices of edges where the estimated shifts occur.}
-#' \item{shift.values}{estimates of shift values.}
+#' \item{shift.values}{estimates of the shift values.}
 #' \item{nShifts}{estimate of number of shifts.}
-#' \item{optimums}{a vector of length number of edges in the tree where each entry is the optimum value of the trait along the corresponding edge. If the data is multivariate, it is a matrix where each row corresponds to an edge.}
+#' \item{optimums}{the optimum values of the trait along the edges. If the data is multivariate, it is a matrix where each row corresponds to an edge.}
 #' \item{alpha}{the maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}.}
 #' \item{sigma2}{the maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}.}
 #' \item{mu}{the fitted values.}
-#' \item{residuals}{raw residuals.}
+#' \item{residuals}{residuals.}
 #' \item{score}{the information criterion value of the estimated shift configuration.}
 #' \item{l1ou.options}{the list of options that are used.}
 #'
@@ -38,7 +38,6 @@
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@references
-#'
 #' M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
 #'
 #'@export
@@ -326,25 +325,27 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #
 #' computes the information criterion score for the given configuration
 #'
-#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
-#'@param Y the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
-#'@param shift.configuration the shift positions, i.e. indices of the edges where the estimated shifts occur.
-#'@param criterion the information criterion.
+#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.
+#'@param Y a trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
+#'@param shift.configuration shift positions, i.e. indices of the edges where the shifts occur.
+#'@param criterion an information criterion.
 #'@param root.model an ancestral state model at the root.
 #'
 #'@return the information criterion value of the shift configuration.
 #'
 #'@examples
 #' 
-#' library("l1ou"); 
-#' data("lizard.traits", "lizard.tree");
-#' Y <- lizard.traits[,1]; 
-#' eModel <- estimate_shift_configuration(lizard.tree, Y);
-#' ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC");
-#' print(ic.score);
+#' library("l1ou") 
+#' data("lizard.traits", "lizard.tree")
+#' Y <- lizard.traits[,1] 
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
+#' print(ic.score)
 #'
 #'@seealso \code{\link{estimate_shift_configuration}} 
 #'
+#'@references
+#' M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
                      criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 

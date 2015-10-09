@@ -2,7 +2,7 @@
 % Please edit documentation in R/shift_configuration.R
 \name{estimate_shift_configuration}
 \alias{estimate_shift_configuration}
-\title{detects evolutionary shifts in one or multiple traits}
+\title{detects evolutionary shifts in one or multiple traits.}
 \usage{
 estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
@@ -14,19 +14,19 @@ estimate_shift_configuration(tree, Y,
   grp.seq.ub = 5, l1ou.options = NA)
 }
 \arguments{
-\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
+\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.}
 
-\item{Y}{the trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
+\item{Y}{a trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.}
 
-\item{max.nShifts}{an upper bound for the number shifts. The default value is half the number of tips.}
+\item{max.nShifts}{an upper bound for the number of shifts. The default value is half the number of tips.}
 
-\item{criterion}{an information criterion for model selection.}
+\item{criterion}{an information criterion for the model selection.}
 
 \item{root.model}{an ancestral state model at the root.}
 
 \item{quietly}{logical. If FALSE, it writes to the output.}
 
-\item{alpha.upper}{an upper bound for the phylogenetic adaptation rate. By default it is log(2) over the minimum branch length connected to tips.}
+\item{alpha.upper}{an upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
 
 \item{alpha.lower}{a lower bound for the phylogenetic adaptation rate.}
 
@@ -34,29 +34,29 @@ estimate_shift_configuration(tree, Y,
 
 \item{num.top.configurations}{an internal argument corresponding to the number of the shift configurations that is chosen for further improvement.}
 
-\item{edge.length.threshold}{a minimum edge length that is considered non-zero.}
+\item{edge.length.threshold}{the minimum edge length that is considered non-zero.}
 
 \item{grp.delta}{an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
 
 \item{grp.seq.ub}{an internal parameter. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
 
-\item{l1ou.options}{if the option object is provided, all the default values will be ignored. It is good for the bootstrap procedure to be run with previously used options.}
+\item{l1ou.options}{if the option object is provided, all the default values will be ignored.}
 }
 \value{
 \item{Y}{the input trait vector/matrix.}
 \item{shift.configuration}{estimated position of shifts, i.e. indices of edges where the estimated shifts occur.}
-\item{shift.values}{estimates of shift values.}
+\item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimate of number of shifts.}
-\item{optimums}{a vector of length number of edges in the tree where each entry is the optimum value of the trait along the corresponding edge. If the data is multivariate, it is a matrix where each row corresponds to an edge.}
+\item{optimums}{the optimum values of the trait along the edges. If the data is multivariate, it is a matrix where each row corresponds to an edge.}
 \item{alpha}{the maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}.}
 \item{sigma2}{the maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}.}
 \item{mu}{the fitted values.}
-\item{residuals}{raw residuals.}
+\item{residuals}{residuals.}
 \item{score}{the information criterion value of the estimated shift configuration.}
 \item{l1ou.options}{the list of options that are used.}
 }
 \description{
-detects evolutionary shifts in one or multiple traits
+detects evolutionary shifts in one or multiple traits.
 }
 \examples{
 data("lizard.traits", "lizard.tree")

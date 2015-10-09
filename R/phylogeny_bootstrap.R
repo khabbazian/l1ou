@@ -1,9 +1,9 @@
 #'
-#' computes the bootstrap support for the detected shift configuration 
+#' computes the bootstrap support for the detected shift configuration.
 #'
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
-#'@param model the object genereted by function estimate_shift_configuration. 
-#'@param nItrs number of independent iterations (bootstrap independent replicates).
+#'@param model the object output of \code{\link{estimate_shift_configuration}}. 
+#'@param nItrs the number of independent iterations (bootstrap independent replicates).
 #'@param multicore logical. If TRUE, it runs nCores processes in parallel. See details. 
 #'@param nCores desired number of parallel processes.
 #'@return vector of size of the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge. 
