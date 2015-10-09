@@ -216,7 +216,7 @@ plot_l1ou <- function(tree, model, pallet=NA, ...){
         counter = counter + 1;
     }
 
-    plot.phylo(tree, edge.color=edgecol, ...);
+    plot.phylo(tree, edge.color=edgecol, no.margin=TRUE, ...);
 
     edge.labels = rep(NA, nEdges);;
     edge.labels[ shift.configuration ] = round(model$shift.values, digits = 2);
@@ -229,7 +229,7 @@ plot_l1ou <- function(tree, model, pallet=NA, ...){
         barcol[[i]]  = edgecol[  which( tree$edge[,2] == i)  ];
     }
 
-    par(mar=c(0,3,0,0))
+    #par(mar=c(0,3,0,0))
     for(i in 1:ncol(Y)){
         normy = (Y[,i] - mean(Y[,i]))/sd(Y[,i]);
         barplot (as.vector(normy), border=FALSE, col=barcol, horiz = TRUE, names.arg = "", xaxt = "n");
