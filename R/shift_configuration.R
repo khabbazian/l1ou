@@ -587,83 +587,157 @@ assign_model <- function(tree, Y, shift.configuration, opt){
                  l1ou.options=opt) );
 }
 
-run_grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){
+function (grpX, grpY, nVariables, grpIdx, opt){
+    delta  = opt$grp.delta
+    seq.ub = opt$grp.seq.ub
+    max.nTries = 10;
+    lmbdMax = 1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
 
-
-    delta      = opt$grp.delta;
-    seq.ub     = opt$grp.seq.ub;
-
-    max.nTries = 5;
-
-    lmbdMax   = 1.2*lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE)+1;
-    base.seq  = seq(0, seq.ub, delta);
-
-    for( itrTmp in 1:max.nTries){  
-
-        lmbd  = lmbdMax*(0.5^base.seq);
-        sink("/dev/null");
+    base.seq = seq(0, seq.ub, delta)
+    for (itrTmp in 1:max.nTries) {
+        lmbd = lmbdMax * (0.5^base.seq)
+        sink("/dev/null")
         sol = grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
-                lambda  = lmbd, model = LinReg(), index = grpIdx,
-                control = grpl.control(tol= 0.01));
-        sink();
+            lambda = lmbd, model = LinReg(), index = grpIdx, 
+            control = grpl.control(tol = 0.01))
+        sink()
+        df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x) > 0))/nVariables)
+        df.missing = setdiff(0:(opt$max.nShifts+1), df.vec)
 
-        df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x)>0))/nVariables );
-        df.missing = setdiff(0:opt$max.nShifts, df.vec);
+        cutExtra = TRUE;
+        if (length(df.missing) > 0) {
+            base.seq.tmp =numeric();
+            idx = prev.idx = 1;
+            for (mdf in df.missing) {
 
-        if( length(df.missing) > 0 ){
-
-            base.seq.idx = seq.tmp = numeric();
-            if ( df.missing[[1]] == 0 ){ 
-                lmbdMax    = lmbdMax + 2; 
-                df.missing = df.missing[-1];
-                if ( length( df.missing ) == 0)
-                    next;
-            }
-
-            for ( mdf in df.missing ){
-                if ( length(which(df.vec > mdf)) == 0 )
-                    break;
-                i = min( which(df.vec > mdf) );
-                base.seq.idx = c(base.seq.idx, i);
-            }
-
-            idx = 1;
-            for ( t in 2:length(base.seq) ){
-                if ( idx <= length(base.seq.idx) && t == base.seq.idx[[idx]] ){
-                    seq.tmp = c(seq.tmp, seq(base.seq[[t-1]], base.seq[[t]], delta/4) );
-                    idx     = idx + 1;
+                if( length( which(df.vec > mdf) ) > 0 ){ ##that means at the begining or in the middle of the sequence
+                    idx = min(which(df.vec > mdf))
+                    if( idx == 1){ ## that means we should add to the begining
+                        ##TODO: I don't like it
+                        lmbdMax    = lmbdMax + 2
+                        next;
+                    }
+                    if( prev.idx == idx){ ## not to repeat the same sequence.
+                        next;
+                    }
+                    lower = base.seq[[idx - 1]] + delta/4;
+                    upper = base.seq[[idx]]
+                    base.seq.tmp=c( base.seq.tmp, base.seq[prev.idx:idx], seq(lower, upper, delta/4));
+                } else{ ## that means we should add to the end
+                    lower = base.seq.tmp[[length(base.seq.tmp)]]+delta;
+                    upper = max(lower, max(base.seq)) + 1;
+                    base.seq.tmp = c(base.seq.tmp, seq(lower, upper, delta));
+                    cutExtra  = FALSE;
                 }
-                seq.tmp = c(seq.tmp, base.seq[[t]]);
+                prev.idx = idx;
             }
 
-            #cutting the extra part or adding more
-            if( length( which(df.vec > opt$max.nShifts ) ) > 0 ){
-                bs.up   = base.seq[ min( which(df.vec > opt$max.nShifts) ) ];
-                seq.tmp = seq.tmp [ which(seq.tmp < bs.up) ];
-                seq.ub  = min(seq.ub, bs.up+1);
-            } else{
-                seq.tmp = c(seq.tmp, seq(seq.ub, seq.ub+1, delta) );
-                seq.ub  = seq.ub + 1;
-            }
+            if( cutExtra ){
+                indices = which(df.vec > (opt$max.nShifts+4));
+                if( length(indices) > 0 ){
+                    upper.idx = min(indices);
+                }else{
+                    upper.idx = length(base.seq);
+                }
 
-            base.seq = seq.tmp;
-            if(length(base.seq.idx)>0) 
-                delta = delta/4;
-        } else { break; }
+                if( idx < upper.idx){
+                    base.seq.tmp = c(base.seq.tmp, base.seq[idx:upper.idx] ); 
+                }
+            }
+            delta = delta/4
+            base.seq = unique(sort(base.seq.tmp));
+        }else { break }
     }
-
-## actual running of the grplasso
-    lmbd  = lmbdMax*(0.5^base.seq);
-    sink("/dev/null");
+    lmbd = lmbdMax * (0.5^base.seq)
+    sink("/dev/null")
     sol = grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
-                   lambda  = lmbd, model = LinReg(), index = grpIdx);
-    sink();
-
-    df.missing = setdiff(0:opt$max.nShifts, df.vec);
-    for(dfm in df.missing){
-        warning( paste0( "There are no solutions with ", dfm , " number of shifts
-                        in the solution path of grplasso. You may want to change grp.delta and 
-                        grp.seq" ) );
+        lambda = lmbd, model = LinReg(), index = grpIdx)
+    sink()
+    df.missing = setdiff(0:opt$max.nShifts, df.vec)
+    for (dfm in df.missing) {
+        warning(paste0("There are no solutions with ", dfm, " number of shifts  
+                in the solution path of grplasso. You may want to change grp.delta and grp.seq"))
     }
-    return(sol);
+    return(sol)
 }
+
+#run_grplasso <- function(grpX, grpY, nVariables, grpIdx, opt){
+#
+#
+#    delta      = opt$grp.delta;
+#    seq.ub     = opt$grp.seq.ub;
+#
+#    max.nTries = 5;
+#
+#    lmbdMax   = 1.2*lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE)+1;
+#    base.seq  = seq(0, seq.ub, delta);
+#
+#    for( itrTmp in 1:max.nTries){  
+#
+#        lmbd  = lmbdMax*(0.5^base.seq);
+#        sink("/dev/null");
+#        sol = grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
+#                lambda  = lmbd, model = LinReg(), index = grpIdx,
+#                control = grpl.control(tol= 0.01));
+#        sink();
+#
+#        df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x)>0))/nVariables );
+#        df.missing = setdiff(0:opt$max.nShifts, df.vec);
+#
+#        if( length(df.missing) > 0 ){
+#
+#            base.seq.idx = seq.tmp = numeric();
+#            if ( df.missing[[1]] == 0 ){ 
+#                lmbdMax    = lmbdMax + 2; 
+#                df.missing = df.missing[-1];
+#                if ( length( df.missing ) == 0)
+#                    next;
+#            }
+#
+#            for ( mdf in df.missing ){
+#                if ( length(which(df.vec > mdf)) == 0 )
+#                    break;
+#                i = min( which(df.vec > mdf) );
+#                base.seq.idx = c(base.seq.idx, i);
+#            }
+#
+#            idx = 1;
+#            for ( t in 2:length(base.seq) ){
+#                if ( idx <= length(base.seq.idx) && t == base.seq.idx[[idx]] ){
+#                    seq.tmp = c(seq.tmp, seq(base.seq[[t-1]], base.seq[[t]], delta/4) );
+#                    idx     = idx + 1;
+#                }
+#                seq.tmp = c(seq.tmp, base.seq[[t]]);
+#            }
+#
+#            #cutting the extra part or adding more
+#            if( length( which(df.vec > opt$max.nShifts ) ) > 0 ){
+#                bs.up   = base.seq[ min( which(df.vec > opt$max.nShifts) ) ];
+#                seq.tmp = seq.tmp [ which(seq.tmp < bs.up) ];
+#                seq.ub  = min(seq.ub, bs.up+1);
+#            } else{
+#                seq.tmp = c(seq.tmp, seq(seq.ub, seq.ub+1, delta) );
+#                seq.ub  = seq.ub + 1;
+#            }
+#
+#            base.seq = seq.tmp;
+#            if(length(base.seq.idx)>0) 
+#                delta = delta/4;
+#        } else { break; }
+#    }
+#
+### actual running of the grplasso
+#    lmbd  = lmbdMax*(0.5^base.seq);
+#    sink("/dev/null");
+#    sol = grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
+#                   lambda  = lmbd, model = LinReg(), index = grpIdx);
+#    sink();
+#
+#    df.missing = setdiff(0:opt$max.nShifts, df.vec);
+#    for(dfm in df.missing){
+#        warning( paste0( "There are no solutions with ", dfm , " number of shifts
+#                        in the solution path of grplasso. You may want to change grp.delta and 
+#                        grp.seq" ) );
+#    }
+#    return(sol);
+#}
