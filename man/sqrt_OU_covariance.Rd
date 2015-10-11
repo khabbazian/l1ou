@@ -2,7 +2,7 @@
 % Please edit documentation in R/sqrt_OU_covariance.R
 \name{sqrt_OU_covariance}
 \alias{sqrt_OU_covariance}
-\title{computes the negative square root and square root of the phylogeny covariance matrix in linear time complexity.}
+\title{computes the negative square root and square root of the phylogeny covariance matrix.}
 \usage{
 sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
   "OUrandomRoot"))
@@ -19,7 +19,7 @@ sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
 \item{sqrtInvSigma}{inverse square root of the phylogeny covariance matrix.}
 }
 \description{
-computes the negative square root and square root of the phylogeny covariance matrix in linear time complexity.
+computes the negative square root and square root of the phylogeny covariance matrix.
 }
 \examples{
 library("l1ou")

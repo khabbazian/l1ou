@@ -1,6 +1,6 @@
 
 #
-#' computes the negative square root and square root of the phylogeny covariance matrix in linear time complexity.
+#' computes the negative square root and square root of the phylogeny covariance matrix.
 #'
 #'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths.
 #'@param alpha the adaptation rate for the OU model.

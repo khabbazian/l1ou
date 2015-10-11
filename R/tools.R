@@ -165,7 +165,7 @@ normalize_tree <- function(tree){
 
 
 #'
-#' plots the tree and trait(s)
+#' plots the tree and trait(s).
 #'
 #'@param tree a phylogenetic tree of class phylo.
 #'@param model the returned object from \code{\link{estimate_shift_configuration}}.
@@ -219,8 +219,13 @@ plot_l1ou <- function(tree, model, pallet=NA, bar.axis=TRUE, ...){
 
     plot.phylo(tree, edge.color=edgecol, no.margin=TRUE, ...);
 
-    edge.labels = rep(NA, nEdges);;
-    edge.labels[ shift.configuration ] = round(model$shift.values, digits = 2);
+    edge.labels = rep(NA, nEdges);
+    counter <- 1;
+    for(shift in shift.configuration){
+        edge.labels[ shift ] = paste(round(model$shift.values[counter,], digits = 2), collapse=",");
+        counter  <- counter + 1;
+    }
+
     edgelabels(edge.labels, adj = c(0.5, -0.25), frame = "none", bg="lightblue");
 
     nTips = length(tree$tip.label);
@@ -229,6 +234,9 @@ plot_l1ou <- function(tree, model, pallet=NA, bar.axis=TRUE, ...){
     for(i in 1:nTips){
         barcol[[i]]  = edgecol[  which( tree$edge[,2] == i)  ];
     }
+
+    if(bar.axis)
+        par(mar=c(0,0,0,3))
 
     for(i in 1:ncol(Y)){
         normy = (Y[,i] - mean(Y[,i]))/sd(Y[,i]);
