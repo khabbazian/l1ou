@@ -587,7 +587,7 @@ assign_model <- function(tree, Y, shift.configuration, opt){
                  l1ou.options=opt) );
 }
 
-function (grpX, grpY, nVariables, grpIdx, opt){
+run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     delta  = opt$grp.delta
     seq.ub = opt$grp.seq.ub
     max.nTries = 10;

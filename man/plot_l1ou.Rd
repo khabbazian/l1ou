@@ -2,7 +2,7 @@
 % Please edit documentation in R/tools.R
 \name{plot_l1ou}
 \alias{plot_l1ou}
-\title{plots the tree and trait(s)}
+\title{plots the tree and trait(s).}
 \usage{
 plot_l1ou(tree, model, pallet = NA, bar.axis = TRUE, ...)
 }
@@ -21,7 +21,7 @@ plot_l1ou(tree, model, pallet = NA, bar.axis = TRUE, ...)
 none.
 }
 \description{
-plots the tree and trait(s)
+plots the tree and trait(s).
 }
 \examples{
 data("lizard.traits", "lizard.tree")
