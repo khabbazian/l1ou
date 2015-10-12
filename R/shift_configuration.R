@@ -324,16 +324,24 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 
 
 #
-#' computes the information criterion score for the given configuration
+#' computes the information criterion score for a given configuration
 #'
-#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.
-#'@param Y a trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
-#'@param shift.configuration shift positions, i.e. indices of the edges where the shifts occur.
-#'@param criterion an information criterion.
+#'@param tree ultrametric tree of class phylo, with branch lengths, and edges in postorder.
+#'@param Y trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
+#'@param shift.configuration shift positions, i.e. vector of indices of the edges where the shifts occur.
+#'@param criterion an information criterion (see Details).
 #'@param root.model an ancestral state model at the root.
 #'
-#'@return the information criterion value of the shift configuration.
+#'@return Information criterion value of the given shift configuration.
 #'
+#'@details
+#'AIC gives the usual Akaike information criterion, penalizing each parameter by 2, and counting each shift as 2 parameter (for the shift magnitude for the shift position, as if this position were a continuous parameter).
+#'AICc gives the usual small-sample size modification to AIC. 
+#'BIC also gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters. 
+#'mBIC is the modified BIC proposed by Ho and Ané (2014).
+#'pBIC is the phylogenetic BIC for shifts proposed by Khabbazian et al.
+#'pBICess is a version of pBIC where the determinant term is replaced by a sum of the log of effective sample sizes (ESS), similar to the ESS proposed by Ané (2008). 
+#' 
 #'@examples
 #' 
 #' library("l1ou") 
@@ -346,7 +354,9 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #'@seealso \code{\link{estimate_shift_configuration}} 
 #'
 #'@references
-#' M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
+#'Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.
+#'Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. 5(11):1133-1146.
+#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
                      criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
