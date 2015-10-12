@@ -44,7 +44,7 @@
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@references
-#' M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
+#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
 #'
 #'@export
 estimate_shift_configuration <- function(tree, Y, 
@@ -60,272 +60,331 @@ estimate_shift_configuration <- function(tree, Y,
            grp.delta             = 1/16,
            grp.seq.ub            = 5,
            l1ou.options          = NA
-     ){
-
-    ## unifying the types
-    Y  <-  as.matrix(Y);
-
-    ## setting up options
-    if(all(is.na(l1ou.options))){
-        l1ou.options                       <-  list();
-        l1ou.options$use.saved.scores      <- TRUE;
-        l1ou.options$max.nShifts           <- max.nShifts;
-        l1ou.options$criterion             <- match.arg(criterion);
-        l1ou.options$root.model            <- match.arg(root.model);
-        l1ou.options$quietly               <- quietly;
-        ##TODO: return warning if estimated alpha is close to its upperbound. What do I mean by close?
-        l1ou.options$alpha_upper_bound     <- alpha.upper;
-        l1ou.options$alpha.lower.bound     <- alpha.lower;
-        l1ou.options$edge.length.threshold <- edge.length.threshold;
-        l1ou.options$num.top.configurations    <- num.top.configurations;
-        l1ou.options$standardize           <- standardize;
-        l1ou.options$grp.seq.ub            <- grp.seq.ub;
-        l1ou.options$grp.delta             <- grp.delta;
-        l1ou.options$Z                     <- generate_design_matrix(tree, "simpX");
+     ) {
+    if(!is.ultrametric(tree)){
+        stop("the input tree is not ultrametric")
     }
 
+    if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
+        warning("the input phylogenetic tree is not in postorder. It is reorder\n", immediate.=TRUE)
+        tree  <- reorder(tree, "postorder")
+    }
 
+    stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
-    ##NOTE: checking the assumptions 
-    stopifnot(is.ultrametric(tree));
-    stopifnot(identical(tree$edge , reorder(tree, "postorder")$edge));
-    stopifnot(nrow(Y) == length(tree$tip.label));
-    stopifnot(all( rownames(Y) == tree$tip.label));
+    Y <- as.matrix(Y)
+
+    if( any(is.na(Y)) )
+        stop("some of the entries of the trait vector/matrix (Y) are missing. 
+             you may use drop.tip to drop corresponding tips from the tree.\n")
+
+    if( class(Y) != "matrix"){
+        Y <- as.matrix(Y)
+        warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
+    }
+
+    if( nrow(Y) != length(tree$tip.label)){
+       stop("the number of entries/rows of the trait vector/matrix (Y) 
+            doesn't match the number of tips.\n") 
+    }
+
+    if( is.null(rownames(Y)) ){
+        warning("no names provided for the trait(s) entries/rows. so it is assumed that 
+                entries/rows match with the tip labels in the same order.\n", , immediate.=TRUE)
+        rownames(Y)  <- tree$tip.label
+    } else{
+        if( any(is.na(rownames(Y))) ){
+            stop("some of the names in either trait vector/matrix or tree tip 
+                 labels are unavailable.\n")
+        }
+    }
+    if(!identical(rownames(Y), tree$tip.label)){
+        diffres = setdiff(rownames(Y), tree$tip.label)
+        if( length(diffres) > 0 ){
+            cat(diffres)
+            stop(" do not exist in the tip labels of the input tree.\n")
+        }
+        diffres = setdiff(tree$tip.label, rownames(Y))
+        if( length(diffres) > 0 ){
+            cat(diffres)
+            stop(" do not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
+                 to drop extra tips in the tree.\n")
+        }
+
+        warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
+        Y = as.matrix( Y[order(rownames(Y)),  ]  )
+        Y = as.matrix( Y[order(order(tree$tip.label)), ] )
+    }
+
+    stopifnot(all(rownames(Y) == tree$tip.label))
     stopifnot(identical(rownames(Y), tree$tip.label))
 
-    if( ncol(Y) == 1 ){  #univariate l1ou
-        eModel1 = estimate_shift_configuration_known_alpha(tree, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = estimate_shift_configuration_known_alpha(tree, Y, alpha=eModel1$alpha, opt=l1ou.options);
-        ## in case the first step finds a better solution
-        if( eModel$score>eModel1$score )
-            eModel = eModel1;
-
-    } 
-    if( ncol(Y) > 1 ){ #multivariate l1ou
-        eModel1 = estimate_shift_configuration_known_alpha_multivariate(tree, Y, est.alpha=TRUE,      opt=l1ou.options);
-        eModel  = estimate_shift_configuration_known_alpha_multivariate(tree, Y, alpha=eModel1$alpha, opt=l1ou.options);
-        ## in case the first step finds a better solution
-        if( eModel$score>eModel1$score )
-            eModel = eModel1;
-    } 
-
-    ## I really don't like this way of coding but I have to clear the static db object in the cpp code here. 
-    ## TODO: can it be implemented differently?
-    if( l1ou.options$use.saved.scores){
-        erase_configuration_score_db();
+    if( max.nShifts > length(tree$tip.label)){
+        warning("max.nShifts should be a positive number less than number of tips. I set it to number of tips.\n")
+        max.nShifts  <-  length(tree$tip.label)
     }
-    return(eModel);
+    if( max.nShifts < 1){
+        warning("max.nShifts should be a positive number less than number of tips. I set it to 1.\n")
+        max.nShifts  <- 1 
+    }
+    if( alpha.lower < 0 ){
+        warning("alpha.lower must be greater than zero. I set it to zero.\n")
+        alpha.lower <- 0 
+    }
+    if( alpha.upper < alpha.lower ){
+        warning("alpha.upper must be equal or greater than alpha.lower. I set them equal.\n")
+        alpha.upper  <- alpha.lower
+    }
+
+    if (all(is.na(l1ou.options))) {
+        l1ou.options <- list()
+        l1ou.options$use.saved.scores <- TRUE
+        l1ou.options$max.nShifts <- max.nShifts
+        l1ou.options$criterion <- match.arg(criterion)
+        l1ou.options$root.model <- match.arg(root.model)
+        l1ou.options$quietly <- quietly
+        l1ou.options$alpha.upper.bound <- alpha.upper
+        l1ou.options$alpha.lower.bound <- alpha.lower
+        l1ou.options$edge.length.threshold <- edge.length.threshold
+        l1ou.options$num.top.configurations <- num.top.configurations
+        l1ou.options$standardize <- standardize
+        l1ou.options$grp.seq.ub <- grp.seq.ub
+        l1ou.options$grp.delta <- grp.delta
+        l1ou.options$Z <- generate_design_matrix(tree, "simpX")
+    }
+
+    if (ncol(Y) == 1) {
+        eModel1 = estimate_shift_configuration_known_alpha(tree, 
+            Y, est.alpha = TRUE, opt = l1ou.options)
+        eModel = estimate_shift_configuration_known_alpha(tree, 
+            Y, alpha = eModel1$alpha, opt = l1ou.options)
+        if (eModel$score > eModel1$score) 
+            eModel = eModel1
+    }
+    if (ncol(Y) > 1) {
+        eModel1 = estimate_shift_configuration_known_alpha_multivariate(tree, 
+            Y, est.alpha = TRUE, opt = l1ou.options)
+        eModel = estimate_shift_configuration_known_alpha_multivariate(tree, 
+            Y, alpha = eModel1$alpha, opt = l1ou.options)
+        if (eModel$score > eModel1$score) 
+            eModel = eModel1
+    }
+    if (l1ou.options$use.saved.scores) {
+        erase_configuration_score_db()
+    }
+    return(eModel)
 }
+
 
 estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha=FALSE, opt){  
 
-    stopifnot( alpha >=0 );
+    stopifnot( alpha >=0 )
 
-    #library("lars");
+    #library("lars")
     if ( est.alpha ){ ## BM model
-        X   = generate_design_matrix(tree, "apprX");
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0)$sqrtInvSigma ); 
+        X   = generate_design_matrix(tree, "apprX")
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0)$sqrtInvSigma ) 
     } else{           ## OU model
-        X   = generate_design_matrix(tree, "orgX", alpha=alpha );
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha)$sqrtInvSigma ); 
+        X   = generate_design_matrix(tree, "orgX", alpha=alpha )
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha)$sqrtInvSigma ) 
     }
 
-    to.be.removed   = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold));
+    to.be.removed   = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
 
-    YY  = Cinvh%*%Y;
-    XX  = Cinvh%*%X;
+    YY  = Cinvh%*%Y
+    XX  = Cinvh%*%X
 
-    nP  = ncol(XX);
-    XX  = XX[,-to.be.removed];
+    nP  = ncol(XX)
+    XX  = XX[,-to.be.removed]
 
-    sol.path = lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts);
+    sol.path = lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
 
-    Tmp = matrix(0, nrow(sol.path$beta), nP);
-    Tmp[,-to.be.removed] = sol.path$beta;
-    sol.path$beta = Tmp;
+    Tmp = matrix(0, nrow(sol.path$beta), nP)
+    Tmp[,-to.be.removed] = sol.path$beta
+    sol.path$beta = Tmp
 
-    result  = select_best_solution(tree, Y, sol.path, opt);
-    eModel  = assign_model(tree, Y, result$shift.configuration, opt);
+    result  = select_best_solution(tree, Y, sol.path, opt)
+    eModel  = assign_model(tree, Y, result$shift.configuration, opt)
 
-    print_out(eModel, opt$quietly);
-    return(eModel);
+    print_out(eModel, opt$quietly)
+    return(eModel)
 }
 
 
 estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha=0, est.alpha=FALSE, opt){
-    library("grplasso");
-    library("magic");
+    library("grplasso")
+    library("magic")
 
-    stopifnot( alpha >=0 );
+    stopifnot( alpha >=0 )
 
     if ( est.alpha == FALSE ){
-        stopifnot(ncol(Y) == length(alpha));
+        stopifnot(ncol(Y) == length(alpha))
     }
 
     ## standardizing
     if(opt$standardize==TRUE){
-        Y  = standardize_matrix(Y);
+        Y  = standardize_matrix(Y)
     }
 
-    nVariables    = ncol(Y);
-    X             = generate_design_matrix(tree, "apprX");
+    nVariables    = ncol(Y)
+    X             = generate_design_matrix(tree, "apprX")
 
     ##NOTE: I used to add a column of 1 to take care of intercept. But it turns out that the new design matrix 
     ##NOTE: causes some problem for grplasso(?). It takes a lot of memory and it become slower (have no idea why). 
     ##NOTE: At some point I should update the group lasso solver. 
 
-    ##X             = cbind(X,1);
-    ##ncolX         = ncol(X);
-    to.be.removed = c(ncol(X), which(tree$edge.length < opt$edge.length.threshold));
-    ##to.be.removed = c(ncolX-1, which(tree$edge.length < opt$edge.length.threshold));
+    ##X             = cbind(X,1)
+    ##ncolX         = ncol(X)
+    to.be.removed = c(ncol(X), which(tree$edge.length < opt$edge.length.threshold))
+    ##to.be.removed = c(ncolX-1, which(tree$edge.length < opt$edge.length.threshold))
 
-    offset        = rep(ncol(X)*(0:(ncol(Y)-1)), each=length(to.be.removed));
-    to.be.removed = rep(to.be.removed, ncol(Y)) + offset;
+    offset        = rep(ncol(X)*(0:(ncol(Y)-1)), each=length(to.be.removed))
+    to.be.removed = rep(to.be.removed, ncol(Y)) + offset
 
-    YY  = Y;
-    grpX = matrix(0,0,0); #empty matrix;
+    YY  = Y
+    grpX = matrix(0,0,0) #empty matrix
     for( i in 1:ncol(YY)){
-        X  = matrix(0,0,0);
+        X  = matrix(0,0,0)
         if ( est.alpha == TRUE ){
-            X   = generate_design_matrix(tree, "apprX");
-            RE  = sqrt_OU_covariance(tree,     alpha = 0 );
+            X   = generate_design_matrix(tree, "apprX")
+            RE  = sqrt_OU_covariance(tree,     alpha = 0 )
         } else {
-            X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]] );
-            RE  = sqrt_OU_covariance(tree,     alpha = alpha[[i]] );
+            X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]] )
+            RE  = sqrt_OU_covariance(tree,     alpha = alpha[[i]] )
         }
-        Cinvh   = t(RE$sqrtInvSigma); #\Sigma^{-1/2}
-        YY[,i]  = Cinvh%*%YY[,i];
-        grpX    = adiag(grpX, Cinvh%*%X);  
+        Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
+        YY[,i]  = Cinvh%*%YY[,i]
+        grpX    = adiag(grpX, Cinvh%*%X)  
     }
 
-    np     = ncol(grpX);
-    grpY   = c(YY);
-    grpX   = grpX[,-to.be.removed];
-    grpIdx = rep(1:ncol(X), ncol(Y))[-to.be.removed];
+    np     = ncol(grpX)
+    grpY   = c(YY)
+    grpX   = grpX[,-to.be.removed]
+    grpIdx = rep(1:ncol(X), ncol(Y))[-to.be.removed]
 
 
     ##including the intercept.
-    #grpX = cbind(grpX,1);
-    #grpIdx = c(grpIdx, NA);
+    #grpX = cbind(grpX,1)
+    #grpIdx = c(grpIdx, NA)
 
-    sol    = run_grplasso(grpX, grpY, nVariables, grpIdx, opt);
+    sol    = run_grplasso(grpX, grpY, nVariables, grpIdx, opt)
 
-    #Tmp                  = matrix(0, np+1, ncol(sol$coefficients));
-    Tmp                  = matrix(0, np, ncol(sol$coefficients));
-    Tmp[-to.be.removed,] = matrix(sol$coefficients);
-    sol$coefficients     = Tmp;
+    #Tmp                  = matrix(0, np+1, ncol(sol$coefficients))
+    Tmp                  = matrix(0, np, ncol(sol$coefficients))
+    Tmp[-to.be.removed,] = matrix(sol$coefficients)
+    sol$coefficients     = Tmp
 
     ##removing the intercept results
-    #sol$coefficients     = sol$coefficients[-ncol(grpX), ];
+    #sol$coefficients     = sol$coefficients[-ncol(grpX), ]
 
-    result  = select_best_solution(tree, Y, sol, opt=opt);
-    eModel  = assign_model(tree, Y, result$shift.configuration, opt=opt);
+    result  = select_best_solution(tree, Y, sol, opt=opt)
+    eModel  = assign_model(tree, Y, result$shift.configuration, opt=opt)
 
-    print_out(eModel, opt$quietly);
-    return(eModel);
+    print_out(eModel, opt$quietly)
+    return(eModel)
 }
 
 
 
 generate_design_matrix <- function(tree, type="apprX", alpha){
-    #library("igraph");
+    #library("igraph")
 
-    stopifnot( is.ultrametric(tree) );
-    stopifnot( sum( 1:length(tree$tip.label) %in% tree$edge[,1]) == 0);
+    stopifnot( is.ultrametric(tree) )
+    stopifnot( sum( 1:length(tree$tip.label) %in% tree$edge[,1]) == 0)
 
-    nTips  = length(tree$tip.label);
-    rNode  = nTips + 1; 
-    nEdges = Nedge(tree);
+    nTips  = length(tree$tip.label)
+    rNode  = nTips + 1 
+    nEdges = Nedge(tree)
 
-    g  = graph.edgelist(tree$edge, directed = TRUE);
-    X  = matrix(0, nTips, nEdges);
+    g  = graph.edgelist(tree$edge, directed = TRUE)
+    X  = matrix(0, nTips, nEdges)
 
-    root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode = "out", output="epath")$epath;
+    root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode = "out", output="epath")$epath
     ## there must be always a path.
-    stopifnot( all( lapply( root2tip, length ) > 0) ); 
+    stopifnot( all( lapply( root2tip, length ) > 0) ) 
     ## since it is ultrametric.
-    Tval  = sum(tree$edge.length[root2tip[[1]] ]); 
+    Tval  = sum(tree$edge.length[root2tip[[1]] ]) 
 
     if(type == "orgX"){
         for(i in 1:nTips){
-            lvec    = c(0, tree$edge.length[root2tip[[i]]]);
-            timeVec = Tval - cumsum(lvec);
-            timeVec = timeVec[1:length(timeVec)-1];
-            X[i, root2tip[[i]] ] = 1 - exp(-alpha*timeVec);
+            lvec    = c(0, tree$edge.length[root2tip[[i]]])
+            timeVec = Tval - cumsum(lvec)
+            timeVec = timeVec[1:length(timeVec)-1]
+            X[i, root2tip[[i]] ] = 1 - exp(-alpha*timeVec)
         }
     }else if(type == "apprX"){
         for(i in 1:nTips){
-            lvec    = c(0, tree$edge.length[root2tip[[i]]]);
-            timeVec = Tval - cumsum(lvec);
-            timeVec = timeVec[1:length(timeVec)-1];
-            X[i, root2tip[[i]] ] = timeVec;
+            lvec    = c(0, tree$edge.length[root2tip[[i]]])
+            timeVec = Tval - cumsum(lvec)
+            timeVec = timeVec[1:length(timeVec)-1]
+            X[i, root2tip[[i]] ] = timeVec
         }
     }else if(type == "simpX"){
         for(i in 1:nTips){
-            X[i, root2tip[[i]] ] = 1;
+            X[i, root2tip[[i]] ] = 1
         }
     }else
-        stop("Undefined design matrix type");
-    return(X);
+        stop("Undefined design matrix type")
+    return(X)
 }
 
 select_best_solution <- function(tree, Y, sol.path, opt){
 
-    nSols   = get_num_solutions(sol.path);
-    stopifnot( nSols > 0 );
+    nSols   = get_num_solutions(sol.path)
+    stopifnot( nSols > 0 )
 
-    score.vec  = idx.vec = numeric();
-    prevshift.configuration = NA;
-    configuration.list = list();
+    score.vec  = idx.vec = numeric()
+    prevshift.configuration = NA
+    configuration.list = list()
     for(idx in 1:nSols) {
 
-        shift.configuration = get_shift_configuration(sol.path, idx, Y);
-        shift.configuration = correct_unidentifiability(tree, shift.configuration, opt);
+        shift.configuration = get_shift_configuration(sol.path, idx, Y)
+        shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
 
-        if ( length(shift.configuration) >= opt$max.nShifts    )  { break;}
-        if ( setequal(shift.configuration, prevshift.configuration ) ){ next; }
+        if ( length(shift.configuration) >= opt$max.nShifts    )  { break}
+        if ( setequal(shift.configuration, prevshift.configuration ) ){ next }
 
-        score = cmp_model_score(tree, Y, shift.configuration, opt);
+        score = cmp_model_score(tree, Y, shift.configuration, opt)
 
-        configuration.list[[idx]] = shift.configuration;
-        score.vec             = c(score.vec, score);
-        idx.vec               = c(idx.vec, idx);
+        configuration.list[[idx]] = shift.configuration
+        score.vec             = c(score.vec, score)
+        idx.vec               = c(idx.vec, idx)
 
-        prevshift.configuration   = shift.configuration;
+        prevshift.configuration   = shift.configuration
     }
 
-    idx.vec   = idx.vec[sort(score.vec, index.return=TRUE)$ix];
-    min.score = Inf;   
-    min.idx   = NA;
+    idx.vec   = idx.vec[sort(score.vec, index.return=TRUE)$ix]
+    min.score = Inf   
+    min.idx   = NA
 
     for( i in 1:min(opt$num.top.configurations, length(idx.vec)) ){ 
-        if ( is.na(idx.vec[[i]]) ){ break; }
-        res = do_backward_selection(tree, Y, configuration.list[[ idx.vec[[i]]  ]], opt);
+        if ( is.na(idx.vec[[i]]) ){ break }
+        res = do_backward_selection(tree, Y, configuration.list[[ idx.vec[[i]]  ]], opt)
         if ( min.score > res$score){
-            min.score       = res$score;
-            shift.configuration = res$shift.configuration;
+            min.score       = res$score
+            shift.configuration = res$shift.configuration
         }
     }
-    return ( list(score=min.score, shift.configuration=shift.configuration) );
+    return ( list(score=min.score, shift.configuration=shift.configuration) )
 }
 
 do_backward_selection <- function(tree, Y, shift.configuration, opt){
 
-    shift.configuration = sort(shift.configuration, decreasing = TRUE);
-    org.score       = cmp_model_score(tree, Y, shift.configuration, opt);
+    shift.configuration = sort(shift.configuration, decreasing = TRUE)
+    org.score       = cmp_model_score(tree, Y, shift.configuration, opt)
 
     if( length(shift.configuration) < 3 ) { 
-        return(list(score=org.score, shift.configuration=shift.configuration)); 
+        return(list(score=org.score, shift.configuration=shift.configuration)) 
     }  
     for( sp in shift.configuration){
-        new.configuration = setdiff(shift.configuration, sp);
-        new.score     = cmp_model_score(tree, Y, new.configuration, opt);      
+        new.configuration = setdiff(shift.configuration, sp)
+        new.score     = cmp_model_score(tree, Y, new.configuration, opt)      
         if ( new.score <= org.score){
-            shift.configuration = new.configuration;
-            org.score       = new.score;
+            shift.configuration = new.configuration
+            org.score       = new.score
         }
     }
-    return(list(score=org.score, shift.configuration=shift.configuration));
+    return(list(score=org.score, shift.configuration=shift.configuration))
 }
 
 
@@ -337,6 +396,8 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #'@param shift.configuration shift positions, i.e. vector of indices of the edges where the shifts occur.
 #'@param criterion an information criterion (see Details).
 #'@param root.model an ancestral state model at the root.
+#'@param alpha.upper upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
+#'@param alpha.lower lower bound for the phylogenetic adaptation rate.
 #'
 #'@return Information criterion value of the given shift configuration.
 #'
@@ -361,233 +422,238 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #'
 #'@references
 #'Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.
+#'
 #'Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. 5(11):1133-1146.
+#'
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
-                     criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-                     root.model = c("OUrandomRoot", "OUfixedRoot")
+                     criterion   = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+                     root.model  = c("OUrandomRoot", "OUfixedRoot"),
+                     alpha.upper = alpha_upper_bound(tree), 
+                     alpha.lower = 0
                      ){
-    opt = list();
+    opt = list()
 
-    opt$criterion         <- match.arg(criterion);
-    opt$root.model        <- match.arg(root.model);
-    opt$alpha_upper_bound <- alpha_upper_bound(tree);
-    opt$alpha.lower.bound <- 0;
-    opt$Z                 <- generate_design_matrix(tree, "simpX");
-    opt$use.saved.scores  <- FALSE;
+    opt$criterion         <- match.arg(criterion)
+    opt$root.model        <- match.arg(root.model)
+    opt$alpha.upper.bound <- alpha.upper
+    opt$alpha.lower.bound <- alpha.lower
+    opt$Z                 <- generate_design_matrix(tree, "simpX")
+    opt$use.saved.scores  <- FALSE
 
-    score = cmp_model_score(tree, Y, shift.configuration, opt);
-    return(score);
+    score = cmp_model_score(tree, Y, shift.configuration, opt)
+    return(score)
 }
 
 cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
-    shift.configuration = correct_unidentifiability(tree, shift.configuration, opt);
+    shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
 
     if(opt$use.saved.scores){
         ##if it's been already computed
-        score = get_configuration_score_to_list(shift.configuration);
+        score = get_configuration_score_to_list(shift.configuration)
         if(!is.na(score)){
-            return(score);
+            return(score)
         }
     }
-    ic = opt$criterion;
+    ic = opt$criterion
 
-    Y       = as.matrix(Y);
-    nEdges  = length(tree$edge.length);
-    nTips   = length(tree$tip.label);
-    nShifts = length(shift.configuration);
+    Y       = as.matrix(Y)
+    nEdges  = length(tree$edge.length)
+    nTips   = length(tree$tip.label)
+    nShifts = length(shift.configuration)
 
     if( ic == "BIC"){
-        df.1  = log(nEdges-1)*(nShifts);
-        df.2  = log(nTips)*(nShifts + 3);
+        df.1  = log(nEdges-1)*(nShifts)
+        df.2  = log(nTips)*(nShifts + 3)
     } else if( ic == "AIC"){
-        df.1  = 2*nShifts;
-        df.2  = 2*3;
+        df.1  = 2*nShifts
+        df.2  = 2*3
     } else if( ic == "AICc"){
         ## AICc implemented in SURFACE
-        p = nShifts + (nShifts + 2)*ncol(Y);
-        N = nTips*ncol(Y);
-        df.1 = 2*p + (2*p*(p+1))/(N-p-1); 
+        p = nShifts + (nShifts + 2)*ncol(Y)
+        N = nTips*ncol(Y)
+        df.1 = 2*p + (2*p*(p+1))/(N-p-1) 
         ## FIXME I am not sure about the following ...
         if( p > N-2)
-            return(Inf);
-        df.2 = 0;
+            return(Inf)
+        df.2 = 0
     } else if( ic == "mBIC"){
-        res =  cmp_mBIC_df(tree, shift.configuration, opt);  
-        df.1 = res$df.1;
-        df.2 = res$df.2;
+        res =  cmp_mBIC_df(tree, shift.configuration, opt)  
+        df.1 = res$df.1
+        df.2 = res$df.2
     } else if( ic == "pBICess"){
-        score = cmp_pBICess(tree, Y, shift.configuration, opt) ;
+        score = cmp_pBICess(tree, Y, shift.configuration, opt) 
         if( opt$use.saved.scores){
-            add_configuration_score_to_list(shift.configuration, score);
+            add_configuration_score_to_list(shift.configuration, score)
         }
-        return( score );
+        return( score )
     } else if( ic == "pBIC"){
-        score = cmp_pBIC(tree, Y, shift.configuration, opt) ;
+        score = cmp_pBIC(tree, Y, shift.configuration, opt) 
         if( opt$use.saved.scores){
-            add_configuration_score_to_list(shift.configuration, score);
+            add_configuration_score_to_list(shift.configuration, score)
         }
-        return( score );
+        return( score )
     } 
 
-    score = df.1;
+    score = df.1
     for( i in 1:ncol(Y)){
-        fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt);
+        fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if ( all( is.na( fit) ) ){
-            return(Inf);
-            #return(NA);
+            return(Inf)
+            #return(NA)
         } 
-        score = score  -2*fit$logLik + df.2;
+        score = score  -2*fit$logLik + df.2
     }
 
     if( opt$use.saved.scores){
-        add_configuration_score_to_list(shift.configuration, score);
+        add_configuration_score_to_list(shift.configuration, score)
     }
-    return(score);
+    return(score)
 }
 
 my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
 
-    preds = cbind(1, opt$Z[ ,shift.configuration]);
+    preds = cbind(1, opt$Z[ ,shift.configuration])
 
-    options(warn = -1);
-    #fit <- try( phylolm(Y~preds-1, phy=tree, model=opt$root.model) );
+    options(warn = -1)
+    #fit <- try( phylolm(Y~preds-1, phy=tree, model=opt$root.model) )
     #fit <- try( phylolm( Y~preds-1, phy=tree, model=opt$root.model, 
     #        starting.value = max(1, opt$alpha.lower.bound),
-    #        upper.bound    = opt$alpha_upper_bound, 
-    #        lower.bound    = opt$alpha.lower.bound ) );  
+    #        upper.bound    = opt$alpha.upper.bound, 
+    #        lower.bound    = opt$alpha.lower.bound ) )  
 
     fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
                             lower.bound    = opt$alpha.lower.bound, 
-                            upper.bound    = opt$alpha_upper_bound ), silent = TRUE);
-    options(warn = 0);
+                            upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
+    options(warn = 0)
 
     if(class(fit) == "try-error"){ 
-      warning( paste0( "phylolm internal error. returning NA; num shifts: ", length(shift.configuration)) );
-      return(NA);
+      warning( paste0( "phylolm internal error. with a shift configuratio with ", 
+                      length(shift.configuration), " shifts. You may want to reduce alpha.upper!") )
+      return(NA)
     }
 
-    return(fit);
+    return(fit)
 }
 
 cmp_mBIC_df <- function(tree, shift.configuration, opt){
 ## we assume that tree is of post order.
 
-    shift.configuration = sort(shift.configuration);
-    nTips           = length(tree$tip.label);
-    nShifts         = length(shift.configuration);
+    shift.configuration = sort(shift.configuration)
+    nTips           = length(tree$tip.label)
+    nShifts         = length(shift.configuration)
 
-    df.1 =  0; 
+    df.1 =  0 
     ## pen for the alpha sigma2 and intercept
-    df.2 =  3*log(nTips);
+    df.2 =  3*log(nTips)
 
     if(nShifts > 0 ){
         ## pen for shift configuration
-        df.1 = (2*nShifts - 1) *log(nTips);
+        df.1 = (2*nShifts - 1) *log(nTips)
         ## pen for alpha sigma2 and intercept
-        df.2 = 3*log(nTips);
+        df.2 = 3*log(nTips)
 
-        all.covered.tips = numeric();
+        all.covered.tips = numeric()
         for(eIdx in shift.configuration){
-            covered.tips = which( opt$Z[,eIdx] > 0 );
-            nUniqueTips  = length( setdiff(covered.tips, all.covered.tips) );
-            all.covered.tips = union(covered.tips, all.covered.tips);
+            covered.tips = which( opt$Z[,eIdx] > 0 )
+            nUniqueTips  = length( setdiff(covered.tips, all.covered.tips) )
+            all.covered.tips = union(covered.tips, all.covered.tips)
 
             ## this must not happen if the input is an 
             ## identifiable configuration and the tree is in post order.
-            stopifnot( nUniqueTips > 0);
-            df.2 = df.2 + log(nUniqueTips); 
+            stopifnot( nUniqueTips > 0)
+            df.2 = df.2 + log(nUniqueTips) 
         }
-        nUniqueTips = length( setdiff(1:nTips, all.covered.tips) );
-        df.2 = df.2 + log(nUniqueTips); 
+        nUniqueTips = length( setdiff(1:nTips, all.covered.tips) )
+        df.2 = df.2 + log(nUniqueTips) 
     } 
 
-    return( list(df.1=df.1, df.2=df.2) );
+    return( list(df.1=df.1, df.2=df.2) )
 }
 
 cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
-    nShifts = length(shift.configuration);
-    nEdges  = length(tree$edge[,1]);
-    nTips   = length(tree$tip.label);
+    nShifts = length(shift.configuration)
+    nEdges  = length(tree$edge[,1])
+    nTips   = length(tree$tip.label)
 
-    df.1  = 2*(nShifts)*log(nEdges-1);
-    score = df.1;
+    df.1  = 2*(nShifts)*log(nEdges-1)
+    score = df.1
     for(i in 1:ncol(Y)){
-        fit  = my_phylolm_interface(tree, Y[,i], shift.configuration, opt);
+        fit  = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if( all( is.na(fit) ) ){
-           #return(NA);
-           return(Inf);
+           #return(NA)
+           return(Inf)
         }
         ess  = effective.sample.size(tree, edges=shift.configuration, model="OUfixedRoot", 
-                 parameters=list(alpha=fit$optpar), FALSE, FALSE);
+                 parameters=list(alpha=fit$optpar), FALSE, FALSE)
 
-        df.2  = 3*log(nTips+1) + sum(log(ess+1));
-        score = score  -2*fit$logLik + df.2 ;
+        df.2  = 3*log(nTips+1) + sum(log(ess+1))
+        score = score  -2*fit$logLik + df.2 
     }
-    return( score );
+    return( score )
 }
 
 cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
-    nShifts = length(shift.configuration);
-    nEdges  = length(tree$edge[,1]);
-    nTips   = length(tree$tip.label);
+    nShifts = length(shift.configuration)
+    nEdges  = length(tree$edge[,1])
+    nTips   = length(tree$tip.label)
 
-    df.1    = 2*(nShifts)*log(nEdges-1);
-    score   = df.1;
+    df.1    = 2*(nShifts)*log(nEdges-1)
+    score   = df.1
 
     for(i in 1:ncol(Y)){
-        fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt);
+        fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if( all( is.na(fit) ) ){
-           #return(NA);
-           return(Inf);
+           #return(NA)
+           return(Inf)
         } 
-        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/fit$n, log=T)$modulus);
-        df.2  = 3*log(nTips) - ld;
-        score = score  -2*fit$logLik + df.2 ;
+        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/fit$n, log=T)$modulus)
+        df.2  = 3*log(nTips) - ld
+        score = score  -2*fit$logLik + df.2 
     }
-    return( score );
+    return( score )
 }
 
 
 assign_model <- function(tree, Y, shift.configuration, opt){
 
-    Y       = as.matrix(Y);
-    nEdges  = length(tree$edge.length);
-    nTips   = length(tree$tip.label);
+    Y       = as.matrix(Y)
+    nEdges  = length(tree$edge.length)
+    nTips   = length(tree$tip.label)
 
-    resi = mu = alpha = sigma2 = numeric();
-    shift.values = optimums = numeric();
-    intercept    = optimums.tmp = numeric();
+    resi = mu = alpha = sigma2 = numeric()
+    shift.values = optimums = numeric()
+    intercept    = optimums.tmp = numeric()
 
     for(i in 1:ncol(Y)){
 
-        nShifts = length(shift.configuration);
-        fit     = my_phylolm_interface(tree, as.matrix(Y[,i]), shift.configuration, opt);
+        nShifts = length(shift.configuration)
+        fit     = my_phylolm_interface(tree, as.matrix(Y[,i]), shift.configuration, opt)
         if ( all( is.na(fit) ) ){
-            stop("model score is NA in assign_model function! This should not happen");
+            stop("model score is NA in assign_model function! This should not happen")
         }
 
-        alpha   = c(alpha,  fit$optpar);
-        sigma2  = c(sigma2, fit$sigma2);
+        alpha   = c(alpha,  fit$optpar)
+        sigma2  = c(sigma2, fit$sigma2)
         ## E[Y]
-        mu      = cbind(mu, fit$fitted.values);
-        resi    = cbind(resi, fit$residuals);
+        mu      = cbind(mu, fit$fitted.values)
+        resi    = cbind(resi, fit$residuals)
 
-        intercept      = c(intercept, fit$coefficients[[1]]);
-        shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)]);
+        intercept      = c(intercept, fit$coefficients[[1]])
+        shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
 
-        optimums.tmp = rep(fit$coefficients[[1]], nEdges);
+        optimums.tmp = rep(fit$coefficients[[1]], nEdges)
         if( length(shift.configuration) > 0 )
             optimums.tmp = convert_shifts2regions(tree, shift.configuration, 
-                                       fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]]; 
+                                       fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
 
-        optimums = cbind(optimums, optimums.tmp);
+        optimums = cbind(optimums, optimums.tmp)
     }
-    score = cmp_model_score (tree, Y, shift.configuration, opt);
+    score = cmp_model_score (tree, Y, shift.configuration, opt)
 
     ##NOTE: adding the trait which used to detect shift positions
     return( list(Y=Y, 
@@ -601,13 +667,13 @@ assign_model <- function(tree, Y, shift.configuration, opt){
                  mu = mu, 
                  residuals = resi,
                  score=score,
-                 l1ou.options=opt) );
+                 l1ou.options=opt) )
 }
 
 run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     delta  = opt$grp.delta
     seq.ub = opt$grp.seq.ub
-    max.nTries = 10;
+    max.nTries = 10
     lmbdMax = 1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
 
     base.seq = seq(0, seq.ub, delta)
@@ -623,10 +689,10 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
         df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x) > 0))/nVariables)
         df.missing = setdiff(0:(opt$max.nShifts+1), df.vec)
 
-        cutExtra = TRUE;
+        cutExtra = TRUE
         if (length(df.missing) > 0) {
-            base.seq.tmp =numeric();
-            idx = prev.idx = 1;
+            base.seq.tmp =numeric()
+            idx = prev.idx = 1
             for (mdf in df.missing) {
 
                 if( length( which(df.vec > mdf) ) > 0 ){ ##that means at the begining or in the middle of the sequence
@@ -634,39 +700,39 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
                     if( idx == 1){ ## that means we should add to the begining
                         ##TODO: I don't like it
                         lmbdMax    = lmbdMax + 2
-                        next;
+                        next
                     }
                     if( prev.idx == idx){ ## not to repeat the same sequence.
-                        next;
+                        next
                     }
-                    lower = base.seq[[idx - 1]] + delta/4;
+                    lower = base.seq[[idx - 1]] + delta/4
                     upper = base.seq[[idx]]
-                    base.seq.tmp=c( base.seq.tmp, base.seq[prev.idx:idx], seq(lower, upper, delta/4));
+                    base.seq.tmp=c( base.seq.tmp, base.seq[prev.idx:idx], seq(lower, upper, delta/4))
                 } else{ ## that means we should add to the end
                     if( length(base.seq.tmp) > 0){
-                        lower = base.seq.tmp[[length(base.seq.tmp)]]+delta;
-                    }else{lower = 0};
-                    upper = max(lower, max(base.seq)) + 1;
-                    base.seq.tmp = c(base.seq.tmp, seq(lower, upper, delta));
-                    cutExtra  = FALSE;
+                        lower = base.seq.tmp[[length(base.seq.tmp)]]+delta
+                    }else{lower = 0}
+                    upper = max(lower, max(base.seq)) + 1
+                    base.seq.tmp = c(base.seq.tmp, seq(lower, upper, delta))
+                    cutExtra  = FALSE
                 }
-                prev.idx = idx;
+                prev.idx = idx
             }
 
             if( cutExtra ){
-                indices = which(df.vec > (opt$max.nShifts+4));
+                indices = which(df.vec > (opt$max.nShifts+4))
                 if( length(indices) > 0 ){
-                    upper.idx = min(indices);
+                    upper.idx = min(indices)
                 }else{
-                    upper.idx = length(base.seq);
+                    upper.idx = length(base.seq)
                 }
 
                 if( idx < upper.idx){
-                    base.seq.tmp = c(base.seq.tmp, base.seq[idx:upper.idx] ); 
+                    base.seq.tmp = c(base.seq.tmp, base.seq[idx:upper.idx] ) 
                 }
             }
             delta = delta/4
-            base.seq = unique(sort(base.seq.tmp));
+            base.seq = unique(sort(base.seq.tmp))
         }else { break }
     }
     lmbd = lmbdMax * (0.5^base.seq)

@@ -26,22 +26,22 @@
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot") ){
 
-    tree         <- multi2di(tree, random=FALSE);
-    root.model <- match.arg(root.model); 
-    tree         <- reorder(tree, "prun");
+    tree         <- multi2di(tree, random=FALSE)
+    root.model <- match.arg(root.model) 
+    tree         <- reorder(tree, "prun")
 
     if ( alpha > 0){
-        tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree;
+        tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree
     } else{
-        tre <- tree;
+        tre <- tree
         if( root.model == "OUrandomRoot"){
-            warning("when alpha is zero the model should be OUfixedRoot, so I switched to the OUfixedRoot");
+            warning("when alpha is zero the model should be OUfixedRoot, so I switched to the OUfixedRoot")
         }
     }
 
 
-    my.edge.list <- cbind(tre$edge-1, tre$edge.length); 
-    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label));
-    return(result);
+    my.edge.list <- cbind(tre$edge-1, tre$edge.length) 
+    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label))
+    return(result)
 }
 

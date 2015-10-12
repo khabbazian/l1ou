@@ -7,6 +7,7 @@ Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
 Description: Provides functions to study trait evolution from comparative data and detect past changes in the expected mean trait values. It uses the Ornstein-Uhlenbeck process, which can model a changing adaptive landscape over time and over lineages. Detection of evolutionary shifts in trait evolution from extant taxa is motivated by the study of convergent evolution, or to correlate shifts in traits with habitat changes or with changes in other phenotypes.
 License: GPL (>= 3) 
 URL: https://github.com/khabbazian/l1ou
+Encoding: UTF-8
 NeedsCompilation: yes
 Depends: R (>= 3.1.0), igraph, ape, phylolm, lars, parallel, grplasso, magic
 Imports: Rcpp
