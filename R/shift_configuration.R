@@ -84,7 +84,8 @@ estimate_shift_configuration <- function(tree, Y,
     stopifnot(is.ultrametric(tree));
     stopifnot(identical(tree$edge , reorder(tree, "postorder")$edge));
     stopifnot(nrow(Y) == length(tree$tip.label));
-    stopifnot(all( row.names(Y) == tree$tip.label));
+    stopifnot(all( rownames(Y) == tree$tip.label));
+    stopifnot(identical(rownames(Y), tree$tip.label))
 
     if( ncol(Y) == 1 ){  #univariate l1ou
         eModel1 = estimate_shift_configuration_known_alpha(tree, Y, est.alpha=TRUE,      opt=l1ou.options);
