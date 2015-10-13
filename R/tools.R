@@ -170,7 +170,10 @@ normalize_tree <- function(tree){
 #'@param tree a phylogenetic tree of class phylo.
 #'@param model the returned object from \code{\link{estimate_shift_configuration}}.
 #'@param pallet a color vector of size number of the shifts plus one. The last element is the background color.
-#'@param bar.axis logical. If TRUE, it plots axis for trait(s) range. 
+#'@param edge.ann logical. If TRUE, annotates edges with shift values or if provided by tree$edge.label. 
+#'@param edge.ann.cex the amount by which the annotation text should be magnified relative to the default.
+#'@param plot.bar logical. If TRUE, the bars corresponding to the trait values will be plotted.
+#'@param bar.axis logical. If TRUE, the axis of of trait(s) range will be plotted. 
 #'@param ... further arguments to be passed on to plot.phylo 
 #'
 #'@return none.
@@ -179,69 +182,74 @@ normalize_tree <- function(tree){
 #' data("lizard.traits", "lizard.tree")
 #' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' ew <- rep(1,198) # the tree has 198 edges
+#' nEdges <- length(lizard.tree$edge[,1]);
+#' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
 #'
-plot_l1ou <- function(tree, model, pallet=NA, bar.axis=TRUE, ...){
-
-    stopifnot(identical(tree$edge , reorder(tree, "postorder")$edge))
-
-    shift.configuration = sort( model$shift.configuration , decreasing = T)
-    nShifts             = model$nShifts
-    nEdges              = length(tree$edge.length)
-
-    if(bar.axis)
-        par(oma=c(3,0,0,3))
+plot_l1ou <- function (tree, model, pallet = NA, edge.ann = TRUE, 
+                       edge.ann.cex = 1, plot.bar = TRUE, bar.axis = TRUE, ...) 
+{
+    stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
+    shift.configuration = sort(model$shift.configuration, decreasing = T)
+    nShifts = model$nShifts
+    nEdges = length(tree$edge.length)
+    if (bar.axis) 
+        par(oma = c(3, 0, 0, 3))
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
 
-    layout(matrix(1:(1+ncol(Y)), 1, (1+ncol(Y))), width=c(2,1,1,1,1))
-
-    if(is.na(pallet)){
-           pallet  = c(sample(rainbow(nShifts)), "gray")
+    if( plot.bar){
+        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, 1, 1, 1, 1))
     }
-    stopifnot(length(pallet)==model$nShifts+1)
 
-    edgecol = rep(pallet[nShifts+1], nEdges)
+    if (is.na(pallet)) {
+        pallet = c(sample(rainbow(nShifts)), "gray")
+    }
+
+    stopifnot(length(pallet) == model$nShifts + 1)
+    edgecol = rep(pallet[nShifts + 1], nEdges)
     counter = 1
-    Z       = model$l1ou.options$Z
-    for( shift in model$shift.configuration){
+    Z = model$l1ou.options$Z
+    for (shift in model$shift.configuration) {
         edgecol[[shift]] = pallet[[counter]]
-        tips = which(Z[ , shift]>0)
-        for( tip in tips){
-            edgecol[ which( Z[tip, 1:shift] > 0) ] = pallet[[counter]]
+        tips = which(Z[, shift] > 0)
+        for (tip in tips) {
+            edgecol[which(Z[tip, 1:shift] > 0)] = pallet[[counter]]
         }
         counter = counter + 1
     }
+    plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
 
-    plot.phylo(tree, edge.color=edgecol, no.margin=TRUE, ...)
-
-    edge.labels = rep(NA, nEdges)
-    counter <- 1
-    for(shift in shift.configuration){
-        edge.labels[ shift ] = paste(round(model$shift.values[counter,], digits = 2), collapse=",")
-        counter  <- counter + 1
+    if( edge.ann ){
+        if( length(tree$edge.label) == 0){
+            tree$edge.label = rep(NA, nEdges)
+            counter <- 1
+            for (shift in shift.configuration) {
+                tree$edge.label[shift] = paste(round(model$shift.values[counter, ], digits = 2), collapse = ",")
+                counter <- counter + 1
+            }
+        }
+        edgelabels(tree$edge.label, cex=edge.ann.cex, adj = c(0.5, -0.25), frame = "none")
     }
 
-    edgelabels(edge.labels, adj = c(0.5, -0.25), frame = "none", bg="lightblue")
-
-    nTips = length(tree$tip.label)
-    barcol = rep("gray", nTips)
-
-    for(i in 1:nTips){
-        barcol[[i]]  = edgecol[  which( tree$edge[,2] == i)  ]
-    }
-
-    if(bar.axis)
-        par(mar=c(0,0,0,3))
-
-    for(i in 1:ncol(Y)){
-        normy = (Y[,i] - mean(Y[,i]))/sd(Y[,i])
-        barplot (as.vector(normy), border=FALSE, col=barcol, horiz = TRUE, names.arg = "", xaxt = "n")
-        if(bar.axis)
-            axis(1, at = range(normy), labels = round(range(normy), digits = 2))
+    if(plot.bar){
+        nTips = length(tree$tip.label)
+        barcol = rep("gray", nTips)
+        for (i in 1:nTips) {
+            barcol[[i]] = edgecol[which(tree$edge[, 2] == i)]
+        }
+        if (bar.axis) 
+            par(mar = c(0, 0, 0, 3))
+        for (i in 1:ncol(Y)) {
+            normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
+            barplot(as.vector(normy), border = FALSE, col = barcol, 
+                    horiz = TRUE, names.arg = "", xaxt = "n")
+            if (bar.axis) 
+                axis(1, at = range(normy), labels = round(range(normy), 
+                                                          digits = 2))
+        }
     }
 }

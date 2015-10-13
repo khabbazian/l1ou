@@ -33,7 +33,6 @@ data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2)
-print(result)
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}

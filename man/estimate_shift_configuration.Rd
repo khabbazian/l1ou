@@ -68,7 +68,8 @@ For information criteria: see \code{\link{configuration_ic}}.
 data("lizard.traits", "lizard.tree")
 Y = lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
-ew <- rep(1, 198) # the tree has 198 edges
+nEdges <- length(lizard.tree$edge[,1]);
+ew <- rep(1,nEdges)
 ew[eModel$shift.configuration] <- 3
 plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 }

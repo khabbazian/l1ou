@@ -39,7 +39,8 @@
 #' data("lizard.traits", "lizard.tree")
 #' Y = lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' ew <- rep(1, 198) # the tree has 198 edges
+#' nEdges <- length(lizard.tree$edge[,1]);
+#' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
@@ -180,7 +181,6 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
     stopifnot( alpha >=0 )
 
-    #library("lars")
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=0)$sqrtInvSigma ) 
@@ -197,7 +197,9 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     nP  = ncol(XX)
     XX  = XX[,-to.be.removed]
 
-    sol.path = lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
+    capture.output(
+                   sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
+                   )
 
     Tmp = matrix(0, nrow(sol.path$beta), nP)
     Tmp[,-to.be.removed] = sol.path$beta
