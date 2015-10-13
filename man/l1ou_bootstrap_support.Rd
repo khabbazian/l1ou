@@ -33,6 +33,13 @@ data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2)
+
+nEdges <- length(lizard.tree$edge[,1])
+ew <- rep(1,nEdges)
+ew[eModel$shift.configuration] <- 3
+lizard.tree$edge.label <- round(result * 100, digits=1)
+lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>0, paste0(lizard.tree$edge.label,"\%"), NA)
+plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}

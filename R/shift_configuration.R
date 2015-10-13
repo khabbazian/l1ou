@@ -527,14 +527,17 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
     #        lower.bound    = opt$alpha.lower.bound ) )  
 
     fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
+                            starting.value = max(1, opt$alpha.lower.bound),
                             lower.bound    = opt$alpha.lower.bound, 
                             upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
     options(warn = 0)
 
     if(class(fit) == "try-error"){ 
-      warning( paste0( "phylolm internal error. with a shift configuratio with ", 
-                      length(shift.configuration), " shifts. You may want to reduce alpha.upper!") )
-      return(NA)
+        if(!opt$quietly){
+            warning( paste0( "phylolm returned error with a shift configuration of size ", 
+                            length(shift.configuration), ". You may want to reduce alpha.upper!") )
+        }
+        return(NA)
     }
 
     return(fit)
