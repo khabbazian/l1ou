@@ -1,4 +1,3 @@
-
 #
 #' (inverse) square root of the phylogenetic covariance
 #'
@@ -7,9 +6,11 @@
 #' The algorithm traverses the tree only once, hence the algorithm is very fast
 #' and can be applied to very big trees.
 #'
-#'@param tree ultrametric tree of class phylo with branch lengths.
+#'@param tree tree of class phylo with branch lengths. If alpha>0, i.e. under OU model, the tree has to be ultrametric.
 #'@param alpha adaptation rate for the OU model. The default is 0, which corresponds to the BM mode with a fixed ancestral state at the root.
 #'@param root.model ancestral state model at the root.
+#'@param check.order logical. If TRUE, the order will be checked to be in postorder traversal.
+#'@param check.ultramteric logical. If TRUE, the tree will be checked to ultrametric.
 #'
 #'@return 
 #' \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
@@ -22,8 +23,8 @@
 #' res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 #' Sigma <- vcv(lizard.tree)
 #' dimnames(Sigma) <- NULL
-#' all.equal(res$sqrtSigma %*% t(res$sqrtSigma) , Sigma) # TRUE
-#' all.equal(res$sqrtInvSigma %*% t(res$sqrtInvSigma) , solve(Sigma)) # TRUE
+#' all.equal(res$sqrtSigma %*% t(res$sqrtSigma), Sigma) # TRUE
+#' all.equal(res$sqrtInvSigma %*% t(res$sqrtInvSigma), solve(Sigma)) # TRUE
 #'
 #'@references
 #' Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models 
@@ -31,18 +32,31 @@
 #' Eric A. Stone. 2011. "Why the phylogenetic regression appears robust to tree misspecification". Systematic Biology, 60(3):245-260.
 #'
 #'@export
-sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot") ){
+sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
+                               check.order=TRUE, check.ultramteric=TRUE){
 
     tree         <- multi2di(tree, random=FALSE)
     root.model <- match.arg(root.model) 
-    tree         <- reorder(tree, "prun")
+    ##NOTE: the function assumes reordering does not change the order of the 
+    ##nodes and it just change the order of edges, so that column i in each 
+    ##matrix still corresponds to internal node 
+    if( check.order ){
+        tree         <- reorder(tree, "post")
+    }
 
     if ( alpha > 0){
+        ##NOTE: this step requires that the tree be ultrametric tree. 
+        ##NOTE: If the tree is not ultrametric, the function returns a wrong result with no warning
+        if(check.ultramteric){
+            if(!is.ultrametric(tree)){
+                stop("then alpha>0, under the OU model, the tree has to be ultrametric"); 
+            }
+        }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree
-    } else{
+    }else{
         tre <- tree
         if( root.model == "OUrandomRoot"){
-            warning("when alpha is zero the model should be OUfixedRoot, so I switched to the OUfixedRoot")
+            warning("when alpha is zero the model should be OUfixedRoot, so it is switched to the OUfixedRoot")
         }
     }
 

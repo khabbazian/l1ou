@@ -5,6 +5,7 @@
 #'the magnitude of shifts in the evolution of these traits. The model assumes an Ornstein-Uhlenbeck process
 #'whose parameters are estimated (adaptation `strength' \eqn{\alpha}{alpha} and drift variance \eqn{\sigma^2}{sigma^2}).
 #'Instantaneous shifts in the optimal trait value affect the traits over time.
+#'
 #'@param tree ultrametric tree of class phylo with branch lengths, and edges in postorder.
 #'@param Y trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
 #'@param max.nShifts upper bound for the number of shifts. The default value is half the number of tips.
@@ -49,18 +50,18 @@
 #'
 #'@export
 estimate_shift_configuration <- function(tree, Y, 
-           max.nShifts           = floor(length(tree$tip.label)/2), 
-           criterion             = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-           root.model            = c("OUrandomRoot", "OUfixedRoot"),
-           quietly               = TRUE,
-           alpha.upper           = alpha_upper_bound(tree), 
-           alpha.lower           = 0,
-           standardize           = TRUE,
-           num.top.configurations    = max.nShifts/2,
-           edge.length.threshold = .Machine$double.eps,
-           grp.delta             = 1/16,
-           grp.seq.ub            = 5,
-           l1ou.options          = NA
+           max.nShifts            = floor(length(tree$tip.label)/2), 
+           criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+           root.model             = c("OUrandomRoot", "OUfixedRoot"),
+           quietly                = TRUE,
+           alpha.upper            = alpha_upper_bound(tree), 
+           alpha.lower            = 0,
+           standardize            = TRUE,
+           num.top.configurations = max.nShifts/2,
+           edge.length.threshold  = .Machine$double.eps,
+           grp.delta              = 1/16,
+           grp.seq.ub             = 5,
+           l1ou.options           = NA
      ) {
     if(!is.ultrametric(tree)){
         stop("the input tree is not ultrametric")
@@ -138,19 +139,19 @@ estimate_shift_configuration <- function(tree, Y,
     }
 
     if (all(is.na(l1ou.options))) {
-        l1ou.options <- list()
-        l1ou.options$use.saved.scores <- TRUE
-        l1ou.options$max.nShifts <- max.nShifts
-        l1ou.options$criterion <- match.arg(criterion)
-        l1ou.options$root.model <- match.arg(root.model)
-        l1ou.options$quietly <- quietly
+        l1ou.options                   <- list()
+        l1ou.options$use.saved.scores  <- TRUE
+        l1ou.options$max.nShifts       <- max.nShifts
+        l1ou.options$criterion         <- match.arg(criterion)
+        l1ou.options$root.model        <- match.arg(root.model)
+        l1ou.options$quietly           <- quietly
         l1ou.options$alpha.upper.bound <- alpha.upper
         l1ou.options$alpha.lower.bound <- alpha.lower
-        l1ou.options$edge.length.threshold <- edge.length.threshold
+        l1ou.options$edge.length.threshold  <- edge.length.threshold
         l1ou.options$num.top.configurations <- num.top.configurations
         l1ou.options$standardize <- standardize
-        l1ou.options$grp.seq.ub <- grp.seq.ub
-        l1ou.options$grp.delta <- grp.delta
+        l1ou.options$grp.seq.ub  <- grp.seq.ub
+        l1ou.options$grp.delta   <- grp.delta
         l1ou.options$Z <- generate_design_matrix(tree, "simpX")
     }
 
@@ -183,10 +184,12 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0)$sqrtInvSigma ) 
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, 
+                                        check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     } else{           ## OU model
         X   = generate_design_matrix(tree, "orgX", alpha=alpha )
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha)$sqrtInvSigma ) 
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, root.model=opt$root.model,
+                                        check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     }
 
     to.be.removed   = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
@@ -249,10 +252,11 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         X  = matrix(0,0,0)
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
-            RE  = sqrt_OU_covariance(tree,     alpha = 0 )
+            RE  = sqrt_OU_covariance(tree,     alpha = 0, check.order=F, check.ultramteric=F )
         } else {
-            X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]] )
-            RE  = sqrt_OU_covariance(tree,     alpha = alpha[[i]] )
+            X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]])
+            RE  = sqrt_OU_covariance(tree,     alpha = alpha[[i]], root.model=opt$root.model,
+                                     check.order=F, check.ultramteric=F )
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
         YY[,i]  = Cinvh%*%YY[,i]
@@ -289,8 +293,6 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
 
 
 generate_design_matrix <- function(tree, type="apprX", alpha){
-    #library("igraph")
-
     stopifnot( is.ultrametric(tree) )
     stopifnot( sum( 1:length(tree$tip.label) %in% tree$edge[,1]) == 0)
 
@@ -434,6 +436,13 @@ configuration_ic <- function(tree, Y, shift.configuration,
                      alpha.upper = alpha_upper_bound(tree), 
                      alpha.lower = 0
                      ){
+
+    ##TODO: change the following into a warning and then reorder 
+    ##the tree and shift configuration accordingly
+    if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
+        stop("the input phylogenetic tree is not in postorder")
+    }
+
     opt = list()
 
     opt$criterion         <- match.arg(criterion)
@@ -538,13 +547,11 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
         }
         return(NA)
     }
-
     return(fit)
 }
 
 cmp_mBIC_df <- function(tree, shift.configuration, opt){
 ## we assume that tree is of post order.
-
     shift.configuration = sort(shift.configuration)
     nTips           = length(tree$tip.label)
     nShifts         = length(shift.configuration)
