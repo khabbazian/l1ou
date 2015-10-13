@@ -1,32 +1,32 @@
 # 
-#' detects evolutionary shifts under OU model
+#' Detects evolutionary shifts under an OU model
 #'
 #'This function takes in one or multiple traits, and automatically detects the phylogenetic placement and 
 #'the magnitude of shifts in the evolution of these traits. The model assumes an Ornstein-Uhlenbeck process
-#'whose parameters are estimated (adaptation 'strength' alpha and drift variance sigma2).
+#'whose parameters are estimated (adaptation `strength' \eqn{\alpha}{alpha} and drift variance \eqn{\sigma^2}{sigma^2}).
 #'Instantaneous shifts in the optimal trait value affect the traits over time.
 #'@param tree ultrametric tree of class phylo with branch lengths, and edges in postorder.
 #'@param Y trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
 #'@param max.nShifts upper bound for the number of shifts. The default value is half the number of tips.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
 #'@param root.model ancestral state model at the root.
-#'@param quietly logical. If FALSE, it writes to the output.
+#'@param quietly logical. If FALSE, a basic summary of the progress and results is printed.
 #'@param alpha.upper upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower lower bound for the phylogenetic adaptation rate.
-#'@param standardize logical. If TRUE, the columns of the trait matrix will be standardized.
-#'@param num.top.configurations internal argument: number of shift configurations chosen for further improvement.
-#'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with length below this threshold are considered as soft polytomies, dissallowing shifts on such branches.
-#'@param grp.delta internal parameter, used when the data contain multiple traits. The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
-#'@param grp.seq.ub internal parameter, used for multiple traits. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
+#'@param standardize logical. If TRUE, the columns of the trait matrix are first standardized.
+#'@param num.top.configurations number of shift configurations on the lasso solution path chosen for further improvement.
+#'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.
+#'@param grp.delta internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
+#'@param grp.seq.ub (used for multiple traits). The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
 #'@param l1ou.options if provided, all the default values will be ignored. 
 #'@return 
 #' \item{Y}{input trait vector/matrix.}
-#' \item{shift.configuration}{estimated position of shifts, i.e. vector of indices of edges where the estimated shifts occur.}
+#' \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 #' \item{shift.values}{estimates of the shift values.}
 #' \item{nShifts}{estimated number of shifts.}
 #' \item{optimums}{optimum values of the trait along the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
-#' \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}, one per trait.}
-#' \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}, one per trait.}
+#' \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
+#' \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 #' \item{mu}{fitted values, i.e. estimated trait means.}
 #' \item{residuals}{residuals. These residuals are phylogenetically correlated.}
 #' \item{score}{information criterion value of the estimated shift configuration.}
@@ -36,12 +36,12 @@
 #'For information criteria: see \code{\link{configuration_ic}}. 
 #'@examples
 #' 
-#' data("lizard.traits", "lizard.tree")
+#' data(lizard.traits, lizard.tree)
 #' Y = lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' nEdges <- length(lizard.tree$edge[,1]);
-#' ew <- rep(1,nEdges) 
-#' ew[eModel$shift.configuration] <- 3
+#' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
+#' ew <- rep(1,nEdges)                    # to set default edge width of 1
+#' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@references
@@ -398,15 +398,15 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #'@param shift.configuration shift positions, i.e. vector of indices of the edges where the shifts occur.
 #'@param criterion an information criterion (see Details).
 #'@param root.model an ancestral state model at the root.
-#'@param alpha.upper upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
+#'@param alpha.upper upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.
 #'@param alpha.lower lower bound for the phylogenetic adaptation rate.
 #'
 #'@return Information criterion value of the given shift configuration.
 #'
 #'@details
-#'AIC gives the usual Akaike information criterion, penalizing each parameter by 2, and counting each shift as 2 parameter (for the shift magnitude for the shift position, as if this position were a continuous parameter).
-#'AICc gives the usual small-sample size modification to AIC. 
-#'BIC also gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters. 
+#'AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
+#'AICc gives the usual small-sample size modification of AIC. 
+#'BIC gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters. 
 #'mBIC is the modified BIC proposed by Ho and Ané (2014).
 #'pBIC is the phylogenetic BIC for shifts proposed by Khabbazian et al.
 #'pBICess is a version of pBIC where the determinant term is replaced by a sum of the log of effective sample sizes (ESS), similar to the ESS proposed by Ané (2008). 
@@ -414,11 +414,10 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #'@examples
 #' 
 #' library("l1ou") 
-#' data("lizard.traits", "lizard.tree")
+#' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1] 
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
-#' print(ic.score)
+#' configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
 #'
 #'@seealso \code{\link{estimate_shift_configuration}} 
 #'
