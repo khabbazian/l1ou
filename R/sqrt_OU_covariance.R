@@ -12,8 +12,8 @@
 #'@param root.model ancestral state model at the root.
 #'
 #'@return 
-#' \item{sqrtSigma}{square root of the phylogenetic covariance matrix.}
 #' \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
+#' \item{sqrtSigma}{square root of the phylogenetic covariance matrix.}
 #'
 #'@examples
 #'
