@@ -4,7 +4,8 @@
 \alias{plot_l1ou}
 \title{plots the tree and trait(s).}
 \usage{
-plot_l1ou(tree, model, pallet = NA, bar.axis = TRUE, ...)
+plot_l1ou(tree, model, pallet = NA, edge.ann = TRUE, edge.ann.cex = 1,
+  plot.bar = TRUE, bar.axis = TRUE, ...)
 }
 \arguments{
 \item{tree}{a phylogenetic tree of class phylo.}
@@ -13,7 +14,13 @@ plot_l1ou(tree, model, pallet = NA, bar.axis = TRUE, ...)
 
 \item{pallet}{a color vector of size number of the shifts plus one. The last element is the background color.}
 
-\item{bar.axis}{logical. If TRUE, it plots axis for trait(s) range.}
+\item{edge.ann}{logical. If TRUE, annotates edges with shift values or if provided by tree$edge.label.}
+
+\item{edge.ann.cex}{the amount by which the annotation text should be magnified relative to the default.}
+
+\item{plot.bar}{logical. If TRUE, the bars corresponding to the trait values will be plotted.}
+
+\item{bar.axis}{logical. If TRUE, the axis of of trait(s) range will be plotted.}
 
 \item{...}{further arguments to be passed on to plot.phylo}
 }
@@ -27,7 +34,8 @@ plots the tree and trait(s).
 data("lizard.traits", "lizard.tree")
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
-ew <- rep(1,198) # the tree has 198 edges
+nEdges <- length(lizard.tree$edge[,1]);
+ew <- rep(1,nEdges)
 ew[eModel$shift.configuration] <- 3
 plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 }

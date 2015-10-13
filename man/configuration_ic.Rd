@@ -6,7 +6,7 @@
 \usage{
 configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"))
+  "OUfixedRoot"), alpha.upper = alpha_upper_bound(tree), alpha.lower = 0)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo, with branch lengths, and edges in postorder.}
@@ -18,6 +18,10 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 \item{criterion}{an information criterion (see Details).}
 
 \item{root.model}{an ancestral state model at the root.}
+
+\item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
+
+\item{alpha.lower}{lower bound for the phylogenetic adaptation rate.}
 }
 \value{
 Information criterion value of the given shift configuration.
@@ -43,7 +47,9 @@ print(ic.score)
 }
 \references{
 Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.
+
 Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. 5(11):1133-1146.
+
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
 }
 \seealso{
