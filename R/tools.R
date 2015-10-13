@@ -142,10 +142,12 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
     return( o.vec )
 }
 
-#' normalizes the branch lengths so that the distance from the root to all tips are equal to one. 
-#'@param tree an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.
+#' Normalizes branch lengths to a unit tree height
 #'
-#'@return the normalized phylogenetic tree.
+#' Normalizes all branch lengths by the same factor, so that the distance from the root to all tips is equal to one. 
+#'@param tree ultrametric tree of class phylo with branch lengths, and edges in postorder.
+#'
+#'@return normalized phylogenetic tree, of class phylo.
 #'
 #'@export
 normalize_tree <- function(tree){
@@ -165,13 +167,15 @@ normalize_tree <- function(tree){
 
 
 #'
-#' plots the tree and trait(s).
+#' Visualizes a shift configuration: tree and trait(s).
 #'
-#'@param tree a phylogenetic tree of class phylo.
-#'@param model the returned object from \code{\link{estimate_shift_configuration}}.
-#'@param pallet a color vector of size number of the shifts plus one. The last element is the background color.
-#'@param edge.ann logical. If TRUE, annotates edges with shift values or if provided by tree$edge.label. 
-#'@param edge.ann.cex the amount by which the annotation text should be magnified relative to the default.
+#' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
+#'
+#'@param tree phylogenetic tree of class phylo.
+#'@param model object returned by \code{\link{estimate_shift_configuration}}.
+#'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
+#'@param edge.ann logical. If TRUE, annotates edges with shift values or by labels in tree$edge.label, if non-empty. 
+#'@param edge.ann.cex amount by which the annotation text should be magnified relative to the default.
 #'@param plot.bar logical. If TRUE, the bars corresponding to the trait values will be plotted.
 #'@param bar.axis logical. If TRUE, the axis of of trait(s) range will be plotted. 
 #'@param ... further arguments to be passed on to plot.phylo 
@@ -179,7 +183,7 @@ normalize_tree <- function(tree){
 #'@return none.
 #'@examples
 #' 
-#' data("lizard.traits", "lizard.tree")
+#' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
 #' nEdges <- length(lizard.tree$edge[,1]);
@@ -189,7 +193,7 @@ normalize_tree <- function(tree){
 #'
 #'@export
 #'
-plot_l1ou <- function (tree, model, pallet = NA, edge.ann = TRUE, 
+plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE, 
                        edge.ann.cex = 1, plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
@@ -205,19 +209,19 @@ plot_l1ou <- function (tree, model, pallet = NA, edge.ann = TRUE,
         layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, 1, 1, 1, 1))
     }
 
-    if (is.na(pallet)) {
-        pallet = c(sample(rainbow(nShifts)), "gray")
+    if (is.na(palette)) {
+        palette = c(sample(rainbow(nShifts)), "gray")
     }
 
-    stopifnot(length(pallet) == model$nShifts + 1)
-    edgecol = rep(pallet[nShifts + 1], nEdges)
+    stopifnot(length(palette) == model$nShifts + 1)
+    edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
     for (shift in model$shift.configuration) {
-        edgecol[[shift]] = pallet[[counter]]
+        edgecol[[shift]] = palette[[counter]]
         tips = which(Z[, shift] > 0)
         for (tip in tips) {
-            edgecol[which(Z[tip, 1:shift] > 0)] = pallet[[counter]]
+            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[counter]]
         }
         counter = counter + 1
     }
