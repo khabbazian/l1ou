@@ -2,7 +2,7 @@
 % Please edit documentation in R/shift_configuration.R
 \name{estimate_shift_configuration}
 \alias{estimate_shift_configuration}
-\title{detects evolutionary shifts under OU model}
+\title{Detects evolutionary shifts under an OU model}
 \usage{
 estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
@@ -24,32 +24,32 @@ estimate_shift_configuration(tree, Y,
 
 \item{root.model}{ancestral state model at the root.}
 
-\item{quietly}{logical. If FALSE, it writes to the output.}
+\item{quietly}{logical. If FALSE, a basic summary of the progress and results is printed.}
 
 \item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
 
 \item{alpha.lower}{lower bound for the phylogenetic adaptation rate.}
 
-\item{standardize}{logical. If TRUE, the columns of the trait matrix will be standardized.}
+\item{standardize}{logical. If TRUE, the columns of the trait matrix are first standardized.}
 
-\item{num.top.configurations}{internal argument: number of shift configurations chosen for further improvement.}
+\item{num.top.configurations}{number of shift configurations on the lasso solution path chosen for further improvement.}
 
-\item{edge.length.threshold}{minimum edge length that is considered non-zero. Branches with length below this threshold are considered as soft polytomies, dissallowing shifts on such branches.}
+\item{edge.length.threshold}{minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.}
 
-\item{grp.delta}{internal parameter, used when the data contain multiple traits. The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
+\item{grp.delta}{internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
 
-\item{grp.seq.ub}{internal parameter, used for multiple traits. The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
+\item{grp.seq.ub}{(used for multiple traits). The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).}
 
 \item{l1ou.options}{if provided, all the default values will be ignored.}
 }
 \value{
 \item{Y}{input trait vector/matrix.}
-\item{shift.configuration}{estimated position of shifts, i.e. vector of indices of edges where the estimated shifts occur.}
+\item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 \item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimated number of shifts.}
 \item{optimums}{optimum values of the trait along the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
-\item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}, one per trait.}
-\item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}, one per trait.}
+\item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
+\item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 \item{mu}{fitted values, i.e. estimated trait means.}
 \item{residuals}{residuals. These residuals are phylogenetically correlated.}
 \item{score}{information criterion value of the estimated shift configuration.}
@@ -58,19 +58,19 @@ estimate_shift_configuration(tree, Y,
 \description{
 This function takes in one or multiple traits, and automatically detects the phylogenetic placement and
 the magnitude of shifts in the evolution of these traits. The model assumes an Ornstein-Uhlenbeck process
-whose parameters are estimated (adaptation 'strength' alpha and drift variance sigma2).
+whose parameters are estimated (adaptation `strength' \eqn{\alpha}{alpha} and drift variance \eqn{\sigma^2}{sigma^2}).
 Instantaneous shifts in the optimal trait value affect the traits over time.
 }
 \details{
 For information criteria: see \code{\link{configuration_ic}}.
 }
 \examples{
-data("lizard.traits", "lizard.tree")
+data(lizard.traits, lizard.tree)
 Y = lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
-nEdges <- length(lizard.tree$edge[,1]);
-ew <- rep(1,nEdges)
-ew[eModel$shift.configuration] <- 3
+nEdges <- length(lizard.tree$edge[,1]) # total number of edges
+ew <- rep(1,nEdges)                    # to set default edge width of 1
+ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
 plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \references{

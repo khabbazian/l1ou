@@ -2,17 +2,17 @@
 % Please edit documentation in R/tools.R
 \name{normalize_tree}
 \alias{normalize_tree}
-\title{normalizes the branch lengths so that the distance from the root to all tips are equal to one.}
+\title{Normalizes branch lengths to a unit tree height}
 \usage{
 normalize_tree(tree)
 }
 \arguments{
-\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths in postorder.}
+\item{tree}{ultrametric tree of class phylo with branch lengths, and edges in postorder.}
 }
 \value{
-the normalized phylogenetic tree.
+normalized phylogenetic tree, of class phylo.
 }
 \description{
-normalizes the branch lengths so that the distance from the root to all tips are equal to one.
+Normalizes all branch lengths by the same factor, so that the distance from the root to all tips is equal to one.
 }
 
