@@ -19,12 +19,17 @@ get_configuration_score_to_list <- function(shift.configuration){
     return(res$value)
 }
 
+
+
 print_out <- function(eModel, silence){
     if ( silence == FALSE)
         print( paste0( "EST: alpha: ", eModel$alpha, " sigma2: ",  
                  eModel$sigma2, " gamma: ", eModel$sigma2/(2*eModel$alpha),
                  " score: ", eModel$score ) )
 }
+
+
+
 
 
 standardize_matrix <- function(Y){
