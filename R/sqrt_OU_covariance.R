@@ -6,7 +6,7 @@
 #' The algorithm traverses the tree only once, hence the algorithm is very fast
 #' and can be applied to very big trees.
 #'
-#'@param tree tree of class phylo with branch lengths. If alpha>0, i.e. under OU model, the tree has to be ultrametric.
+#'@param tree tree of class phylo with branch lengths. If alpha>0, i.e. under the OU model, the tree has to be ultrametric.
 #'@param alpha adaptation rate for the OU model. The default is 0, which corresponds to the BM mode with a fixed ancestral state at the root.
 #'@param root.model ancestral state model at the root.
 #'@param check.order logical. If TRUE, the order will be checked to be in postorder traversal.
