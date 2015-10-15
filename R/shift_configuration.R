@@ -11,6 +11,7 @@
 #'@param max.nShifts upper bound for the number of shifts. The default value is half the number of tips.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
 #'@param root.model ancestral state model at the root.
+#'@param candid.edges a vector of indices of edges where the shifts may occur. If provided, only these set of edges will be speculated for occurrence of shifts; otherwise all the edges will be considered.
 #'@param quietly logical. If FALSE, a basic summary of the progress and results is printed.
 #'@param alpha.upper upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower lower bound for the phylogenetic adaptation rate.
@@ -38,12 +39,21 @@
 #'@examples
 #' 
 #' data(lizard.traits, lizard.tree)
-#' Y = lizard.traits[,1]
+#' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#'
+#'@examples
+#'
+#' data("lizard.traits", "lizard.tree")
+#' Y <- lizard.traits[,1:1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
+#' ce <- eModel$shift.configuration 
+#' eModel <- estimate_shift_configuration(lizard.tree, Y, candid.edges = ce)
+#' plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 #'
 #'@references
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
@@ -53,6 +63,7 @@ estimate_shift_configuration <- function(tree, Y,
            max.nShifts            = floor(length(tree$tip.label)/2), 
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
            root.model             = c("OUrandomRoot", "OUfixedRoot"),
+           candid.edges           = NA,
            quietly                = TRUE,
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = 0,
@@ -149,10 +160,11 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$alpha.lower.bound <- alpha.lower
         l1ou.options$edge.length.threshold  <- edge.length.threshold
         l1ou.options$num.top.configurations <- num.top.configurations
-        l1ou.options$standardize <- standardize
-        l1ou.options$grp.seq.ub  <- grp.seq.ub
-        l1ou.options$grp.delta   <- grp.delta
-        l1ou.options$Z <- generate_design_matrix(tree, "simpX")
+        l1ou.options$standardize  <- standardize
+        l1ou.options$grp.seq.ub   <- grp.seq.ub
+        l1ou.options$grp.delta    <- grp.delta
+        l1ou.options$candid.edges <- candid.edges
+        l1ou.options$Z            <- generate_design_matrix(tree, "simpX")
     }
 
     if (ncol(Y) == 1) {
@@ -192,7 +204,11 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
                                         check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     }
 
-    to.be.removed   = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
+    if(!all(is.na(opt$candid.edges))){
+        to.be.removed  = setdiff(1:length(tree$edge.length), opt$candid.edges)
+    }else{
+        to.be.removed   = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
+    }
 
     YY  = Cinvh%*%Y
     XX  = Cinvh%*%X
@@ -240,8 +256,13 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
 
     ##X             = cbind(X,1)
     ##ncolX         = ncol(X)
-    to.be.removed = c(ncol(X), which(tree$edge.length < opt$edge.length.threshold))
     ##to.be.removed = c(ncolX-1, which(tree$edge.length < opt$edge.length.threshold))
+
+    if(!all(is.na(opt$candid.edges))){
+        to.be.removed  = setdiff(1:length(tree$edge.length), opt$candid.edges)
+    }else{
+        to.be.removed = c(ncol(X), which(tree$edge.length < opt$edge.length.threshold))
+    }
 
     offset        = rep(ncol(X)*(0:(ncol(Y)-1)), each=length(to.be.removed))
     to.be.removed = rep(to.be.removed, ncol(Y)) + offset

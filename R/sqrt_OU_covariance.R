@@ -35,13 +35,13 @@
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
                                check.order=TRUE, check.ultramteric=TRUE){
 
-    tree         <- multi2di(tree, random=FALSE)
+    tree       <- multi2di(tree, random=FALSE)
     root.model <- match.arg(root.model) 
     ##NOTE: the function assumes reordering does not change the order of the 
     ##nodes and it just change the order of edges, so that column i in each 
     ##matrix still corresponds to internal node 
     if( check.order ){
-        tree         <- reorder(tree, "post")
+        tree <- reorder(tree, "post")
     }
 
     if ( alpha > 0){
@@ -49,17 +49,16 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
         ##NOTE: If the tree is not ultrametric, the function returns a wrong result with no warning
         if(check.ultramteric){
             if(!is.ultrametric(tree)){
-                stop("then alpha>0, under the OU model, the tree has to be ultrametric"); 
+                stop("alpha>0, the tree has to be ultrametric") 
             }
         }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree
     }else{
         tre <- tree
         if( root.model == "OUrandomRoot"){
-            warning("when alpha is zero the model should be OUfixedRoot, so it is switched to the OUfixedRoot")
+            warning("alpha=0, BM model, the ancestral state model is changed to the OUfixedRoot")
         }
     }
-
 
     my.edge.list <- cbind(tre$edge-1, tre$edge.length) 
     result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label))

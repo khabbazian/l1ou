@@ -8,7 +8,7 @@ sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
   "OUrandomRoot"), check.order = TRUE, check.ultramteric = TRUE)
 }
 \arguments{
-\item{tree}{tree of class phylo with branch lengths. If alpha>0, i.e. under OU model, the tree has to be ultrametric.}
+\item{tree}{tree of class phylo with branch lengths. If alpha>0, i.e. under the OU model, the tree has to be ultrametric.}
 
 \item{alpha}{adaptation rate for the OU model. The default is 0, which corresponds to the BM mode with a fixed ancestral state at the root.}
 
