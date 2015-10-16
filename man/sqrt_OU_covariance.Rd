@@ -2,35 +2,44 @@
 % Please edit documentation in R/sqrt_OU_covariance.R
 \name{sqrt_OU_covariance}
 \alias{sqrt_OU_covariance}
-\title{computes the negative square root and square root of the phylogeny covariance matrix.}
+\title{(inverse) square root of the phylogenetic covariance}
 \usage{
 sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
-  "OUrandomRoot"))
+  "OUrandomRoot"), check.order = TRUE, check.ultramteric = TRUE)
 }
 \arguments{
-\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
+\item{tree}{tree of class phylo with branch lengths. If alpha>0, i.e. under the OU model, the tree has to be ultrametric.}
 
-\item{alpha}{the adaptation rate for the OU model.}
+\item{alpha}{adaptation rate for the OU model. The default is 0, which corresponds to the BM mode with a fixed ancestral state at the root.}
 
-\item{root.model}{an ancestral state model at the root.}
+\item{root.model}{ancestral state model at the root.}
+
+\item{check.order}{logical. If TRUE, the order will be checked to be in postorder traversal.}
+
+\item{check.ultramteric}{logical. If TRUE, the tree will be checked to ultrametric.}
 }
 \value{
-\item{sqrtSigma}{square root of the phylogeny covariance matrix.}
-\item{sqrtInvSigma}{inverse square root of the phylogeny covariance matrix.}
+\item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
+\item{sqrtSigma}{square root of the phylogenetic covariance matrix.}
 }
 \description{
-computes the negative square root and square root of the phylogeny covariance matrix.
+Computes an inverse square root and square root of the phylogenetic covariance matrix,
+under the Brownian motion (BM) or the Ornstein-Uhlenbeck (OU) model.
+The algorithm traverses the tree only once, hence the algorithm is very fast
+and can be applied to very big trees.
 }
 \examples{
-library("l1ou")
-data("lizard.tree")
-res <- sqrt_OU_covariance(lizard.tree)
+library(l1ou)
+data(lizard.tree)
+res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
-all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma) , Sigma) # TRUE
-all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma) , solve(Sigma)) # TRUE
+all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma), Sigma) # TRUE
+all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma), solve(Sigma)) # TRUE
 }
 \references{
-M. Khabbazian, R. Kriebel, K. Rohe, and Cecile Ane. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
+Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
+
+Eric A. Stone. 2011. "Why the phylogenetic regression appears robust to tree misspecification". Systematic Biology, 60(3):245-260.
 }
 

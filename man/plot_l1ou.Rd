@@ -2,21 +2,21 @@
 % Please edit documentation in R/tools.R
 \name{plot_l1ou}
 \alias{plot_l1ou}
-\title{plots the tree and trait(s).}
+\title{Visualizes a shift configuration: tree and trait(s).}
 \usage{
-plot_l1ou(tree, model, pallet = NA, edge.ann = TRUE, edge.ann.cex = 1,
+plot_l1ou(tree, model, palette = NA, edge.ann = TRUE, edge.ann.cex = 1,
   plot.bar = TRUE, bar.axis = TRUE, ...)
 }
 \arguments{
-\item{tree}{a phylogenetic tree of class phylo.}
+\item{tree}{phylogenetic tree of class phylo.}
 
-\item{model}{the returned object from \code{\link{estimate_shift_configuration}}.}
+\item{model}{object returned by \code{\link{estimate_shift_configuration}}.}
 
-\item{pallet}{a color vector of size number of the shifts plus one. The last element is the background color.}
+\item{palette}{vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).}
 
-\item{edge.ann}{logical. If TRUE, annotates edges with shift values or if provided by tree$edge.label.}
+\item{edge.ann}{logical. If TRUE, annotates edges with shift values or by labels in tree$edge.label, if non-empty.}
 
-\item{edge.ann.cex}{the amount by which the annotation text should be magnified relative to the default.}
+\item{edge.ann.cex}{amount by which the annotation text should be magnified relative to the default.}
 
 \item{plot.bar}{logical. If TRUE, the bars corresponding to the trait values will be plotted.}
 
@@ -28,10 +28,10 @@ plot_l1ou(tree, model, pallet = NA, edge.ann = TRUE, edge.ann.cex = 1,
 none.
 }
 \description{
-plots the tree and trait(s).
+plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 }
 \examples{
-data("lizard.traits", "lizard.tree")
+data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 nEdges <- length(lizard.tree$edge[,1]);

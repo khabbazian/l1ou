@@ -19,7 +19,7 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 
 \item{root.model}{an ancestral state model at the root.}
 
-\item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
+\item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.}
 
 \item{alpha.lower}{lower bound for the phylogenetic adaptation rate.}
 }
@@ -30,20 +30,19 @@ Information criterion value of the given shift configuration.
 computes the information criterion score for a given configuration
 }
 \details{
-AIC gives the usual Akaike information criterion, penalizing each parameter by 2, and counting each shift as 2 parameter (for the shift magnitude for the shift position, as if this position were a continuous parameter).
-AICc gives the usual small-sample size modification to AIC.
-BIC also gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters.
+AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
+AICc gives the usual small-sample size modification of AIC.
+BIC gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters.
 mBIC is the modified BIC proposed by Ho and Ané (2014).
 pBIC is the phylogenetic BIC for shifts proposed by Khabbazian et al.
 pBICess is a version of pBIC where the determinant term is replaced by a sum of the log of effective sample sizes (ESS), similar to the ESS proposed by Ané (2008).
 }
 \examples{
 library("l1ou")
-data("lizard.traits", "lizard.tree")
+data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
-ic.score <- configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
-print(ic.score)
+configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
 }
 \references{
 Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.

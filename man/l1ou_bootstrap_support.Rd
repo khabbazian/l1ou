@@ -2,43 +2,52 @@
 % Please edit documentation in R/phylogeny_bootstrap.R
 \name{l1ou_bootstrap_support}
 \alias{l1ou_bootstrap_support}
-\title{computes the bootstrap support for the detected shift configuration.}
+\title{Computes bootstrap support for shift positions}
 \usage{
 l1ou_bootstrap_support(tree, model, nItrs = 100, multicore = FALSE,
   nCores = 2)
 }
 \arguments{
-\item{tree}{an ultrametric phylogenetic tree of class phylo with branch lengths.}
+\item{tree}{ultrametric phylogenetic tree of class phylo with branch lengths.}
 
-\item{model}{the object output of \code{\link{estimate_shift_configuration}}.}
+\item{model}{an object output by \code{\link{estimate_shift_configuration}}.}
 
-\item{nItrs}{the number of independent iterations (bootstrap independent replicates).}
+\item{nItrs}{number of independent iterations (bootstrap replicates).}
 
-\item{multicore}{logical. If TRUE, it runs nCores processes in parallel. See details.}
+\item{multicore}{logical. If TRUE, nCores processes are used in parallel.}
 
 \item{nCores}{desired number of parallel processes.}
 }
 \value{
-vector of size of the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge.
+vector of size the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge.
 }
 \description{
-computes the bootstrap support for the detected shift configuration.
+Takes a given shift configuration previously detected from data along with shift magnitudes
+and OU parameters, to calculate bootstrap support for shift positions.
+The non-parametric bootstrap procedure calculates phylogenetically-uncorrelated standardized residuals,
+one at each node. These residuals are sampled with replacement, then mapped back onto the tree
+to create bootstrap replicates. Each replicate is analyzed with the l1ou method and user-specified options.
 }
 \details{
 The results of sequential and parallel runs are not necessarily equal, because different seeds might be used for different bootstrap replicates.
-        To change options, like the information criterion or maximum allowed number of shifts, modify model$opt.
+        For multiple cores to be used, the \code{parallel} library needs to be installed.
+        To change options for the analysis of each bootstrap replicate,
+        like the information criterion or the maximum allowed number of shifts, modify model$opt.
 }
 \examples{
 data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2)
-
+# using only 2 replicates in vastly insufficient in general,
+# but used here to make the illustrative example run faster.
 nEdges <- length(lizard.tree$edge[,1])
 ew <- rep(1,nEdges)
 ew[eModel$shift.configuration] <- 3
 lizard.tree$edge.label <- round(result * 100, digits=1)
-lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>0, paste0(lizard.tree$edge.label,"\%"), NA)
+# below: code to avoid annotating edges with support at or below 10\%
+lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>10,
+                                 paste0(lizard.tree$edge.label,"\%"), NA)
 plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \seealso{
