@@ -69,7 +69,7 @@ For information criteria: see \code{\link{configuration_ic}}.
 \examples{
 data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
-eModel <- estimate_shift_configuration(lizard.tree, Y)
+eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="pBICess")
 nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
