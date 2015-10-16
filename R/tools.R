@@ -95,11 +95,17 @@ get_shift_configuration <- function(sol.path, index, Y, tidx=1){
         beta      = sol.path$beta[index,]
         shift.configuration  = which( abs(beta) > 0 )
     } else if( any( grepl("grplasso",sol.path$call) ) ){
-        beta  = sol.path$coefficients[, index]
-        lIdx  = length(beta)/ncol(Y)
+        #beta  = sol.path$coefficients[, index]
+        #lIdx  = length(beta)/ncol(Y)
         #shift.configuration  = which( abs(beta[ (1+(tidx-1)*lIdx):(tidx*lIdx) ]) > 0 )
         ##NOTE: in case, in a group of variables some are zero and some non-zero i consider all as non-zero
-        shift.configuration  = which( rowSums(matrix(abs(beta),nrow=lIdx)) > 0 ) 
+        #shift.configuration  = which( rowSums(matrix(abs(beta),nrow=lIdx)) > 0 ) 
+
+        beta = sol.path$coefficients[, index]
+        nVariables = ncol(Y)
+        MM = matrix(ifelse(abs(beta)>0,1,0), ncol = nVariables)
+        shift.configuration = which(rowSums(MM) >= nVariables/2)
+
     } else {  
         stop(paste0(match.call(), ":undefined solver!"))
     }

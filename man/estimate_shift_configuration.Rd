@@ -7,9 +7,9 @@
 estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"), quietly = TRUE, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = 0, standardize = TRUE,
-  num.top.configurations = max.nShifts/2,
+  "OUfixedRoot"), candid.edges = NA, quietly = TRUE,
+  alpha.upper = alpha_upper_bound(tree), alpha.lower = 0,
+  standardize = TRUE, num.top.configurations = max.nShifts/2,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -23,6 +23,8 @@ estimate_shift_configuration(tree, Y,
 \item{criterion}{information criterion for model selection (see Details in \code{\link{configuration_ic}}).}
 
 \item{root.model}{ancestral state model at the root.}
+
+\item{candid.edges}{a vector of indices of edges where the shifts may occur. If provided, only these set of edges will be speculated for occurrence of shifts; otherwise all the edges will be considered.}
 
 \item{quietly}{logical. If FALSE, a basic summary of the progress and results is printed.}
 
@@ -66,7 +68,7 @@ For information criteria: see \code{\link{configuration_ic}}.
 }
 \examples{
 data(lizard.traits, lizard.tree)
-Y = lizard.traits[,1]
+Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
 nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1

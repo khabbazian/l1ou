@@ -718,7 +718,9 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
                                          control = grpl.control(tol = 0.01))
                        )
 
-        df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x) > 0))/nVariables)
+        #df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x) > 0))/nVariables)
+        df.vec = apply(sol$coefficients, 2, function(x) length(which(rowSums(matrix(ifelse(abs(x)>0,1,0),ncol=nVariables))>nVariables-1)))
+
         df.missing = setdiff(0:(opt$max.nShifts+1), df.vec)
 
         cutExtra = TRUE
