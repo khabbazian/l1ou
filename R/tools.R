@@ -37,6 +37,46 @@ standardize_matrix <- function(Y){
 
 
 
+
+effective.sample.size <- function(phy, edges=NULL,
+             model = c("BM","OUrandomRoot","OUfixedRoot","lambda","delta","EB"),
+             parameters = NULL, check.pruningwise = TRUE,
+             check.ultrametric = TRUE){
+        # requires ultrametric tree. Kappa disallowed: causes non-ultrametric tree
+        #                            both OU models result in same n_e
+        # removes every edge in 'edges' to split phy into m+1 subtrees, then
+        # sums log(n_e+1) over all subtrees. n_e = max(V) * one' V^{-1} one
+        # where V = phylogenetic covariance matrix for the subtree.
+        model = match.arg(model)
+        if (!inherits(phy, "phylo")) stop("object \"phy\" is not of class \"phylo\".")
+        if (check.pruningwise) phy = reorder(phy,"pruningwise")
+        if (check.ultrametric)
+            if (!is.ultrametric(phy))
+                stop("ultrametric tree required to calculate effective sample sizes.")
+        Di <- numeric(length(phy$tip.label)) # zeros
+        phy <- transf.branch.lengths(phy,model,parameters=parameters,
+                                     check.pruningwise=check.pruningwise,check.ultrametric=FALSE,
+                                     D=Di,check.names=F)$tree
+        rootedge <- dim(phy$edge)[1]+1
+        if (is.null(edges)){ sortededges <- rootedge }
+        else{
+            o <- order(edges); r <- rank(edges)
+            sortededges <- c(edges[o],rootedge)
+        }
+        tmp <- .C("effectiveSampleSize", as.integer(dim(phy$edge)[1]), # edges
+                  as.integer(length(phy$tip.label)), as.integer(phy$Nnode), # tips and nodes
+                  as.integer(length(phy$tip.label)+1), # root index
+                  as.double(phy$root.edge),as.double(phy$edge.length),
+                  as.integer(phy$edge[, 2]), as.integer(phy$edge[, 1]), # descendents and ancestors
+                  as.integer(sortededges), # edges to cut, including root edge
+                  result=double(length(edges)+1))$result # tmp has, in this order:
+        if (is.null(edges))
+            res <- tmp
+        else res <- tmp[c(length(tmp),r)]
+        return(res)
+}
+
+
 correct_unidentifiability <- function(tree, shift.configuration, opt){
 
     if( length(shift.configuration) < 2)  { return(shift.configuration) }
