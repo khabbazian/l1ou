@@ -63,6 +63,7 @@ effective.sample.size <- function(phy, edges=NULL,
             o <- order(edges); r <- rank(edges)
             sortededges <- c(edges[o],rootedge)
         }
+        dyn.load("effectiveSampleSize.o")
         tmp <- .C("effectiveSampleSize", as.integer(dim(phy$edge)[1]), # edges
                   as.integer(length(phy$tip.label)), as.integer(phy$Nnode), # tips and nodes
                   as.integer(length(phy$tip.label)+1), # root index
