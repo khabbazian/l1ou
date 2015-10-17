@@ -1,4 +1,4 @@
-#' Adjust the tree and trait values so that they pass the required conditions of \code{\link{estimate_shift_configuration}} function conditions
+#' Adjusts the tree and trait values so that they pass the required conditions of \code{estimate_shift_configuration} function conditions
 #'
 #' Changes the order of the tree to postorder. Reorders/adds the trait names so that it matches tree tip names in same order.  
 #' 

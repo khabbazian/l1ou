@@ -2,7 +2,7 @@
 % Please edit documentation in R/tools.R
 \name{adjust_data}
 \alias{adjust_data}
-\title{Adjust the tree and trait values so that they pass the required conditions of \code{\link{estimate_shift_configuration}} function conditions}
+\title{Adjusts the tree and trait values so that they pass the required conditions of \code{estimate_shift_configuration} function conditions}
 \usage{
 adjust_data(tree, Y, normalize = TRUE, quietly = FALSE)
 }
