@@ -11,7 +11,7 @@
 #'@param max.nShifts upper bound for the number of shifts. The default value is half the number of tips.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
 #'@param root.model ancestral state model at the root.
-#'@param candid.edges a vector of indices of edges where the shifts may occur. If provided, only these set of edges will be speculated for occurrence of shifts; otherwise all the edges will be considered.
+#'@param candid.edges a vector of indices of candidate edges where the shifts may occur. If provided, shifts will only be allowed on these edges; otherwise all edges will be considered.
 #'@param quietly logical. If FALSE, a basic summary of the progress and results is printed.
 #'@param alpha.upper upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower lower bound for the phylogenetic adaptation rate.
@@ -46,12 +46,9 @@
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
 #' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
-#'@examples
-#'
-#' data("lizard.traits", "lizard.tree")
-#' Y <- lizard.traits[,1:1]
+#' # example to constrain the set of candidate branches with a shift
 #' eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
-#' ce <- eModel$shift.configuration 
+#' ce <- eModel$shift.configuration # set of candidate edges
 #' eModel <- estimate_shift_configuration(lizard.tree, Y, candid.edges = ce)
 #' plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 #'
@@ -62,7 +59,7 @@
 estimate_shift_configuration <- function(tree, Y, 
            max.nShifts            = floor(length(tree$tip.label)/2), 
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-           root.model             = c("OUrandomRoot", "OUfixedRoot"),
+           root.model             = c("OUfixedRoot", "OUrandomRoot"),
            candid.edges           = NA,
            quietly                = TRUE,
            alpha.upper            = alpha_upper_bound(tree), 
@@ -115,12 +112,12 @@ estimate_shift_configuration <- function(tree, Y,
         diffres = setdiff(rownames(Y), tree$tip.label)
         if( length(diffres) > 0 ){
             cat(diffres)
-            stop(" do not exist in the tip labels of the input tree.\n")
+            stop(" do(es) not exist in the tip labels of the input tree.\n")
         }
         diffres = setdiff(tree$tip.label, rownames(Y))
         if( length(diffres) > 0 ){
             cat(diffres)
-            stop(" do not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
+            stop(" do(es) not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
                  to drop extra tips in the tree.\n")
         }
 
