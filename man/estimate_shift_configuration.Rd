@@ -8,7 +8,7 @@ estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
-  alpha.upper = alpha_upper_bound(tree), alpha.lower = 0,
+  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
   standardize = TRUE, num.top.configurations = max.nShifts/2,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
@@ -67,19 +67,19 @@ Instantaneous shifts in the optimal trait value affect the traits over time.
 For information criteria: see \code{\link{configuration_ic}}.
 }
 \examples{
-data(lizard.traits, lizard.tree)
-Y <- lizard.traits[,1]
-eModel <- estimate_shift_configuration(lizard.tree, Y)
+data(lizard.tree, lizard.traits)
+lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
-plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+plot_l1ou(lizard$tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 
 # example to constrain the set of candidate branches with a shift
-eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
+eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 ce <- eModel$shift.configuration # set of candidate edges
-eModel <- estimate_shift_configuration(lizard.tree, Y, candid.edges = ce)
-plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
+plot_l1ou(lizard$tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.

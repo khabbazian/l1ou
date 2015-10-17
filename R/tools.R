@@ -1,7 +1,86 @@
+#' Adjust the tree and trait values so that they pass the required conditions of \code{\link{estimate_shift_configuration}} function conditions
+#'
+#' Changes the order of the tree to postorder. Reorders/adds the trait names so that it matches tree tip names in same order.  
+#' 
+#'@param tree ultrametric tree of class phylo with branch lengths.
+#'@param Y trait vector/matrix without missing entries.
+#'@param normalize logical. If TRUE, normalizes branch lengths to a unit tree height.
+#'@param quietly logical. If FALSE, changes in tree/trait are printed.
+#'
+#'@return 
+#' \item{tree}{the adjusted tree.}
+#' \item{Y}{the adjusted trait vector/matrix.}
+#'@examples
+#' data(lizard.tree, lizard.traits)
+#' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+#' 
+#'@export
+adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
+    if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
+        if(!quietly)
+            warning("the tree edge order is changed to postorder!")
+        tree  <- reorder(tree, "postorder")
+    }
+
+    if( normalize ){
+        if(!quietly)
+            warning("the tree is normalized, i.e. the distances of root to each tip is one, now!")
+        tree <- normalize_tree(tree)
+    }
+
+    if( class(Y) != "matrix"){
+        if(!quietly)
+            warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
+        Y <- as.matrix(Y)
+    }
+
+    if( nrow(Y) != length(tree$tip.label)){
+       stop("the number of entries/rows of the trait vector/matrix (Y) 
+            doesn't match the number of tips.\n") 
+    }
+
+    if( is.null(rownames(Y)) ){
+        if(!quietly)
+            warning("no names provided for the trait(s) entries/rows. so it is assumed that 
+                    entries/rows match with the tip labels in the same order.\n", , immediate.=TRUE)
+        rownames(Y)  <- tree$tip.label
+    } else{
+        if( any(is.na(rownames(Y))) ){
+            stop("some of the names in either trait vector/matrix or tree tip 
+                 labels are unavailable.\n")
+        }
+    }
+    if(!identical(rownames(Y), tree$tip.label)){
+        diffres = setdiff(rownames(Y), tree$tip.label)
+        if( length(diffres) > 0 ){
+            cat(diffres)
+            stop(" do(es) not exist in the tip labels of the input tree.\n")
+        }
+        diffres = setdiff(tree$tip.label, rownames(Y))
+        if( length(diffres) > 0 ){
+            cat(diffres)
+            stop(" do(es) not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
+                 to drop extra tips in the tree.\n")
+        }
+
+        if(!quietly)
+            warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
+
+        Y = as.matrix( Y[order(rownames(Y)),  ]  )
+        Y = as.matrix( Y[order(order(tree$tip.label)), ] )
+    }
+
+
+    stopifnot(all(rownames(Y) == tree$tip.label))
+    stopifnot(identical(rownames(Y), tree$tip.label))
+
+    return(list(tree=tree, Y=Y))
+}
 
 
 lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
+
 #my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")) }
 
 
