@@ -6,8 +6,8 @@
 \usage{
 estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"), candid.edges = NA, quietly = TRUE,
+  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
+  "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.upper = alpha_upper_bound(tree), alpha.lower = 0,
   standardize = TRUE, num.top.configurations = max.nShifts/2,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
@@ -24,7 +24,7 @@ estimate_shift_configuration(tree, Y,
 
 \item{root.model}{ancestral state model at the root.}
 
-\item{candid.edges}{a vector of indices of edges where the shifts may occur. If provided, only these set of edges will be speculated for occurrence of shifts; otherwise all the edges will be considered.}
+\item{candid.edges}{a vector of indices of candidate edges where the shifts may occur. If provided, shifts will only be allowed on these edges; otherwise all edges will be considered.}
 
 \item{quietly}{logical. If FALSE, a basic summary of the progress and results is printed.}
 
@@ -74,6 +74,12 @@ nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
 plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+
+# example to constrain the set of candidate branches with a shift
+eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
+ce <- eModel$shift.configuration # set of candidate edges
+eModel <- estimate_shift_configuration(lizard.tree, Y, candid.edges = ce)
+plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
