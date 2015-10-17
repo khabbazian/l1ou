@@ -281,6 +281,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
         YY[,i]  = Cinvh%*%YY[,i]
+        ##X     = cbin(Cinvh%*%X,1)
+        ##grpX    = adiag(grpX, X)  
         grpX    = adiag(grpX, Cinvh%*%X)  
     }
 
@@ -288,17 +290,15 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     grpY   = c(YY)
     grpX   = grpX[,-to.be.removed]
     grpIdx = rep(1:ncol(X), ncol(Y))[-to.be.removed]
+    ##grpIdx = rep(c(1:(ncol(X)-1),NA), ncol(Y))[-to.be.removed]
 
-
-    ##including the intercept.
-    #grpX = cbind(grpX,1)
-    #grpIdx = c(grpIdx, NA)
 
     sol    = run_grplasso(grpX, grpY, nVariables, grpIdx, opt)
 
-    #Tmp                  = matrix(0, np+1, ncol(sol$coefficients))
     Tmp                  = matrix(0, np, ncol(sol$coefficients))
     Tmp[-to.be.removed,] = matrix(sol$coefficients)
+
+    ##Tmp                  = Tmp[-seq(ncol(X),np,ncol(X)),]
     sol$coefficients     = Tmp
 
     ##removing the intercept results
@@ -705,7 +705,7 @@ assign_model <- function(tree, Y, shift.configuration, opt){
 run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     delta  = opt$grp.delta
     seq.ub = opt$grp.seq.ub
-    max.nTries = 10
+    max.nTries = 7
     lmbdMax = 1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
 
     base.seq = seq(0, seq.ub, delta)
