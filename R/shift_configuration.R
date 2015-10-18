@@ -228,8 +228,6 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
 
 estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha=0, est.alpha=FALSE, opt){
-    library("grplasso")
-    library("magic")
 
     stopifnot( alpha >=0 )
 

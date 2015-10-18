@@ -18,7 +18,6 @@
 #'
 #'@examples
 #'
-#' library(l1ou)
 #' data(lizard.tree)
 #' res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 #' Sigma <- vcv(lizard.tree)

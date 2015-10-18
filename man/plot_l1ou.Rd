@@ -2,9 +2,11 @@
 % Please edit documentation in R/tools.R
 \name{plot_l1ou}
 \alias{plot_l1ou}
-\title{Visualizes a shift configuration: tree and trait(s).}
+\title{Visualizes a shift configuration: tree and trait(s)}
 \usage{
-plot_l1ou(tree, model, palette = NA, edge.ann = TRUE, edge.ann.cex = 1,
+plot_l1ou(tree, model, palette = NA, edge.shift.ann = TRUE,
+  edge.shift.adj = c(0.5, -0.025), edge.label = NA,
+  edge.label.ann = FALSE, edge.label.adj = c(0.5, 1), edge.ann.cex = 1,
   plot.bar = TRUE, bar.axis = TRUE, ...)
 }
 \arguments{
@@ -14,7 +16,15 @@ plot_l1ou(tree, model, palette = NA, edge.ann = TRUE, edge.ann.cex = 1,
 
 \item{palette}{vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).}
 
-\item{edge.ann}{logical. If TRUE, annotates edges with shift values or by labels in tree$edge.label, if non-empty.}
+\item{edge.shift.ann}{logical. If TRUE, annotates edges by shift values.}
+
+\item{edge.shift.adj}{adjustment argument to give to edgelabel() for labeling edges by shift values.}
+
+\item{edge.label}{vector of size number of edges.}
+
+\item{edge.label.ann}{logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label.}
+
+\item{edge.label.adj}{adjustment argument to give to edgelabel() for labeling edges.}
 
 \item{edge.ann.cex}{amount by which the annotation text should be magnified relative to the default.}
 
@@ -22,7 +32,7 @@ plot_l1ou(tree, model, palette = NA, edge.ann = TRUE, edge.ann.cex = 1,
 
 \item{bar.axis}{logical. If TRUE, the axis of of trait(s) range will be plotted.}
 
-\item{...}{further arguments to be passed on to plot.phylo}
+\item{...}{further arguments to be passed on to plot.phylo.}
 }
 \value{
 none.

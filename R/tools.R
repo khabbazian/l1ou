@@ -287,18 +287,22 @@ normalize_tree <- function(tree){
 
 
 #'
-#' Visualizes a shift configuration: tree and trait(s).
+#' Visualizes a shift configuration: tree and trait(s)
 #'
 #' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 #'
 #'@param tree phylogenetic tree of class phylo.
 #'@param model object returned by \code{\link{estimate_shift_configuration}}.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
-#'@param edge.ann logical. If TRUE, annotates edges with shift values or by labels in tree$edge.label, if non-empty. 
+#'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
+#'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
+#'@param edge.label vector of size number of edges.
+#'@param edge.label.ann logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label. 
+#'@param edge.label.adj adjustment argument to give to edgelabel() for labeling edges.
 #'@param edge.ann.cex amount by which the annotation text should be magnified relative to the default.
 #'@param plot.bar logical. If TRUE, the bars corresponding to the trait values will be plotted.
 #'@param bar.axis logical. If TRUE, the axis of of trait(s) range will be plotted. 
-#'@param ... further arguments to be passed on to plot.phylo 
+#'@param ... further arguments to be passed on to plot.phylo. 
 #'
 #'@return none.
 #'@examples
@@ -313,31 +317,35 @@ normalize_tree <- function(tree){
 #'
 #'@export
 #'
-plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE, 
-                       edge.ann.cex = 1, plot.bar = TRUE, bar.axis = TRUE, ...) 
+plot_l1ou <- function (tree, model, palette = NA, 
+                       edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
+                       edge.label=NA,
+                       edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
+                       edge.ann.cex = 1, 
+                       plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
+
     shift.configuration = sort(model$shift.configuration, decreasing = T)
     nShifts = model$nShifts
     nEdges = length(tree$edge.length)
     if (bar.axis) 
         par(oma = c(3, 0, 0, 3))
+
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
 
-    if( plot.bar){
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, 1, 1, 1, 1))
+    if (plot.bar) {
+        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, rep(1,ncol(Y))))
     }
-
     if (is.na(palette)) {
         palette = c(sample(rainbow(nShifts)), "gray")
     }
-
     stopifnot(length(palette) == model$nShifts + 1)
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-    for (shift in model$shift.configuration) {
+    for (shift in shift.configuration) {
         edgecol[[shift]] = palette[[counter]]
         tips = which(Z[, shift] > 0)
         for (tip in tips) {
@@ -347,19 +355,28 @@ plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE,
     }
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
 
-    if( edge.ann ){
-        if( length(tree$edge.label) == 0){
-            tree$edge.label = rep(NA, nEdges)
-            counter <- 1
-            for (shift in shift.configuration) {
-                tree$edge.label[shift] = paste(round(model$shift.values[counter, ], digits = 2), collapse = ",")
-                counter <- counter + 1
-            }
+    if (edge.shift.ann) {
+        eLabels = rep(NA, nEdges)
+        for (shift in shift.configuration) {
+            eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
+                                         ], digits = 2), collapse = ",")
         }
-        edgelabels(tree$edge.label, cex=edge.ann.cex, adj = c(0.5, -0.25), frame = "none")
+        edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
+                   frame = "none")
     }
 
-    if(plot.bar){
+    if (edge.label.ann){
+        if (length(tree$edge.label) == 0) {
+            if(is.na(edge.label)){
+                stop("no edge labels are provided via tree$edge.label or edge.label!")
+            }
+            tree$edge.label = edge.label 
+        }
+        edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
+                   frame = "none")
+    }
+
+    if (plot.bar) {
         nTips = length(tree$tip.label)
         barcol = rep("gray", nTips)
         for (i in 1:nTips) {
@@ -370,10 +387,10 @@ plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE,
         for (i in 1:ncol(Y)) {
             normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
             barplot(as.vector(normy), border = FALSE, col = barcol, 
-                    horiz = TRUE, names.arg = "", xaxt = "n")
+                horiz = TRUE, names.arg = "", xaxt = "n")
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
-                                                          digits = 2))
+                  digits = 2))
         }
     }
 }
