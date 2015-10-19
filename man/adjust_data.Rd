@@ -2,7 +2,7 @@
 % Please edit documentation in R/tools.R
 \name{adjust_data}
 \alias{adjust_data}
-\title{Adjusts the tree and trait values so that they pass the required conditions of \code{estimate_shift_configuration} function conditions}
+\title{Adjusts the tree and traits to meet the requirements of \code{estimate_shift_configuration}}
 \usage{
 adjust_data(tree, Y, normalize = TRUE, quietly = FALSE)
 }
@@ -16,11 +16,13 @@ adjust_data(tree, Y, normalize = TRUE, quietly = FALSE)
 \item{quietly}{logical. If FALSE, changes in tree/trait are printed.}
 }
 \value{
-\item{tree}{the adjusted tree.}
-\item{Y}{the adjusted trait vector/matrix.}
+\item{tree}{tree of class phylo, with the same topology as the input \code{tree} but adjusted edge order.}
+\item{Y}{trait vector/matrix with adjusted row names and row order.}
 }
 \description{
-Changes the order of the tree to postorder. Reorders/adds the trait names so that it matches tree tip names in same order.
+Creates a new tree and new data matrix, where the tree edges are in postorder,
+the trait matrix has tip labels as row names, and the tips come in the same order
+in the trait matrix as in the tree's tip.label vector.
 }
 \examples{
 data(lizard.tree, lizard.traits)
