@@ -7,5 +7,5 @@ export(l1ou_bootstrap_support)
 export(normalize_tree)
 export(plot_l1ou)
 export(sqrt_OU_covariance)
-useDynLib(l1ou);
-importFrom(Rcpp, evalCpp);
+useDynLib(l1ou)
+importFrom(Rcpp, evalCpp)
