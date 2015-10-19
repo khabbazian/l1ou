@@ -39,6 +39,12 @@
 #'@examples
 #' 
 #' data(lizard.tree, lizard.traits)
+#' # here lizard.traits already has row names:
+#' rownames(lizard.traits)
+#' # If your trait data "dat" does not have row names but instead has
+#' # the species names in a column called "species", then you can
+#' # create row names containing to species names like this: 
+#' # rownames(dat) <- dat$species
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges

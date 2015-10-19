@@ -1,6 +1,8 @@
-#' Adjusts the tree and trait values so that they pass the required conditions of \code{estimate_shift_configuration} function conditions
+#' Adjusts the tree and traits to meet the requirements of \code{estimate_shift_configuration}
 #'
-#' Changes the order of the tree to postorder. Reorders/adds the trait names so that it matches tree tip names in same order.  
+#' Creates a new tree and new data matrix, where the tree edges are in postorder, 
+#' the trait matrix has tip labels as row names, and the tips come in the same order 
+#' in the trait matrix as in the tree's tip.label vector.
 #' 
 #'@param tree ultrametric tree of class phylo with branch lengths.
 #'@param Y trait vector/matrix without missing entries.
@@ -8,8 +10,8 @@
 #'@param quietly logical. If FALSE, changes in tree/trait are printed.
 #'
 #'@return 
-#' \item{tree}{the adjusted tree.}
-#' \item{Y}{the adjusted trait vector/matrix.}
+#' \item{tree}{tree of class phylo, with the same topology as the input \code{tree} but adjusted edge order.}
+#' \item{Y}{trait vector/matrix with adjusted row names and row order.}
 #'@examples
 #' data(lizard.tree, lizard.traits)
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
@@ -19,19 +21,19 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
     if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
         if(!quietly)
-            warning("the tree edge order is changed to postorder!")
+            warning("the new tree edges are ordered differently, in postorder!")
         tree  <- reorder(tree, "postorder")
     }
 
     if( normalize ){
         if(!quietly)
-            warning("the tree is normalized, i.e. the distances of root to each tip is one, now!")
+            warning("the new tree is normalized, i.e. the distance from the root to each tip is one, now!")
         tree <- normalize_tree(tree)
     }
 
     if( class(Y) != "matrix"){
         if(!quietly)
-            warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
+            warning(paste("new Y: matrix of size", nrow(Y), "x", ncol(Y), "\n" ))
         Y <- as.matrix(Y)
     }
 
@@ -43,12 +45,12 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     if( is.null(rownames(Y)) ){
         if(!quietly)
             warning("no names provided for the trait(s) entries/rows. so it is assumed that 
-                    entries/rows match with the tip labels in the same order.\n", , immediate.=TRUE)
+                    entries/rows match the tip labels in the same order.\n", , immediate.=TRUE)
         rownames(Y)  <- tree$tip.label
     } else{
         if( any(is.na(rownames(Y))) ){
-            stop("some of the names in either trait vector/matrix or tree tip 
-                 labels are unavailable.\n")
+            stop("some of the names in the trait vector/matrix or in the tree's 
+                 tip.label are unavailable.\n")
         }
     }
     if(!identical(rownames(Y), tree$tip.label)){
@@ -60,15 +62,15 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         diffres = setdiff(tree$tip.label, rownames(Y))
         if( length(diffres) > 0 ){
             cat(diffres)
-            stop(" do(es) not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
+            stop(" do(es) not exist in the input trait. you may want to use
+                 drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
                  to drop extra tips in the tree.\n")
         }
 
         if(!quietly)
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
 
-        Y = as.matrix( Y[order(rownames(Y)),  ]  )
-        Y = as.matrix( Y[order(order(tree$tip.label)), ] )
+        Y <- Y[tree$tip.label, ]
     }
 
 
