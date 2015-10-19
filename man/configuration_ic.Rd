@@ -6,7 +6,7 @@
 \usage{
 configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"), alpha.upper = alpha_upper_bound(tree), alpha.lower = 0)
+  "OUfixedRoot"), alpha.upper = alpha_upper_bound(tree), alpha.lower = NA)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo, with branch lengths, and edges in postorder.}
@@ -38,11 +38,10 @@ pBIC is the phylogenetic BIC for shifts proposed by Khabbazian et al.
 pBICess is a version of pBIC where the determinant term is replaced by a sum of the log of effective sample sizes (ESS), similar to the ESS proposed by Ané (2008).
 }
 \examples{
-library("l1ou")
-data(lizard.traits, lizard.tree)
-Y <- lizard.traits[,1]
-eModel <- estimate_shift_configuration(lizard.tree, Y)
-configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
+data(lizard.tree, lizard.traits)
+lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+configuration_ic(lizard$tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
 }
 \references{
 Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.

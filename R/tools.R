@@ -1,7 +1,86 @@
+#' Adjusts the tree and trait values so that they pass the required conditions of \code{estimate_shift_configuration} function conditions
+#'
+#' Changes the order of the tree to postorder. Reorders/adds the trait names so that it matches tree tip names in same order.  
+#' 
+#'@param tree ultrametric tree of class phylo with branch lengths.
+#'@param Y trait vector/matrix without missing entries.
+#'@param normalize logical. If TRUE, normalizes branch lengths to a unit tree height.
+#'@param quietly logical. If FALSE, changes in tree/trait are printed.
+#'
+#'@return 
+#' \item{tree}{the adjusted tree.}
+#' \item{Y}{the adjusted trait vector/matrix.}
+#'@examples
+#' data(lizard.tree, lizard.traits)
+#' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+#' 
+#'@export
+adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
+    if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
+        if(!quietly)
+            warning("the tree edge order is changed to postorder!")
+        tree  <- reorder(tree, "postorder")
+    }
+
+    if( normalize ){
+        if(!quietly)
+            warning("the tree is normalized, i.e. the distances of root to each tip is one, now!")
+        tree <- normalize_tree(tree)
+    }
+
+    if( class(Y) != "matrix"){
+        if(!quietly)
+            warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
+        Y <- as.matrix(Y)
+    }
+
+    if( nrow(Y) != length(tree$tip.label)){
+       stop("the number of entries/rows of the trait vector/matrix (Y) 
+            doesn't match the number of tips.\n") 
+    }
+
+    if( is.null(rownames(Y)) ){
+        if(!quietly)
+            warning("no names provided for the trait(s) entries/rows. so it is assumed that 
+                    entries/rows match with the tip labels in the same order.\n", , immediate.=TRUE)
+        rownames(Y)  <- tree$tip.label
+    } else{
+        if( any(is.na(rownames(Y))) ){
+            stop("some of the names in either trait vector/matrix or tree tip 
+                 labels are unavailable.\n")
+        }
+    }
+    if(!identical(rownames(Y), tree$tip.label)){
+        diffres = setdiff(rownames(Y), tree$tip.label)
+        if( length(diffres) > 0 ){
+            cat(diffres)
+            stop(" do(es) not exist in the tip labels of the input tree.\n")
+        }
+        diffres = setdiff(tree$tip.label, rownames(Y))
+        if( length(diffres) > 0 ){
+            cat(diffres)
+            stop(" do(es) not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
+                 to drop extra tips in the tree.\n")
+        }
+
+        if(!quietly)
+            warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
+
+        Y = as.matrix( Y[order(rownames(Y)),  ]  )
+        Y = as.matrix( Y[order(order(tree$tip.label)), ] )
+    }
+
+
+    stopifnot(all(rownames(Y) == tree$tip.label))
+    stopifnot(identical(rownames(Y), tree$tip.label))
+
+    return(list(tree=tree, Y=Y))
+}
 
 
 lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
+
 #my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")) }
 
 
@@ -208,18 +287,22 @@ normalize_tree <- function(tree){
 
 
 #'
-#' Visualizes a shift configuration: tree and trait(s).
+#' Visualizes a shift configuration: tree and trait(s)
 #'
 #' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 #'
 #'@param tree phylogenetic tree of class phylo.
 #'@param model object returned by \code{\link{estimate_shift_configuration}}.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
-#'@param edge.ann logical. If TRUE, annotates edges with shift values or by labels in tree$edge.label, if non-empty. 
+#'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
+#'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
+#'@param edge.label vector of size number of edges.
+#'@param edge.label.ann logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label. 
+#'@param edge.label.adj adjustment argument to give to edgelabel() for labeling edges.
 #'@param edge.ann.cex amount by which the annotation text should be magnified relative to the default.
 #'@param plot.bar logical. If TRUE, the bars corresponding to the trait values will be plotted.
 #'@param bar.axis logical. If TRUE, the axis of of trait(s) range will be plotted. 
-#'@param ... further arguments to be passed on to plot.phylo 
+#'@param ... further arguments to be passed on to plot.phylo. 
 #'
 #'@return none.
 #'@examples
@@ -234,31 +317,35 @@ normalize_tree <- function(tree){
 #'
 #'@export
 #'
-plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE, 
-                       edge.ann.cex = 1, plot.bar = TRUE, bar.axis = TRUE, ...) 
+plot_l1ou <- function (tree, model, palette = NA, 
+                       edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
+                       edge.label=NA,
+                       edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
+                       edge.ann.cex = 1, 
+                       plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
+
     shift.configuration = sort(model$shift.configuration, decreasing = T)
     nShifts = model$nShifts
     nEdges = length(tree$edge.length)
     if (bar.axis) 
         par(oma = c(3, 0, 0, 3))
+
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
 
-    if( plot.bar){
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, 1, 1, 1, 1))
+    if (plot.bar) {
+        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, rep(1,ncol(Y))))
     }
-
     if (is.na(palette)) {
         palette = c(sample(rainbow(nShifts)), "gray")
     }
-
     stopifnot(length(palette) == model$nShifts + 1)
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-    for (shift in model$shift.configuration) {
+    for (shift in shift.configuration) {
         edgecol[[shift]] = palette[[counter]]
         tips = which(Z[, shift] > 0)
         for (tip in tips) {
@@ -268,19 +355,28 @@ plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE,
     }
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
 
-    if( edge.ann ){
-        if( length(tree$edge.label) == 0){
-            tree$edge.label = rep(NA, nEdges)
-            counter <- 1
-            for (shift in shift.configuration) {
-                tree$edge.label[shift] = paste(round(model$shift.values[counter, ], digits = 2), collapse = ",")
-                counter <- counter + 1
-            }
+    if (edge.shift.ann) {
+        eLabels = rep(NA, nEdges)
+        for (shift in shift.configuration) {
+            eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
+                                         ], digits = 2), collapse = ",")
         }
-        edgelabels(tree$edge.label, cex=edge.ann.cex, adj = c(0.5, -0.25), frame = "none")
+        edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
+                   frame = "none")
     }
 
-    if(plot.bar){
+    if (edge.label.ann){
+        if (length(tree$edge.label) == 0) {
+            if(is.na(edge.label)){
+                stop("no edge labels are provided via tree$edge.label or edge.label!")
+            }
+            tree$edge.label = edge.label 
+        }
+        edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
+                   frame = "none")
+    }
+
+    if (plot.bar) {
         nTips = length(tree$tip.label)
         barcol = rep("gray", nTips)
         for (i in 1:nTips) {
@@ -291,10 +387,10 @@ plot_l1ou <- function (tree, model, palette = NA, edge.ann = TRUE,
         for (i in 1:ncol(Y)) {
             normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
             barplot(as.vector(normy), border = FALSE, col = barcol, 
-                    horiz = TRUE, names.arg = "", xaxt = "n")
+                horiz = TRUE, names.arg = "", xaxt = "n")
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
-                                                          digits = 2))
+                  digits = 2))
         }
     }
 }

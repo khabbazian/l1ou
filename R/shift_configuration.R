@@ -38,19 +38,19 @@
 #'For information criteria: see \code{\link{configuration_ic}}. 
 #'@examples
 #' 
-#' data(lizard.traits, lizard.tree)
-#' Y <- lizard.traits[,1]
-#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' data(lizard.tree, lizard.traits)
+#' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+#' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
-#' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot_l1ou(lizard$tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #' # example to constrain the set of candidate branches with a shift
-#' eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
+#' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 #' ce <- eModel$shift.configuration # set of candidate edges
-#' eModel <- estimate_shift_configuration(lizard.tree, Y, candid.edges = ce)
-#' plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+#' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
+#' plot_l1ou(lizard$tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 #'
 #'@references
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
@@ -63,7 +63,7 @@ estimate_shift_configuration <- function(tree, Y,
            candid.edges           = NA,
            quietly                = TRUE,
            alpha.upper            = alpha_upper_bound(tree), 
-           alpha.lower            = 0,
+           alpha.lower            = NA,
            standardize            = TRUE,
            num.top.configurations = max.nShifts/2,
            edge.length.threshold  = .Machine$double.eps,
@@ -76,11 +76,8 @@ estimate_shift_configuration <- function(tree, Y,
     }
 
     if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
-        warning("the input phylogenetic tree is not in postorder. It is reorder\n", immediate.=TRUE)
-        tree  <- reorder(tree, "postorder")
+        stop("the tree is not in postorder, use adjust_data function to reorder tree!")
     }
-
-    stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
     Y <- as.matrix(Y)
 
@@ -108,6 +105,7 @@ estimate_shift_configuration <- function(tree, Y,
                  labels are unavailable.\n")
         }
     }
+
     if(!identical(rownames(Y), tree$tip.label)){
         diffres = setdiff(rownames(Y), tree$tip.label)
         if( length(diffres) > 0 ){
@@ -121,9 +119,7 @@ estimate_shift_configuration <- function(tree, Y,
                  to drop extra tips in the tree.\n")
         }
 
-        warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
-        Y = as.matrix( Y[order(rownames(Y)),  ]  )
-        Y = as.matrix( Y[order(order(tree$tip.label)), ] )
+        stop("the order of entries/rows of the trait vector/matrix (Y) does not matche the order of the tip labels. use adjust_data function to fix that\n")
     }
 
     stopifnot(all(rownames(Y) == tree$tip.label))
@@ -137,14 +133,16 @@ estimate_shift_configuration <- function(tree, Y,
         warning("max.nShifts should be a positive number less than number of tips. I set it to 1.\n")
         max.nShifts  <- 1 
     }
-    if( alpha.lower < 0 ){
-        warning("alpha.lower must be greater than zero. I set it to zero.\n")
-        alpha.lower <- 0 
-    }
-    if( alpha.upper < alpha.lower ){
-        warning("alpha.upper must be equal or greater than alpha.lower. I set them equal.\n")
-        alpha.upper  <- alpha.lower
-    }
+    if(!is.na(alpha.lower))
+        if( alpha.lower < 0 ){
+            warning("alpha.lower must be greater than zero. I set it to zero.\n")
+            alpha.lower <- 0 
+        }
+    if(!is.na(alpha.lower))
+        if( alpha.upper < alpha.lower ){
+            warning("alpha.upper must be equal or greater than alpha.lower. I set them equal.\n")
+            alpha.upper  <- alpha.lower
+        }
 
     if (all(is.na(l1ou.options))) {
         l1ou.options                   <- list()
@@ -230,8 +228,6 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
 
 estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha=0, est.alpha=FALSE, opt){
-    library("grplasso")
-    library("magic")
 
     stopifnot( alpha >=0 )
 
@@ -278,6 +274,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
         YY[,i]  = Cinvh%*%YY[,i]
+        ##X     = cbin(Cinvh%*%X,1)
+        ##grpX    = adiag(grpX, X)  
         grpX    = adiag(grpX, Cinvh%*%X)  
     }
 
@@ -285,17 +283,15 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     grpY   = c(YY)
     grpX   = grpX[,-to.be.removed]
     grpIdx = rep(1:ncol(X), ncol(Y))[-to.be.removed]
+    ##grpIdx = rep(c(1:(ncol(X)-1),NA), ncol(Y))[-to.be.removed]
 
-
-    ##including the intercept.
-    #grpX = cbind(grpX,1)
-    #grpIdx = c(grpIdx, NA)
 
     sol    = run_grplasso(grpX, grpY, nVariables, grpIdx, opt)
 
-    #Tmp                  = matrix(0, np+1, ncol(sol$coefficients))
     Tmp                  = matrix(0, np, ncol(sol$coefficients))
     Tmp[-to.be.removed,] = matrix(sol$coefficients)
+
+    ##Tmp                  = Tmp[-seq(ncol(X),np,ncol(X)),]
     sol$coefficients     = Tmp
 
     ##removing the intercept results
@@ -433,11 +429,10 @@ do_backward_selection <- function(tree, Y, shift.configuration, opt){
 #' 
 #'@examples
 #' 
-#' library("l1ou") 
-#' data(lizard.traits, lizard.tree)
-#' Y <- lizard.traits[,1] 
-#' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' configuration_ic(lizard.tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
+#' data(lizard.tree, lizard.traits)
+#' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+#' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+#' configuration_ic(lizard$tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
 #'
 #'@seealso \code{\link{estimate_shift_configuration}} 
 #'
@@ -452,7 +447,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
                      criterion   = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
                      root.model  = c("OUrandomRoot", "OUfixedRoot"),
                      alpha.upper = alpha_upper_bound(tree), 
-                     alpha.lower = 0
+                     alpha.lower = NA
                      ){
 
     ##TODO: change the following into a warning and then reorder 
@@ -546,16 +541,18 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
     preds = cbind(1, opt$Z[ ,shift.configuration])
 
     options(warn = -1)
-    #fit <- try( phylolm(Y~preds-1, phy=tree, model=opt$root.model) )
-    #fit <- try( phylolm( Y~preds-1, phy=tree, model=opt$root.model, 
-    #        starting.value = max(1, opt$alpha.lower.bound),
-    #        upper.bound    = opt$alpha.upper.bound, 
-    #        lower.bound    = opt$alpha.lower.bound ) )  
 
-    fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
-                            starting.value = max(1, opt$alpha.lower.bound),
-                            lower.bound    = opt$alpha.lower.bound, 
-                            upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
+
+    ## apparently phylolm doesn't like a lower.bound ;)
+    if(is.na(opt$alpha.lower.bound)){
+        fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
+                                upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
+    }else{
+        fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
+                                starting.value = max(1, opt$alpha.lower.bound),
+                                lower.bound    = opt$alpha.lower.bound, 
+                                upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
+    }
     options(warn = 0)
 
     if(class(fit) == "try-error"){ 
@@ -673,6 +670,7 @@ assign_model <- function(tree, Y, shift.configuration, opt){
         resi    = cbind(resi, fit$residuals)
 
         intercept      = c(intercept, fit$coefficients[[1]])
+
         shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
 
         optimums.tmp = rep(fit$coefficients[[1]], nEdges)
@@ -687,22 +685,22 @@ assign_model <- function(tree, Y, shift.configuration, opt){
     ##NOTE: adding the trait which used to detect shift positions
     return( list(Y=Y, 
                  shift.configuration=shift.configuration, 
-                 shift.values=shift.values,
-                 nShifts=length(shift.configuration), 
-                 optimums=optimums, 
-                 alpha=alpha, 
-                 sigma2=sigma2, 
-                 intercept=intercept, 
-                 mu = mu, 
-                 residuals = resi,
-                 score=score,
-                 l1ou.options=opt) )
+                 shift.values       =shift.values,
+                 nShifts            =length(shift.configuration), 
+                 optimums           =optimums, 
+                 alpha              =alpha, 
+                 sigma2             =sigma2, 
+                 intercept          =intercept, 
+                 mu                 = mu, 
+                 residuals          = resi,
+                 score              =score,
+                 l1ou.options       =opt) )
 }
 
 run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     delta  = opt$grp.delta
     seq.ub = opt$grp.seq.ub
-    max.nTries = 10
+    max.nTries = 7
     lmbdMax = 1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
 
     base.seq = seq(0, seq.ub, delta)
