@@ -340,7 +340,7 @@ plot_l1ou <- function (tree, model, palette = NA,
     stopifnot(identical(rownames(Y), tree$tip.label))
 
     if (plot.bar) {
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, rep(1,ncol(Y))))
+        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, rep(1,ncol(Y))))
     }
     if (is.na(palette)) {
         palette = c(sample(rainbow(nShifts)), "gray")

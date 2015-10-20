@@ -1,1 +1,10 @@
 citHeader("To cite package 'l1ou' in publications use:")
+
+citEntry(entry = "Article", 
+  author = personList(as.person("Mohammad Khabbazian"), as.person("Ricardo Kriebel"), as.person("Karl Rohe"), as.person("Cécile Ané")),
+  year = 2015, 
+  journal = "In review",
+  title = "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models",
+  textVersion = paste("Khabbazian, M., Kriebel, R., Rohe K., and Ané C.", 
+        "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models", 
+        "In review."))
