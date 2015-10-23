@@ -33,7 +33,8 @@ void one_step(const int i1, const int i2, const int e1, const int e2,
     const double t2 = edgeList(e2,2);
 
     int e3 = -1; // -1 means root index
-    for(int i=0; i<nEdges; ++i) 
+    //for(int i=0; i<nEdges; ++i) 
+    for(int i=e2+1; i<nEdges; ++i) 
         if( edgeList(i,1) == i3){
             e3 = i;
             break;

@@ -45,7 +45,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     if( is.null(rownames(Y)) ){
         if(!quietly)
             warning("no names provided for the trait(s) entries/rows. so it is assumed that 
-                    entries/rows match the tip labels in the same order.\n", , immediate.=TRUE)
+                    entries/rows match the tip labels in the same order.\n", immediate.=TRUE)
         rownames(Y)  <- tree$tip.label
     } else{
         if( any(is.na(rownames(Y))) ){
@@ -69,8 +69,9 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
         if(!quietly)
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
-
-        Y <- Y[tree$tip.label, ]
+ 
+        Y  <-  Y[order(rownames(Y)),  ]; 
+        Y  <-  Y[order(order(tr$tip.label)), ];
     }
 
 
@@ -109,6 +110,7 @@ print_out <- function(eModel, silence){
 
 
 standardize_matrix <- function(Y){
+    ##TODO: use scale(Y, center=TRUE, scale=TRUE)
     for(i in 1:ncol(Y)){
         Y[,i] = Y[,i] - mean(Y[,i])
     }
@@ -338,7 +340,7 @@ plot_l1ou <- function (tree, model, palette = NA,
     stopifnot(identical(rownames(Y), tree$tip.label))
 
     if (plot.bar) {
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), width = c(2, rep(1,ncol(Y))))
+        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, rep(1,ncol(Y))))
     }
     if (is.na(palette)) {
         palette = c(sample(rainbow(nShifts)), "gray")

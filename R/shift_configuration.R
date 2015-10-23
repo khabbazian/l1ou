@@ -555,7 +555,7 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
                                 upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
     }else{
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
-                                starting.value = max(1, opt$alpha.lower.bound),
+                                starting.value = max(0.5, opt$alpha.lower.bound),
                                 lower.bound    = opt$alpha.lower.bound, 
                                 upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
     }
