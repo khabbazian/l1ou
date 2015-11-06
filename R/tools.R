@@ -24,15 +24,15 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     }
 
     if( normalize ){
-        if(!quietly)
-            warning("the new tree is normalized, i.e. the distance from the root to each tip is one, now!")
         tree <- normalize_tree(tree)
+        if(!quietly)
+            warning("the new tree is normalized: each tip is at distance 1 from the root.")
     }
 
     if( class(Y) != "matrix"){
+        Y <- as.matrix(Y)
         if(!quietly)
             warning(paste("new Y: matrix of size", nrow(Y), "x", ncol(Y), "\n" ))
-        Y <- as.matrix(Y)
     }
 
     if( nrow(Y) != length(tree$tip.label)){
