@@ -725,19 +725,19 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     delta  = opt$grp.delta
     seq.ub = opt$grp.seq.ub
     max.nTries = 7
-    lmbdMax = 1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
+    suppressMessages(
+                     lmbdMax  <-  1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
+                     )
 
     base.seq = seq(0, seq.ub, delta)
     for (itrTmp in 1:max.nTries) {
         lmbd = lmbdMax * (0.5^base.seq)
 
-        suppressMessages(
         capture.output(
                        sol  <-  grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
                                          lambda = lmbd, model = LinReg(), index = grpIdx, 
                                          control = grpl.control(tol = 0.01))
                        )
-        )
 
         #df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x) > 0))/nVariables)
         df.vec = apply(sol$coefficients, 2, function(x) length(which(rowSums(matrix(ifelse(abs(x[!is.na(grpIdx)])>0,1,0),ncol=nVariables))>nVariables-1)))
@@ -791,11 +791,11 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
         }else { break }
     }
     lmbd = lmbdMax * (0.5^base.seq)
-    suppressMessages( capture.output(
+     capture.output(
              sol  <-  grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
                                lambda = lmbd, model = LinReg(), index = grpIdx, 
                                control = grpl.control(tol = 1e-6) )
-             ) )
+             )
     df.missing = setdiff(0:opt$max.nShifts, df.vec)
     for (dfm in df.missing) {
         warning(paste0("There are no solutions with ", dfm, " number of shifts  
