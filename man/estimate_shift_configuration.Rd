@@ -8,8 +8,9 @@ estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
-  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
-  standardize = TRUE, num.top.configurations = max.nShifts/2,
+  alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
+  alpha.lower = NA, standardize = TRUE,
+  num.top.configurations = max.nShifts/2,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -28,9 +29,11 @@ estimate_shift_configuration(tree, Y,
 
 \item{quietly}{logical. If FALSE, a basic summary of the progress and results is printed.}
 
-\item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
+\item{alpha.starting.value}{optional starting value for the optimization of the phylogenetic adaptation rate.}
 
-\item{alpha.lower}{lower bound for the phylogenetic adaptation rate.}
+\item{alpha.upper}{optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
+
+\item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
 \item{standardize}{logical. If TRUE, the columns of the trait matrix are first standardized.}
 
@@ -71,8 +74,8 @@ data(lizard.tree, lizard.traits)
 # here lizard.traits already has row names:
 rownames(lizard.traits)
 # If your trait data "dat" does not have row names but instead has
-# the species names in a column called "species", then you can
-# create row names containing to species names like this:
+# species names in a column called "species", then you can
+# create row names containing the species names like this:
 # rownames(dat) <- dat$species
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)

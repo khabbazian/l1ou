@@ -45,7 +45,7 @@ nEdges <- length(lizard.tree$edge[,1])
 ew <- rep(1,nEdges)
 ew[eModel$shift.configuration] <- 3
 lizard.tree$edge.label <- round(result * 100, digits=1)
-# below: code to avoid annotating edges with support at or below 10\%
+# to avoid annotating edges with support at or below 10\%
 lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>10,
                                  paste0(lizard.tree$edge.label,"\%"), NA)
 plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)

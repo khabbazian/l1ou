@@ -1,9 +1,7 @@
 #' Adjusts the tree and traits to meet the requirements of \code{estimate_shift_configuration}
 #'
-#' Creates a new tree and new data matrix, where the tree edges are in postorder, 
-#' the trait matrix has tip labels as row names, and the tips come in the same order 
-#' in the trait matrix as in the tree's tip.label vector.
-#' 
+#' Returns a new tree and new data matrix, where the tree edges are in postorder, and the data row names match the order of the tree tip labels.
+#'
 #'@param tree ultrametric tree of class phylo with branch lengths.
 #'@param Y trait vector/matrix without missing entries.
 #'@param normalize logical. If TRUE, normalizes branch lengths to a unit tree height.

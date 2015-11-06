@@ -2,11 +2,13 @@
 % Please edit documentation in R/shift_configuration.R
 \name{configuration_ic}
 \alias{configuration_ic}
-\title{computes the information criterion score for a given configuration}
+\title{Computes the information criterion score for a given configuration}
 \usage{
 configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"), alpha.upper = alpha_upper_bound(tree), alpha.lower = NA)
+  "OUfixedRoot"), alpha.starting.value = NA,
+  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
+  fit.OU.model = FALSE)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo, with branch lengths, and edges in postorder.}
@@ -19,15 +21,19 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 
 \item{root.model}{an ancestral state model at the root.}
 
-\item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.}
+\item{alpha.starting.value}{optional starting value for the optimization of the phylogenetic adaptation rate.}
 
-\item{alpha.lower}{lower bound for the phylogenetic adaptation rate.}
+\item{alpha.upper}{optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.}
+
+\item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
+
+\item{fit.OU.model}{logical. If TRUE, ...}
 }
 \value{
 Information criterion value of the given shift configuration.
 }
 \description{
-computes the information criterion score for a given configuration
+Computes the information criterion score for a given configuration
 }
 \details{
 AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
@@ -51,6 +57,6 @@ Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evo
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
 }
 \seealso{
-\code{\link{estimate_shift_configuration}}
+\code{\link{estimate_shift_configuration}} \code{\link{adjust_data}}
 }
 
