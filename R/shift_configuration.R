@@ -812,6 +812,6 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
         warning(paste0("There are no solutions with ", dfm, " number of shifts  
                 in the solution path of grplasso. You may want to change grp.delta and grp.seq"))
     }
-    return(sol)
+    return(sol);
 }
 
