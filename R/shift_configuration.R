@@ -359,7 +359,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     nSols   = get_num_solutions(sol.path)
     stopifnot( nSols > 0 )
 
-    score.vec  = idx.vec = numeric()
+    all.shifts = score.vec  = idx.vec = numeric()
     prevshift.configuration = NA
     configuration.list = list()
     for(idx in 1:nSols) {
@@ -369,6 +369,17 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
         if ( length(shift.configuration) >= opt$max.nShifts    )  { break}
         if ( setequal(shift.configuration, prevshift.configuration ) ){ next }
+
+
+        ## sorting shifts based on their age in the solution path
+        all.shifts = c(all.shifts, shift.configuration)
+        freq.shifts = numeric()
+        for( s in shift.configuration){
+            freq.shifts = c(freq.shifts, length( which(all.shifts == s) ) )
+        }
+
+        names(shift.configuration)  <- freq.shifts
+        shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
 
         score = cmp_model_score(tree, Y, shift.configuration, opt)
 
@@ -396,7 +407,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
 do_backward_selection <- function(tree, Y, shift.configuration, opt){
 
-    shift.configuration = sort(shift.configuration, decreasing = TRUE)
+    #shift.configuration = sort(shift.configuration, decreasing = TRUE)
     org.score       = cmp_model_score(tree, Y, shift.configuration, opt)
 
     if( length(shift.configuration) < 3 ) { 
