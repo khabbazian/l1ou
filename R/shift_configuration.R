@@ -191,7 +191,7 @@ estimate_shift_configuration <- function(tree, Y,
             eModel = eModel1
     }
     if(!quietly){
-        print(get_stored_config_score())
+        print( data.frame(get_stored_config_score()) )
     }
     if (l1ou.options$use.saved.scores) {
         erase_configuration_score_db()
