@@ -5,6 +5,10 @@ add_configuration_score_to_db <- function(str_key, value) {
     invisible(.Call('l1ou_add_configuration_score_to_db', PACKAGE = 'l1ou', str_key, value))
 }
 
+get_stored_config_score <- function() {
+    .Call('l1ou_get_stored_config_score', PACKAGE = 'l1ou')
+}
+
 erase_configuration_score_db <- function() {
     invisible(.Call('l1ou_erase_configuration_score_db', PACKAGE = 'l1ou'))
 }

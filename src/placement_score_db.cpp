@@ -7,16 +7,25 @@
 // [[Rcpp::plugins(cpp11)]]
 
 typedef std::map<std::size_t, double> DataBase;
+typedef std::map<double,std::string>  ScoreConfigSet;
 
 DataBase db;
 std::hash<std::string> myHash;
+ScoreConfigSet myConfigSet;
 
 // [[Rcpp::export]]
 void add_configuration_score_to_db(std::string str_key, double value){
     auto key = myHash(str_key);
     db[key]  = value;
+    myConfigSet[value] = str_key;
 }
 
+// [[Rcpp::export]]
+Rcpp::List get_stored_config_score(){
+    return( Rcpp::List::create( 
+                Rcpp::Named("value") = myConfigSet.begin()->first,
+                Rcpp::Named("valid") = myConfigSet.begin()->second ) );
+}
 
 // [[Rcpp::export]]
 void erase_configuration_score_db(){

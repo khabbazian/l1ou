@@ -16,6 +16,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// get_stored_config_score
+Rcpp::List get_stored_config_score();
+RcppExport SEXP l1ou_get_stored_config_score() {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    __result = Rcpp::wrap(get_stored_config_score());
+    return __result;
+END_RCPP
+}
 // erase_configuration_score_db
 void erase_configuration_score_db();
 RcppExport SEXP l1ou_erase_configuration_score_db() {
