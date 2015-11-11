@@ -7,29 +7,44 @@
 // [[Rcpp::plugins(cpp11)]]
 
 typedef std::map<std::size_t, double> DataBase;
-typedef std::map<double,std::string>  ScoreConfigSet;
+typedef std::pair<double,std::string>  ScoreConfig;
+typedef std::vector<ScoreConfig> ScoreConfigVec;
 
 DataBase db;
 std::hash<std::string> myHash;
-ScoreConfigSet myConfigSet;
+ScoreConfigVec myConfigVec;
+
 
 // [[Rcpp::export]]
 void add_configuration_score_to_db(std::string str_key, double value){
     auto key = myHash(str_key);
     db[key]  = value;
-    myConfigSet[value] = str_key;
+    myConfigVec.push_back( ScoreConfig(value, str_key) );
 }
 
 // [[Rcpp::export]]
 Rcpp::List get_stored_config_score(){
-    return( Rcpp::List::create( 
-                Rcpp::Named("value") = myConfigSet.begin()->first,
-                Rcpp::Named("valid") = myConfigSet.begin()->second ) );
+   
+    std::sort(myConfigVec.begin(), myConfigVec.end(),
+            [](const ScoreConfig& lhs, const ScoreConfig& rhs) {
+            return lhs.first < rhs.first; } );
+
+    std::vector<std::string> strVec;
+    std::vector<double> doubleVec;
+    for(auto &itr : myConfigVec){
+        doubleVec.push_back(itr.first);
+        strVec.push_back   (itr.second);
+    }
+
+    return Rcpp::List::create( 
+                Rcpp::Named("scores") = doubleVec,
+                Rcpp::Named("configurations") = strVec ) ;
 }
 
 // [[Rcpp::export]]
 void erase_configuration_score_db(){
     db.erase(db.begin(), db.end());
+    myConfigVec.erase(myConfigVec.begin(), myConfigVec.end() );
 }
  
 // [[Rcpp::export]]
