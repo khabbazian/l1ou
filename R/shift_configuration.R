@@ -190,7 +190,9 @@ estimate_shift_configuration <- function(tree, Y,
         if (eModel$score > eModel1$score) 
             eModel = eModel1
     }
-    eModel$profile = data.frame(get_stored_config_score())
+
+    eModel$profile = list_investigated_configs() 
+
     if (l1ou.options$use.saved.scores) {
         erase_configuration_score_db()
     }
@@ -565,7 +567,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
     if(opt$use.saved.scores){
         ##if it's been already computed
-        score = get_configuration_score_to_list(shift.configuration)
+        score = get_configuration_score_from_list(shift.configuration)
         if(!is.na(score)){
             return(score)
         }

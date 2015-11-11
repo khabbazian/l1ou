@@ -90,13 +90,23 @@ add_configuration_score_to_list  <- function(shift.configuration, score){
     add_configuration_score_to_db(paste0(shift.configuration, collapse=" "), score)
 }
 
-get_configuration_score_to_list <- function(shift.configuration){
+get_configuration_score_from_list <- function(shift.configuration){
     shift.configuration = sort(shift.configuration)
     res = get_score_of_configuration(paste0(shift.configuration, collapse=" "))
     if( res$valid == FALSE){
         return(NA)
     }
     return(res$value)
+}
+
+list_investigated_configs <- function(){
+    tmpList = get_stored_config_score()
+    c.s = list()
+    c.s$scores = tmpList$scores
+    for( i in 1:length(c.s$scores)){
+        c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
+    }
+    return(c.s)
 }
 
 print_out <- function(eModel, silence){
@@ -398,11 +408,12 @@ plot.l1ou <- function (model, tree, palette = NA,
 }
 
 #'
-#' Prints out a summery of the shift configurations investigated by \code{\link{estimate_shift_configuration}}  
+#' Prints out a summary of the shift configurations investigated by \code{\link{estimate_shift_configuration}}  
 #'
 #' prints the list of the shift configurations sorted by number of shifts and corresponding ic scores.
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param ... further arguments. 
 #'
 #'@return none.
 #'@examples
@@ -414,8 +425,30 @@ plot.l1ou <- function (model, tree, palette = NA,
 #'
 #'@export
 #'
-profile.l1ou <- function(model){
+profile.l1ou <- function(model, ...){
     #as.numeric(unlist(strsplit(mystr, split=",")))
-    dat <- data.frame(get_stored_config_score())
-    print( dat[1:10,] )
+    print( eModel$profile )
+}
+
+#'
+#' Prints out a summary 
+#'
+#' prints out a summary 
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param ... further arguments. 
+#'
+#'@return none.
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' summary(eModel)
+#'
+#'@export
+#'
+summary.l1ou <- function(model, ...){
+    #as.numeric(unlist(strsplit(mystr, split=",")))
+    print( eModel$profile )
 }

@@ -2,6 +2,7 @@
 
 S3method(plot,l1ou)
 S3method(profile,l1ou)
+S3method(summary,l1ou)
 export(adjust_data)
 export(configuration_ic)
 export(estimate_shift_configuration)
