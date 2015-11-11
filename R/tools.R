@@ -118,7 +118,6 @@ standardize_matrix <- function(Y){
 
 
 
-
 effective.sample.size <- function(phy, edges=NULL,
              model = c("BM","OUrandomRoot","OUfixedRoot","lambda","delta","EB"),
              parameters = NULL, check.pruningwise = TRUE,
@@ -293,8 +292,8 @@ normalize_tree <- function(tree){
 #'
 #' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 #'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param tree phylogenetic tree of class phylo.
-#'@param model object returned by \code{\link{estimate_shift_configuration}}.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
@@ -315,17 +314,18 @@ normalize_tree <- function(tree){
 #' nEdges <- length(lizard.tree$edge[,1]);
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
-#' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot(eModel, lizard.tree, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
 #'
-plot_l1ou <- function (tree, model, palette = NA, 
+plot.l1ou <- function (model, tree, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
                        edge.label=NA,
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
+    stopifnot(class(model)=="l1ou")
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
     shift.configuration = sort(model$shift.configuration, decreasing = T)
@@ -395,4 +395,27 @@ plot_l1ou <- function (tree, model, palette = NA,
                   digits = 2))
         }
     }
+}
+
+#'
+#' Prints out a summery of the shift configurations investigated by \code{\link{estimate_shift_configuration}}  
+#'
+#' prints the list of the shift configurations sorted by number of shifts and corresponding ic scores.
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'
+#'@return none.
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' profile(eModel)
+#'
+#'@export
+#'
+profile.l1ou <- function(model){
+    #as.numeric(unlist(strsplit(mystr, split=",")))
+    dat <- data.frame(get_stored_config_score())
+    print( dat[1:10,] )
 }

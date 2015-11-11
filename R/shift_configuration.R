@@ -51,13 +51,13 @@
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
-#' plot_l1ou(lizard$tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot(eModel, lizard$tree, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #' # example to constrain the set of candidate branches with a shift
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 #' ce <- eModel$shift.configuration # set of candidate edges
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
-#' plot_l1ou(lizard$tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+#' plot(eModel, lizard$tree, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 #'
 #'@references
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
@@ -189,9 +189,6 @@ estimate_shift_configuration <- function(tree, Y,
             Y, alpha = eModel1$alpha, opt = l1ou.options)
         if (eModel$score > eModel1$score) 
             eModel = eModel1
-    }
-    if(!quietly){
-        print( data.frame(get_stored_config_score()) )
     }
     if (l1ou.options$use.saved.scores) {
         erase_configuration_score_db()
@@ -543,7 +540,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     score = cmp_model_score (tree, Y, shift.configuration, opt)
 
     ##NOTE: adding the trait which used to detect shift positions
-    return( list(Y=Y, 
+    model = list(Y=Y, 
                  shift.configuration=shift.configuration, 
                  shift.values       =shift.values,
                  nShifts            =length(shift.configuration), 
@@ -554,7 +551,9 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  mu                 =mu, 
                  residuals          =resi,
                  score              =score,
-                 l1ou.options       =opt) )
+                 l1ou.options       =opt) 
+    class(model) <- "l1ou"
+    return( model )
 }
 
 

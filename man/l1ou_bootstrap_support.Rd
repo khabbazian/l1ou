@@ -48,7 +48,7 @@ lizard.tree$edge.label <- round(result * 100, digits=1)
 # to avoid annotating edges with support at or below 10\%
 lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>10,
                                  paste0(lizard.tree$edge.label,"\%"), NA)
-plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
+plot(eModel, lizard.tree, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}
