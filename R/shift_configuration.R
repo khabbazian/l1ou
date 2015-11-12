@@ -585,15 +585,21 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         df.1 = res$df.1
         df.2 = res$df.2
     } else if( ic == "pBICess"){
-        score = cmp_pBICess(tree, Y, shift.configuration, opt) 
-        if( opt$use.saved.scores && score!=Inf ){
-            add_configuration_score_to_list(shift.configuration, score)
+        res   = cmp_pBICess(tree, Y, shift.configuration, opt) 
+        if(is.na(res)) return(Inf)
+        score = res$score
+        if( opt$use.saved.scores){
+            add_configuration_score_to_list(shift.configuration, score,
+                                            paste0(c(res$alpha,res$sigma2,res$loglik),collapse=" "))
         }
         return( score )
     } else if(ic == "pBIC"){
-        score = cmp_pBIC(tree, Y, shift.configuration, opt) 
-        if( opt$use.saved.scores && score!=Inf ){
-            add_configuration_score_to_list(shift.configuration, score)
+        res = cmp_pBIC(tree, Y, shift.configuration, opt) 
+        if(is.na(res)) return(Inf)
+        score = res$score
+        if( opt$use.saved.scores ){
+            add_configuration_score_to_list(shift.configuration, score,
+                                            paste0(c(res$alpha,res$sigma2,res$loglik),collapse=" "))
         }
         return( score )
     } 
@@ -603,13 +609,13 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if ( all( is.na( fit) ) ){
             return(Inf)
-            #return(NA)
         } 
         score = score  -2*fit$logLik + df.2
     }
 
-    if( opt$use.saved.scores && score!=Inf ){
-        add_configuration_score_to_list(shift.configuration, score)
+    if( opt$use.saved.scores ){
+        add_configuration_score_to_list(shift.configuration, score,
+                                        paste0(c(res$alpha,res$sigma2,res$loglik),collapse=" "))
     }
     return(score)
 }
@@ -684,19 +690,25 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
     df.1  = 2*(nShifts)*log(nEdges-1)
     score = df.1
+
+    alpha = sigma2  = loglik = numeric()
+
     for(i in 1:ncol(Y)){
         fit  = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if( all( is.na(fit) ) ){
-           #return(NA)
-           return(Inf)
+           return(NA)
         }
         ess  = effective.sample.size(tree, edges=shift.configuration, model="OUfixedRoot", 
                  parameters=list(alpha=fit$optpar), FALSE, FALSE)
 
         df.2  = 3*log(nTips+1) + sum(log(ess+1))
         score = score  -2*fit$logLik + df.2 
+
+        alpha  = c(alpha, fit$optpar)
+        sigma2 = c(sigma2, fit$sigma2)
+        loglik = c(loglik, fit$logLik)
     }
-    return( score )
+    return( list(score=score, alpha=alpha, sigma2=sigma2, loglik=loglik) )
 }
 
 cmp_pBIC <- function(tree, Y, shift.configuration, opt){
@@ -708,17 +720,22 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
     df.1    = 2*(nShifts)*log(nEdges-1)
     score   = df.1
 
+    alpha   = sigma2  = loglik = numeric()
+
     for(i in 1:ncol(Y)){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if( all( is.na(fit) ) ){
-           #return(NA)
-           return(Inf)
+           return(NA)
         } 
         ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/fit$n, log=T)$modulus)
         df.2  = 3*log(nTips) - ld
         score = score  -2*fit$logLik + df.2 
+
+        alpha  = c(alpha, fit$optpar)
+        sigma2 = c(sigma2, fit$sigma2)
+        loglik = c(loglik, fit$logLik)
     }
-    return( score )
+    return( list(score=score, alpha=alpha, sigma2=sigma2, loglik=loglik) )
 }
 
 

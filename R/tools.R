@@ -79,19 +79,12 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     return(list(tree=tree, Y=Y))
 }
 
+lnorm      <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
 
-lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
-
-#my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")) }
-
-
-add_configuration_score_to_list  <- function(shift.configuration, score, alpha=0, sigma2=0, loglik=0){
+add_configuration_score_to_list  <- function(shift.configuration, score, moreInfo){
     shift.configuration = sort(shift.configuration)
-    add_configuration_score_to_db(
-                                  paste0(shift.configuration, collapse=" "), 
-                                  score, 
-                                  paste0(c(alpha, sigma2, loglik), collapse=" ") 
-                              )
+    add_configuration_score_to_db( paste0(shift.configuration, collapse=" "), 
+                                  score, moreInfo )
 }
 
 get_configuration_score_from_list <- function(shift.configuration){
