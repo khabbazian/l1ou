@@ -10,7 +10,6 @@ estimate_shift_configuration(tree, Y,
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
   alpha.lower = NA, standardize = TRUE,
-  num.top.configurations = max.nShifts/2,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -36,8 +35,6 @@ estimate_shift_configuration(tree, Y,
 \item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
 \item{standardize}{logical. If TRUE, the columns of the trait matrix are first standardized.}
-
-\item{num.top.configurations}{number of shift configurations on the lasso solution path chosen for further improvement.}
 
 \item{edge.length.threshold}{minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.}
 

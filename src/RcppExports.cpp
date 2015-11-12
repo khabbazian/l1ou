@@ -6,13 +6,14 @@
 using namespace Rcpp;
 
 // add_configuration_score_to_db
-void add_configuration_score_to_db(std::string str_key, double value);
-RcppExport SEXP l1ou_add_configuration_score_to_db(SEXP str_keySEXP, SEXP valueSEXP) {
+void add_configuration_score_to_db(std::string str_key, double value, std::string mInfo);
+RcppExport SEXP l1ou_add_configuration_score_to_db(SEXP str_keySEXP, SEXP valueSEXP, SEXP mInfoSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< std::string >::type str_key(str_keySEXP);
     Rcpp::traits::input_parameter< double >::type value(valueSEXP);
-    add_configuration_score_to_db(str_key, value);
+    Rcpp::traits::input_parameter< std::string >::type mInfo(mInfoSEXP);
+    add_configuration_score_to_db(str_key, value, mInfo);
     return R_NilValue;
 END_RCPP
 }

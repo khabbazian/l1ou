@@ -85,9 +85,13 @@ lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
 #my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")) }
 
 
-add_configuration_score_to_list  <- function(shift.configuration, score){
+add_configuration_score_to_list  <- function(shift.configuration, score, alpha=0, sigma2=0, loglik=0){
     shift.configuration = sort(shift.configuration)
-    add_configuration_score_to_db(paste0(shift.configuration, collapse=" "), score)
+    add_configuration_score_to_db(
+                                  paste0(shift.configuration, collapse=" "), 
+                                  score, 
+                                  paste0(c(alpha, sigma2, loglik), collapse=" ") 
+                              )
 }
 
 get_configuration_score_from_list <- function(shift.configuration){
@@ -105,6 +109,7 @@ list_investigated_configs <- function(){
     c.s$scores = tmpList$scores
     for( i in 1:length(c.s$scores)){
         c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
+        c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
     }
     return(c.s)
 }
@@ -413,10 +418,13 @@ plot.l1ou <- function (model, tree, palette = NA,
 #' prints the list of the shift configurations sorted by number of shifts and corresponding ic scores.
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
-#'@param quietly logical. If FALSE, a basic summary of the progress and results is printed.
 #'@param ... further arguments. 
 #'
-#'@return none.
+#'@return 
+#'\item{shift.configurations}{list of shift configurations sorted by number of shifts.}
+#'\item{scores}{list of scores corresponding to shift.configurations.}
+#'\item{nShifts}{number of shifts corresponding to the shift configurations.}
+#'
 #'@examples
 #' 
 #' data(lizard.traits, lizard.tree)
