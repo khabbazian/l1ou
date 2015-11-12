@@ -365,6 +365,9 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     all.shifts = score.vec  = idx.vec = numeric()
     prevshift.configuration = NA
     configuration.list = list()
+    min.score = Inf   
+    min.idx   = NA
+
     for(idx in 1:nSols) {
 
         shift.configuration = get_shift_configuration(sol.path, idx, Y)
@@ -372,7 +375,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
         if ( length(shift.configuration) >= opt$max.nShifts    )  { break}
         if ( setequal(shift.configuration, prevshift.configuration ) ){ next }
-
+        prevshift.configuration  = shift.configuration
 
         ## sorting shifts based on their age in the solution path
         all.shifts = c(all.shifts, shift.configuration)
@@ -383,29 +386,32 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
         names(shift.configuration)  <- freq.shifts
         shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
+        #score = cmp_model_score(tree, Y, shift.configuration, opt)
 
-        score = cmp_model_score(tree, Y, shift.configuration, opt)
+        #configuration.list[[idx]] = shift.configuration
+        #score.vec             = c(score.vec, score)
+        #idx.vec               = c(idx.vec, idx)
 
-        configuration.list[[idx]] = shift.configuration
-        score.vec             = c(score.vec, score)
-        idx.vec               = c(idx.vec, idx)
-
-        prevshift.configuration   = shift.configuration
-    }
-
-    idx.vec   = idx.vec[sort(score.vec, index.return=TRUE)$ix]
-    min.score = Inf   
-    min.idx   = NA
-
-    for( i in 1:min(opt$num.top.configurations, length(idx.vec)) ){ 
-        if ( is.na(idx.vec[[i]]) ){ break }
-        res = do_backward_selection(tree, Y, configuration.list[[ idx.vec[[i]]  ]], opt)
+        res = do_backward_selection(tree, Y, shift.configuration, opt)
         if ( min.score > res$score){
-            min.score       = res$score
-            shift.configuration = res$shift.configuration
+            min.score   = res$score
+            best.shift.configuration = res$shift.configuration
         }
+
     }
-    return ( list(score=min.score, shift.configuration=shift.configuration) )
+
+    #idx.vec   = idx.vec[sort(score.vec, index.return=TRUE)$ix]
+
+    #for( i in 1:min(opt$num.top.configurations, length(idx.vec)) ){ 
+    #    if ( is.na(idx.vec[[i]]) ){ break }
+    #    res = do_backward_selection(tree, Y, configuration.list[[ idx.vec[[i]]  ]], opt)
+    #    if ( min.score > res$score){
+    #        min.score       = res$score
+    #        shift.configuration = res$shift.configuration
+    #    }
+    #}
+    #return ( list(score=min.score, shift.configuration=shift.configuration) )
+    return ( list(score=min.score, shift.configuration=best.shift.configuration) )
 }
 
 do_backward_selection <- function(tree, Y, shift.configuration, opt){

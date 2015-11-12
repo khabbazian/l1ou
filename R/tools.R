@@ -413,6 +413,7 @@ plot.l1ou <- function (model, tree, palette = NA,
 #' prints the list of the shift configurations sorted by number of shifts and corresponding ic scores.
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param quietly logical. If FALSE, a basic summary of the progress and results is printed.
 #'@param ... further arguments. 
 #'
 #'@return none.
@@ -425,9 +426,47 @@ plot.l1ou <- function (model, tree, palette = NA,
 #'
 #'@export
 #'
-profile.l1ou <- function(model, ...){
-    #as.numeric(unlist(strsplit(mystr, split=",")))
-    print( eModel$profile )
+profile.l1ou <- function(model, quietly=TRUE, ...){
+    profile.data = eModel$profile
+    p.d          = list()
+    ##sorting them based on scores first (there are already sorter tho)
+    profile.data$scores         = profile.data$scores[order(profile.data$scores)]
+    profile.data$configurations = profile.data$configurations[order(profile.data$scores)]
+
+    lens = unlist( lapply(profile.data$configurations, length) )
+
+    ##sorting them based on shift config lengths 
+    ##(I assumed that order doesn't change the order of equal elements)
+    profile.data$scores         = profile.data$scores[order(lens)]
+    profile.data$configurations = profile.data$configurations[order(lens)]
+
+    if(!quietly)
+        cat( "number of shifts : scores : shift configurations (the configuration with ** shows the min ic score)\n" )
+
+    min.score = min(profile.data$scores)
+    clength = -1
+    for( i in 1:length(profile.data$scores) ){
+        if( clength == length(profile.data$configurations[[i]]) ){
+            next
+        }
+
+        clength = length(profile.data$configurations[[i]]) 
+        p.d$length       [[i]] = length(profile.data$configurations[[i]]) 
+        p.d$score        [[i]] = profile.data$score[[i]] 
+        p.d$configuration[[i]] = profile.data$configurations[[i]] 
+
+        if(!quietly){
+            if( profile.data$score[[i]] == min.score ) 
+                cat("**")
+            cat( length(profile.data$configurations[[i]]) )
+            cat( " : " )
+            cat( profile.data$score[[i]] )
+            cat( " : " )
+            cat( profile.data$configurations[[i]] )
+            cat( "\n\n" )
+        }
+    }
+    return(p.d)
 }
 
 #'
@@ -450,5 +489,6 @@ profile.l1ou <- function(model, ...){
 #'
 summary.l1ou <- function(model, ...){
     #as.numeric(unlist(strsplit(mystr, split=",")))
+    #Haven't implemented it yet :)
     print( eModel$profile )
 }
