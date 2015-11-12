@@ -335,7 +335,7 @@ plot.l1ou <- function (model, tree, palette = NA,
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
-    stopifnot(class(model)=="l1ou")
+
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
     shift.configuration = sort(model$shift.configuration, decreasing = T)
@@ -422,49 +422,34 @@ plot.l1ou <- function (model, tree, palette = NA,
 #' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' profile(eModel)
+#' model.profile  <- profile(eModel)
+#' plot(model.profile$nShifts, model.profile$scores)
 #'
 #'@export
 #'
-profile.l1ou <- function(model, quietly=TRUE, ...){
+profile.l1ou <- function(model, ...)
+{
     profile.data = eModel$profile
-    p.d          = list()
-    ##sorting them based on scores first (there are already sorter tho)
-    profile.data$scores         = profile.data$scores[order(profile.data$scores)]
+    p.d = list()
+    profile.data$scores = profile.data$scores[order(profile.data$scores)]
     profile.data$configurations = profile.data$configurations[order(profile.data$scores)]
-
-    lens = unlist( lapply(profile.data$configurations, length) )
-
-    ##sorting them based on shift config lengths 
-    ##(I assumed that order doesn't change the order of equal elements)
-    profile.data$scores         = profile.data$scores[order(lens)]
+    lens = unlist(lapply(profile.data$configurations, length))
+    profile.data$scores = profile.data$scores[order(lens)]
     profile.data$configurations = profile.data$configurations[order(lens)]
-
-    if(!quietly)
-        cat( "number of shifts : scores : shift configurations (the configuration with ** shows the min ic score)\n" )
 
     min.score = min(profile.data$scores)
     clength = -1
-    for( i in 1:length(profile.data$scores) ){
-        if( clength == length(profile.data$configurations[[i]]) ){
+    counter = 1
+    for (i in 1:length(profile.data$scores)) {
+        if (clength == length(profile.data$configurations[[i]])) {
             next
         }
 
-        clength = length(profile.data$configurations[[i]]) 
-        p.d$length       [[i]] = length(profile.data$configurations[[i]]) 
-        p.d$score        [[i]] = profile.data$score[[i]] 
-        p.d$configuration[[i]] = profile.data$configurations[[i]] 
-
-        if(!quietly){
-            if( profile.data$score[[i]] == min.score ) 
-                cat("**")
-            cat( length(profile.data$configurations[[i]]) )
-            cat( " : " )
-            cat( profile.data$score[[i]] )
-            cat( " : " )
-            cat( profile.data$configurations[[i]] )
-            cat( "\n\n" )
-        }
+        clength = length(profile.data$configurations[[i]])
+        p.d$nShifts[[counter]]              = length(profile.data$configurations[[i]])
+        p.d$scores[[counter]]               = profile.data$score[[i]]
+        p.d$shift.configurations[[counter]] = profile.data$configurations[[i]]
+        counter = counter + 1
     }
     return(p.d)
 }
