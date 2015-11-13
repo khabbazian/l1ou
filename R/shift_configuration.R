@@ -615,7 +615,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
     if( opt$use.saved.scores ){
         add_configuration_score_to_list(shift.configuration, score,
-                                        paste0(c(fit$optpar, fit$sigma2, fit$loglik),collapse=" "))
+                                        paste0(c(fit$optpar, fit$sigma2, fit$logLik),collapse=" "))
     }
     return(score)
 }

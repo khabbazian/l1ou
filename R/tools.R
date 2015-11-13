@@ -450,6 +450,7 @@ profile.l1ou <- function(model, ...)
         p.d$nShifts[[counter]]              = length(profile.data$configurations[[i]])
         p.d$scores[[counter]]               = profile.data$score[[i]]
         p.d$shift.configurations[[counter]] = profile.data$configurations[[i]]
+        p.d$moreInfo                        = profile.data$moreInfo[[i]]
         counter = counter + 1
     }
     return(p.d)
