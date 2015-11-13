@@ -2,20 +2,35 @@
 % Please edit documentation in R/tools.R
 \name{summary.l1ou}
 \alias{summary.l1ou}
+<<<<<<< HEAD
 \title{Prints out a summary}
 \usage{
 \method{summary}{l1ou}(model, ...)
+=======
+\title{Prints out a summary of the model}
+\usage{
+\method{summary}{l1ou}(model, nTop.scores = 5, ...)
+>>>>>>> experimental
 }
 \arguments{
 \item{model}{object of class l1ou returned by \code{\link{estimate_shift_configuration}}.}
 
+<<<<<<< HEAD
+=======
+\item{nTop.scores}{number of top scores and shift configuration to print out.}
+
+>>>>>>> experimental
 \item{...}{further arguments.}
 }
 \value{
 none.
 }
 \description{
+<<<<<<< HEAD
 prints out a summary
+=======
+prints out a summary of the model
+>>>>>>> experimental
 }
 \examples{
 data(lizard.traits, lizard.tree)

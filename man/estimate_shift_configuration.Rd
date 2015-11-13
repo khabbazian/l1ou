@@ -46,6 +46,7 @@ estimate_shift_configuration(tree, Y,
 }
 \value{
 \item{Y}{input trait vector/matrix.}
+\item{tree}{input tree.}
 \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 \item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimated number of shifts.}
@@ -55,6 +56,7 @@ estimate_shift_configuration(tree, Y,
 \item{mu}{fitted values, i.e. estimated trait means.}
 \item{residuals}{residuals. These residuals are phylogenetically correlated.}
 \item{score}{information criterion value of the estimated shift configuration.}
+\item{profile}{list of shift configurations sorted by their ic scores.}
 \item{l1ou.options}{list of options that were used.}
 }
 \description{
@@ -76,16 +78,18 @@ rownames(lizard.traits)
 # rownames(dat) <- dat$species
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+summary(eModel)
+
 nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
-plot(eModel, lizard$tree, cex=0.5, label.offset=0.02, edge.width=ew)
+plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 
 # example to constrain the set of candidate branches with a shift
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 ce <- eModel$shift.configuration # set of candidate edges
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
-plot(eModel, lizard$tree, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+plot(eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
