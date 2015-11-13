@@ -17,7 +17,6 @@
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
 #'@param standardize logical. If TRUE, the columns of the trait matrix are first standardized.
-#'@param num.top.configurations number of shift configurations on the lasso solution path chosen for further improvement.
 #'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.
 #'@param grp.delta internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
 #'@param grp.seq.ub (used for multiple traits). The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
@@ -51,13 +50,13 @@
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
-#' plot_l1ou(lizard$tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot(eModel, lizard$tree, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #' # example to constrain the set of candidate branches with a shift
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 #' ce <- eModel$shift.configuration # set of candidate edges
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
-#' plot_l1ou(lizard$tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+#' plot(eModel, lizard$tree, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 #'
 #'@references
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
@@ -73,7 +72,6 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
            standardize            = TRUE,
-           num.top.configurations = max.nShifts/2,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
            grp.seq.ub             = 5,
@@ -128,7 +126,8 @@ estimate_shift_configuration <- function(tree, Y,
                  to drop extra tips in the tree.\n")
         }
 
-        stop("the order of entries/rows of the trait vector/matrix (Y) does not matche the order of the tip labels. use adjust_data function to fix that\n")
+        stop("the order of entries/rows of the trait vector/matrix (Y) does not matche 
+             the order of the tip labels. use adjust_data function to fix that\n")
     }
 
     stopifnot(all(rownames(Y) == tree$tip.label))
@@ -165,7 +164,6 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$alpha.upper.bound      <- alpha.upper
         l1ou.options$alpha.lower.bound      <- alpha.lower
         l1ou.options$edge.length.threshold  <- edge.length.threshold
-        l1ou.options$num.top.configurations <- num.top.configurations
         l1ou.options$standardize            <- standardize
 
         l1ou.options$grp.seq.ub   <- grp.seq.ub
@@ -190,6 +188,9 @@ estimate_shift_configuration <- function(tree, Y,
         if (eModel$score > eModel1$score) 
             eModel = eModel1
     }
+
+    eModel$profile = list_investigated_configs() 
+
     if (l1ou.options$use.saved.scores) {
         erase_configuration_score_db()
     }
@@ -362,6 +363,9 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     all.shifts = score.vec  = idx.vec = numeric()
     prevshift.configuration = NA
     configuration.list = list()
+    min.score = Inf   
+    min.idx   = NA
+
     for(idx in 1:nSols) {
 
         shift.configuration = get_shift_configuration(sol.path, idx, Y)
@@ -369,7 +373,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
         if ( length(shift.configuration) >= opt$max.nShifts    )  { break}
         if ( setequal(shift.configuration, prevshift.configuration ) ){ next }
-
+        prevshift.configuration  = shift.configuration
 
         ## sorting shifts based on their age in the solution path
         all.shifts = c(all.shifts, shift.configuration)
@@ -380,29 +384,14 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
         names(shift.configuration)  <- freq.shifts
         shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
-
-        score = cmp_model_score(tree, Y, shift.configuration, opt)
-
-        configuration.list[[idx]] = shift.configuration
-        score.vec             = c(score.vec, score)
-        idx.vec               = c(idx.vec, idx)
-
-        prevshift.configuration   = shift.configuration
-    }
-
-    idx.vec   = idx.vec[sort(score.vec, index.return=TRUE)$ix]
-    min.score = Inf   
-    min.idx   = NA
-
-    for( i in 1:min(opt$num.top.configurations, length(idx.vec)) ){ 
-        if ( is.na(idx.vec[[i]]) ){ break }
-        res = do_backward_selection(tree, Y, configuration.list[[ idx.vec[[i]]  ]], opt)
+        res = do_backward_selection(tree, Y, shift.configuration, opt)
         if ( min.score > res$score){
-            min.score       = res$score
-            shift.configuration = res$shift.configuration
+            min.score   = res$score
+            best.shift.configuration = res$shift.configuration
         }
+
     }
-    return ( list(score=min.score, shift.configuration=shift.configuration) )
+    return ( list(score=min.score, shift.configuration=best.shift.configuration) )
 }
 
 do_backward_selection <- function(tree, Y, shift.configuration, opt){
@@ -539,8 +528,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     }
     score = cmp_model_score (tree, Y, shift.configuration, opt)
 
-    ##NOTE: adding the trait which used to detect shift positions
-    return( list(Y=Y, 
+    ##NOTE: adding the trait (response vector/matrix) which used to detect shift positions
+    model = list(Y=Y, 
                  shift.configuration=shift.configuration, 
                  shift.values       =shift.values,
                  nShifts            =length(shift.configuration), 
@@ -551,7 +540,10 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  mu                 =mu, 
                  residuals          =resi,
                  score              =score,
-                 l1ou.options       =opt) )
+                 l1ou.options       =opt) 
+
+    class(model) <- "l1ou"
+    return( model )
 }
 
 
@@ -562,7 +554,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
     if(opt$use.saved.scores){
         ##if it's been already computed
-        score = get_configuration_score_to_list(shift.configuration)
+        score = get_configuration_score_from_list(shift.configuration)
         if(!is.na(score)){
             return(score)
         }
@@ -594,15 +586,21 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         df.1 = res$df.1
         df.2 = res$df.2
     } else if( ic == "pBICess"){
-        score = cmp_pBICess(tree, Y, shift.configuration, opt) 
+        res   = cmp_pBICess(tree, Y, shift.configuration, opt) 
+        if(is.na(res)) return(Inf)
+        score = res$score
         if( opt$use.saved.scores){
-            add_configuration_score_to_list(shift.configuration, score)
+            add_configuration_score_to_list(shift.configuration, score,
+                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
         }
         return( score )
-    } else if( ic == "pBIC"){
-        score = cmp_pBIC(tree, Y, shift.configuration, opt) 
-        if( opt$use.saved.scores){
-            add_configuration_score_to_list(shift.configuration, score)
+    } else if(ic == "pBIC"){
+        res = cmp_pBIC(tree, Y, shift.configuration, opt) 
+        if(is.na(res)) return(Inf)
+        score = res$score
+        if( opt$use.saved.scores ){
+            add_configuration_score_to_list(shift.configuration, score,
+                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
         }
         return( score )
     } 
@@ -612,13 +610,13 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if ( all( is.na( fit) ) ){
             return(Inf)
-            #return(NA)
         } 
         score = score  -2*fit$logLik + df.2
     }
 
-    if( opt$use.saved.scores){
-        add_configuration_score_to_list(shift.configuration, score)
+    if( opt$use.saved.scores ){
+        add_configuration_score_to_list(shift.configuration, score,
+                                        paste0(c(fit$sigma2/(2*fit$optpar), fit$logLik),collapse=" "))
     }
     return(score)
 }
@@ -644,7 +642,7 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
     if(class(fit) == "try-error"){ 
         if(!opt$quietly){
             warning( paste0( "phylolm returned error with a shift configuration of size ", 
-                            length(shift.configuration), ". You may want to reduce alpha.upper!") )
+                            length(shift.configuration), ". You may want to reduce alpha.upper or change alpha.starting.value!") )
         }
         return(NA)
     }
@@ -693,19 +691,25 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
     df.1  = 2*(nShifts)*log(nEdges-1)
     score = df.1
+
+    alpha = sigma2  = logLik = numeric()
+
     for(i in 1:ncol(Y)){
         fit  = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if( all( is.na(fit) ) ){
-           #return(NA)
-           return(Inf)
+           return(NA)
         }
         ess  = effective.sample.size(tree, edges=shift.configuration, model="OUfixedRoot", 
                  parameters=list(alpha=fit$optpar), FALSE, FALSE)
 
         df.2  = 3*log(nTips+1) + sum(log(ess+1))
         score = score  -2*fit$logLik + df.2 
+
+        alpha  = c(alpha, fit$optpar)
+        sigma2 = c(sigma2, fit$sigma2)
+        logLik = c(logLik, fit$logLik)
     }
-    return( score )
+    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
 cmp_pBIC <- function(tree, Y, shift.configuration, opt){
@@ -717,17 +721,22 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
     df.1    = 2*(nShifts)*log(nEdges-1)
     score   = df.1
 
+    alpha   = sigma2  = logLik = numeric()
+
     for(i in 1:ncol(Y)){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
         if( all( is.na(fit) ) ){
-           #return(NA)
-           return(Inf)
+           return(NA)
         } 
         ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/fit$n, log=T)$modulus)
         df.2  = 3*log(nTips) - ld
         score = score  -2*fit$logLik + df.2 
+
+        alpha  = c(alpha, fit$optpar)
+        sigma2 = c(sigma2, fit$sigma2)
+        logLik = c(logLik, fit$logLik)
     }
-    return( score )
+    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
 

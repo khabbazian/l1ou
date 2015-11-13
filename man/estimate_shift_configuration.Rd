@@ -10,7 +10,6 @@ estimate_shift_configuration(tree, Y,
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
   alpha.lower = NA, standardize = TRUE,
-  num.top.configurations = max.nShifts/2,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -36,8 +35,6 @@ estimate_shift_configuration(tree, Y,
 \item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
 \item{standardize}{logical. If TRUE, the columns of the trait matrix are first standardized.}
-
-\item{num.top.configurations}{number of shift configurations on the lasso solution path chosen for further improvement.}
 
 \item{edge.length.threshold}{minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.}
 
@@ -82,13 +79,13 @@ eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
-plot_l1ou(lizard$tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+plot(eModel, lizard$tree, cex=0.5, label.offset=0.02, edge.width=ew)
 
 # example to constrain the set of candidate branches with a shift
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 ce <- eModel$shift.configuration # set of candidate edges
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
-plot_l1ou(lizard$tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+plot(eModel, lizard$tree, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.

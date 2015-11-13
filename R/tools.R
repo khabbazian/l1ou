@@ -79,24 +79,32 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     return(list(tree=tree, Y=Y))
 }
 
+lnorm      <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
 
-lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
-
-#my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")) }
-
-
-add_configuration_score_to_list  <- function(shift.configuration, score){
+add_configuration_score_to_list  <- function(shift.configuration, score, moreInfo){
     shift.configuration = sort(shift.configuration)
-    add_configuration_score_to_db(paste0(shift.configuration, collapse=" "), score)
+    add_configuration_score_to_db( paste0(shift.configuration, collapse=" "), 
+                                  score, moreInfo )
 }
 
-get_configuration_score_to_list <- function(shift.configuration){
+get_configuration_score_from_list <- function(shift.configuration){
     shift.configuration = sort(shift.configuration)
     res = get_score_of_configuration(paste0(shift.configuration, collapse=" "))
     if( res$valid == FALSE){
         return(NA)
     }
     return(res$value)
+}
+
+list_investigated_configs <- function(){
+    tmpList = get_stored_config_score()
+    c.s = list()
+    c.s$scores = tmpList$scores
+    for( i in 1:length(c.s$scores)){
+        c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
+        c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
+    }
+    return(c.s)
 }
 
 print_out <- function(eModel, silence){
@@ -115,7 +123,6 @@ standardize_matrix <- function(Y){
     Y   = Y%*%(0.1*nrow(Y)*diag(apply(Y,2,lnorm,l=2)^-1))
     return(Y)
 }
-
 
 
 
@@ -293,8 +300,8 @@ normalize_tree <- function(tree){
 #'
 #' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 #'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param tree phylogenetic tree of class phylo.
-#'@param model object returned by \code{\link{estimate_shift_configuration}}.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
@@ -315,17 +322,18 @@ normalize_tree <- function(tree){
 #' nEdges <- length(lizard.tree$edge[,1]);
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
-#' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot(eModel, lizard.tree, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
 #'
-plot_l1ou <- function (tree, model, palette = NA, 
+plot.l1ou <- function (model, tree, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
                        edge.label=NA,
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
+
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
     shift.configuration = sort(model$shift.configuration, decreasing = T)
@@ -395,4 +403,80 @@ plot_l1ou <- function (tree, model, palette = NA,
                   digits = 2))
         }
     }
+}
+
+#'
+#' Prints out a summary of the shift configurations investigated by \code{\link{estimate_shift_configuration}}  
+#'
+#' prints the list of the shift configurations sorted by number of shifts and corresponding ic scores.
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param ... further arguments. 
+#'
+#'@return 
+#'\item{shift.configurations}{list of shift configurations sorted by number of shifts.}
+#'\item{scores}{list of scores corresponding to shift.configurations.}
+#'\item{nShifts}{number of shifts corresponding to the shift configurations.}
+#'
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' model.profile  <- profile(eModel)
+#' plot(model.profile$nShifts, model.profile$scores)
+#'
+#'@export
+#'
+profile.l1ou <- function(model, ...)
+{
+    profile.data = eModel$profile
+    p.d = list()
+    profile.data$scores = profile.data$scores[order(profile.data$scores)]
+    profile.data$configurations = profile.data$configurations[order(profile.data$scores)]
+    lens = unlist(lapply(profile.data$configurations, length))
+    profile.data$scores = profile.data$scores[order(lens)]
+    profile.data$configurations = profile.data$configurations[order(lens)]
+    min.score = min(profile.data$scores)
+    clength = -1
+    counter = 1
+    for (i in 1:length(profile.data$scores)) {
+        if (clength == length(profile.data$configurations[[i]])) {
+            next
+        }
+        clength = length(profile.data$configurations[[i]])
+        p.d$shift.configurations[[counter]] = profile.data$configurations[[i]]
+
+        p.d$nShifts[[counter]] = length(profile.data$configurations[[i]])
+        p.d$scores [[counter]] = profile.data$score[[i]]
+        p.d$gamma  [[counter]] = profile.data$moreInfo[[i]][[1]] ##the stationary variance
+        p.d$logLik [[counter]] = profile.data$moreInfo[[i]][[2]] ##the log likelihood
+
+        counter = counter + 1
+    }
+    return(p.d)
+}
+
+#'
+#' Prints out a summary 
+#'
+#' prints out a summary 
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param ... further arguments. 
+#'
+#'@return none.
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' summary(eModel)
+#'
+#'@export
+#'
+summary.l1ou <- function(model, ...){
+    #as.numeric(unlist(strsplit(mystr, split=",")))
+    #Haven't implemented it yet :)
+    print( eModel$profile )
 }
