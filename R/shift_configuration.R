@@ -510,7 +510,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         nShifts = length(shift.configuration)
         fit     = my_phylolm_interface(tree, as.matrix(Y[,i]), shift.configuration, opt)
-        if ( all( is.na(fit) ) ){
+        if ( all(is.na(fit)) ){
             stop("model score is NA in fit_OU_model function! This should not happen.")
         }
 
@@ -592,7 +592,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         df.2 = res$df.2
     } else if( ic == "pBICess"){
         res   = cmp_pBICess(tree, Y, shift.configuration, opt) 
-        if(is.na(res)) return(Inf)
+        if(all(is.na(res))) return(Inf)
         score = res$score
         if( opt$use.saved.scores){
             add_configuration_score_to_list(shift.configuration, score,
@@ -601,7 +601,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         return( score )
     } else if(ic == "pBIC"){
         res = cmp_pBIC(tree, Y, shift.configuration, opt) 
-        if(is.na(res)) return(Inf)
+        if(all(is.na(res))) return(Inf)
         score = res$score
         if( opt$use.saved.scores ){
             add_configuration_score_to_list(shift.configuration, score,
@@ -613,7 +613,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     score = df.1
     for( i in 1:ncol(Y)){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
-        if ( all( is.na( fit) ) ){
+        if ( all(is.na(fit)) ){
             return(Inf)
         } 
         score = score  -2*fit$logLik + df.2
@@ -701,7 +701,7 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
     for(i in 1:ncol(Y)){
         fit  = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
-        if( all( is.na(fit) ) ){
+        if( all(is.na(fit)) ){
            return(NA)
         }
         ess  = effective.sample.size(tree, edges=shift.configuration, model="OUfixedRoot", 
@@ -730,7 +730,7 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
     for(i in 1:ncol(Y)){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
-        if( all( is.na(fit) ) ){
+        if( all(is.na(fit)) ){
            return(NA)
         } 
         ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/fit$n, log=T)$modulus)
