@@ -478,34 +478,37 @@ profile.l1ou <- function(model, ...)
 #'@export
 #'
 summary.l1ou <- function(model, nTop.scores=5, ...){
-
     cat("number of shifts: ")
     cat(model$nShifts)
+    cat("\n")
+
+    cat("edge index of the shift configuration: ")
+    cat(model$shift.configuration)
     cat("\n")
 
     cat(paste0(model$l1ou.options$criterion, " score: "))
     cat(model$score)
     cat("\n")
 
-    cat("estimated adaptation rate: ")
+    cat("estimated adaptation rate (alpha): ")
     cat(model$alpha)
     cat("\n")
 
-    cat("estimated variance: ")
+    cat("estimated variance (sigma2): ")
     cat(model$sigma2)
     cat("\n")
 
-    cat("estimated stationary variance: ")
-    cat(model$sigma2/(2*model$alpha))
+    cat("estimated stationary variance (gamma): ")
+    cat(model$sigma2/(2 * model$alpha))
     cat("\n")
 
-    top.scores = min(top.scores, length(model$profile$scores) )
-    
-    cat(paste0(c("top ", top.scores ," best scores\n")))
-    for(i in 1:top.scores){
+    top.scores = min(nTop.scores, length(model$profile$scores))
+    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat("scores\t\tshift.configurations\n")
+    for (i in 1:top.scores){
         cat(model$profile$scores[[i]])
         cat("\t")
         cat(model$profile$configurations[[i]])
-        cat("\n\n")
+        cat("\n")
     }
 }
