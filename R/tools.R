@@ -17,6 +17,8 @@
 #'@export
 adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
+
+    if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
         if(!quietly)
             warning("the new tree edges are ordered differently, in postorder!")
@@ -302,7 +304,6 @@ normalize_tree <- function(tree){
 #' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
-#'@param tree phylogenetic tree of class phylo.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
@@ -323,18 +324,19 @@ normalize_tree <- function(tree){
 #' nEdges <- length(lizard.tree$edge[,1])
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
-#' plot(eModel, lizard.tree, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
 #'
-plot.l1ou <- function (model, tree, palette = NA, 
+plot.l1ou <- function (model, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
-                       edge.label=NA,
+                       edge.label=c(),
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
 
+    tree = model$tree
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
     shift.configuration = sort(model$shift.configuration, decreasing = T)
@@ -378,7 +380,7 @@ plot.l1ou <- function (model, tree, palette = NA,
 
     if (edge.label.ann){
         if (length(tree$edge.label) == 0) {
-            if(is.na(edge.label)){
+            if(length(edge.label)==0){
                 stop("no edge labels are provided via tree$edge.label or edge.label!")
             }
             tree$edge.label = edge.label 
@@ -431,6 +433,7 @@ plot.l1ou <- function (model, tree, palette = NA,
 #'
 profile.l1ou <- function(model, ...)
 {
+
     profile.data = eModel$profile
     p.d = list()
     profile.data$scores = profile.data$scores[order(profile.data$scores)]
@@ -482,7 +485,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge index of the shift configuration: ")
+    cat("edge indices of the shift configuration: ")
     cat(model$shift.configuration)
     cat("\n")
 
