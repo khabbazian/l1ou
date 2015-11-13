@@ -104,7 +104,7 @@ list_investigated_configs <- function(){
     c.s$scores = tmpList$scores
     for( i in 1:length(c.s$scores)){
         c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
-        c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
+        #c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
     }
     return(c.s)
 }
@@ -453,8 +453,8 @@ profile.l1ou <- function(model, ...)
 
         p.d$nShifts[[counter]] = length(profile.data$configurations[[i]])
         p.d$scores [[counter]] = profile.data$score[[i]]
-        p.d$gamma  [[counter]] = profile.data$moreInfo[[i]][[1]] ##the stationary variance
-        p.d$logLik [[counter]] = profile.data$moreInfo[[i]][[2]] ##the log likelihood
+        #p.d$gamma  [[counter]] = profile.data$moreInfo[[i]][[1]] ##the stationary variance
+        #p.d$logLik [[counter]] = profile.data$moreInfo[[i]][[2]] ##the log likelihood
 
         counter = counter + 1
     }
