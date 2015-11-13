@@ -176,6 +176,8 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$Z            <- generate_design_matrix(tree, "simpX")
     }
 
+    if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
+
     if (ncol(Y) == 1) {
         eModel1 = estimate_shift_configuration_known_alpha(tree, 
             Y, est.alpha = TRUE, opt = l1ou.options)
@@ -195,9 +197,8 @@ estimate_shift_configuration <- function(tree, Y,
 
     eModel$profile = list_investigated_configs() 
 
-    if (l1ou.options$use.saved.scores) {
-        erase_configuration_score_db()
-    }
+    if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
+
     return(eModel)
 }
 
