@@ -68,8 +68,8 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         if(!quietly)
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
  
-        Y  <-  Y[order(rownames(Y)),  ]; 
-        Y  <-  Y[order(order(tr$tip.label)), ];
+        Y  <-  Y[order(rownames(Y)),  ] 
+        Y  <-  Y[order(order(tr$tip.label)), ]
     }
 
 
@@ -148,7 +148,8 @@ effective.sample.size <- function(phy, edges=NULL,
         rootedge <- dim(phy$edge)[1]+1
         if (is.null(edges)){ sortededges <- rootedge }
         else{
-            o <- order(edges); r <- rank(edges)
+            o <- order(edges) 
+            r <- rank(edges)
             sortededges <- c(edges[o],rootedge)
         }
         tmp <- .C("effectiveSampleSize", as.integer(dim(phy$edge)[1]), # edges
@@ -319,7 +320,7 @@ normalize_tree <- function(tree){
 #' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' nEdges <- length(lizard.tree$edge[,1]);
+#' nEdges <- length(lizard.tree$edge[,1])
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
 #' plot(eModel, lizard.tree, cex=0.5, label.offset=0.02, edge.width=ew)
@@ -458,11 +459,12 @@ profile.l1ou <- function(model, ...)
 }
 
 #'
-#' Prints out a summary 
+#' Prints out a summary of the model 
 #'
-#' prints out a summary 
+#' prints out a summary of the model 
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param nTop.scores number of top scores and shift configuration to print out.
 #'@param ... further arguments. 
 #'
 #'@return none.
@@ -475,8 +477,35 @@ profile.l1ou <- function(model, ...)
 #'
 #'@export
 #'
-summary.l1ou <- function(model, ...){
-    #as.numeric(unlist(strsplit(mystr, split=",")))
-    #Haven't implemented it yet :)
-    print( eModel$profile )
+summary.l1ou <- function(model, nTop.scores=5, ...){
+
+    cat("number of shifts: ")
+    cat(model$nShifts)
+    cat("\n")
+
+    cat(paste0(model$l1ou.options$criterion, " score: "))
+    cat(model$score)
+    cat("\n")
+
+    cat("estimated adaptation rate: ")
+    cat(model$alpha)
+    cat("\n")
+
+    cat("estimated variance: ")
+    cat(model$sigma2)
+    cat("\n")
+
+    cat("estimated stationary variance: ")
+    cat(model$sigma2/(2*model$alpha))
+    cat("\n")
+
+    top.scores = min(top.scores, length(model$profile$scores) )
+    
+    cat(paste0(c("top ", top.scores ," best scores\n")))
+    for(i in 1:top.scores){
+        cat(model$profile$scores[[i]])
+        cat("\t")
+        cat(model$profile$configurations[[i]])
+        cat("\n\n")
+    }
 }

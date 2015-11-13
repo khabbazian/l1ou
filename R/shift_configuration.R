@@ -47,6 +47,8 @@
 #' # rownames(dat) <- dat$species
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+#' summary(eModel)
+#'
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
@@ -360,20 +362,18 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     nSols   = get_num_solutions(sol.path)
     stopifnot( nSols > 0 )
 
-    all.shifts = score.vec  = idx.vec = numeric()
-    prevshift.configuration = NA
-    configuration.list = list()
+    all.shifts = numeric()
+    prev.shift.configuration = NA
     min.score = Inf   
-    min.idx   = NA
 
     for(idx in 1:nSols) {
 
         shift.configuration = get_shift_configuration(sol.path, idx, Y)
         shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
 
-        if ( length(shift.configuration) >= opt$max.nShifts    )  { break}
-        if ( setequal(shift.configuration, prevshift.configuration ) ){ next }
-        prevshift.configuration  = shift.configuration
+        if ( length(shift.configuration) > opt$max.nShifts           ){break}
+        if ( setequal(shift.configuration, prev.shift.configuration) ){next }
+        prev.shift.configuration  = shift.configuration
 
         ## sorting shifts based on their age in the solution path
         all.shifts = c(all.shifts, shift.configuration)
@@ -381,10 +381,11 @@ select_best_solution <- function(tree, Y, sol.path, opt){
         for( s in shift.configuration){
             freq.shifts = c(freq.shifts, length( which(all.shifts == s) ) )
         }
-
         names(shift.configuration)  <- freq.shifts
         shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
-        res = do_backward_selection(tree, Y, shift.configuration, opt)
+
+        res = do_backward_correction(tree, Y, shift.configuration, opt)
+
         if ( min.score > res$score){
             min.score   = res$score
             best.shift.configuration = res$shift.configuration
@@ -394,22 +395,23 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     return ( list(score=min.score, shift.configuration=best.shift.configuration) )
 }
 
-do_backward_selection <- function(tree, Y, shift.configuration, opt){
+do_backward_correction <- function(tree, Y, shift.configuration, opt){
 
-    #shift.configuration = sort(shift.configuration, decreasing = TRUE)
-    org.score       = cmp_model_score(tree, Y, shift.configuration, opt)
+    org.score = cmp_model_score(tree, Y, shift.configuration, opt)
 
     if( length(shift.configuration) < 3 ) { 
         return(list(score=org.score, shift.configuration=shift.configuration)) 
     }  
+
     for( sp in shift.configuration){
         new.configuration = setdiff(shift.configuration, sp)
-        new.score     = cmp_model_score(tree, Y, new.configuration, opt)      
-        if ( new.score <= org.score){
+        new.score         = cmp_model_score(tree, Y, new.configuration, opt)      
+        if ( new.score < org.score){
             shift.configuration = new.configuration
-            org.score       = new.score
+            org.score           = new.score
         }
     }
+
     return(list(score=org.score, shift.configuration=shift.configuration))
 }
 
@@ -545,7 +547,6 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     class(model) <- "l1ou"
     return( model )
 }
-
 
 
 cmp_model_score <-function(tree, Y, shift.configuration, opt){
