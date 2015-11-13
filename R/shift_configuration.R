@@ -126,7 +126,8 @@ estimate_shift_configuration <- function(tree, Y,
                  to drop extra tips in the tree.\n")
         }
 
-        stop("the order of entries/rows of the trait vector/matrix (Y) does not matche the order of the tip labels. use adjust_data function to fix that\n")
+        stop("the order of entries/rows of the trait vector/matrix (Y) does not matche 
+             the order of the tip labels. use adjust_data function to fix that\n")
     }
 
     stopifnot(all(rownames(Y) == tree$tip.label))
@@ -590,7 +591,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         score = res$score
         if( opt$use.saved.scores){
             add_configuration_score_to_list(shift.configuration, score,
-                                            paste0(c(res$alpha,res$sigma2,res$loglik),collapse=" "))
+                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
         }
         return( score )
     } else if(ic == "pBIC"){
@@ -599,7 +600,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         score = res$score
         if( opt$use.saved.scores ){
             add_configuration_score_to_list(shift.configuration, score,
-                                            paste0(c(res$alpha,res$sigma2,res$loglik),collapse=" "))
+                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
         }
         return( score )
     } 
@@ -615,7 +616,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
     if( opt$use.saved.scores ){
         add_configuration_score_to_list(shift.configuration, score,
-                                        paste0(c(fit$optpar, fit$sigma2, fit$logLik),collapse=" "))
+                                        paste0(c(fit$sigma2/(2*fit$optpar), fit$logLik),collapse=" "))
     }
     return(score)
 }
@@ -691,7 +692,7 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
     df.1  = 2*(nShifts)*log(nEdges-1)
     score = df.1
 
-    alpha = sigma2  = loglik = numeric()
+    alpha = sigma2  = logLik = numeric()
 
     for(i in 1:ncol(Y)){
         fit  = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
@@ -706,9 +707,9 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
         alpha  = c(alpha, fit$optpar)
         sigma2 = c(sigma2, fit$sigma2)
-        loglik = c(loglik, fit$logLik)
+        logLik = c(logLik, fit$logLik)
     }
-    return( list(score=score, alpha=alpha, sigma2=sigma2, loglik=loglik) )
+    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
 cmp_pBIC <- function(tree, Y, shift.configuration, opt){
@@ -720,7 +721,7 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
     df.1    = 2*(nShifts)*log(nEdges-1)
     score   = df.1
 
-    alpha   = sigma2  = loglik = numeric()
+    alpha   = sigma2  = logLik = numeric()
 
     for(i in 1:ncol(Y)){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
@@ -733,9 +734,9 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
         alpha  = c(alpha, fit$optpar)
         sigma2 = c(sigma2, fit$sigma2)
-        loglik = c(loglik, fit$logLik)
+        logLik = c(logLik, fit$logLik)
     }
-    return( list(score=score, alpha=alpha, sigma2=sigma2, loglik=loglik) )
+    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
 
