@@ -437,7 +437,6 @@ profile.l1ou <- function(model, ...)
     lens = unlist(lapply(profile.data$configurations, length))
     profile.data$scores = profile.data$scores[order(lens)]
     profile.data$configurations = profile.data$configurations[order(lens)]
-
     min.score = min(profile.data$scores)
     clength = -1
     counter = 1
@@ -445,13 +444,14 @@ profile.l1ou <- function(model, ...)
         if (clength == length(profile.data$configurations[[i]])) {
             next
         }
-
         clength = length(profile.data$configurations[[i]])
-        p.d$nShifts[[counter]]              = length(profile.data$configurations[[i]])
-        p.d$scores[[counter]]               = profile.data$score[[i]]
         p.d$shift.configurations[[counter]] = profile.data$configurations[[i]]
-        p.d$gamma                        = profile.data$moreInfo[[i]][[1]]
-        p.d$logLik                        = profile.data$moreInfo[[i]][[2]]
+
+        p.d$nShifts[[counter]] = length(profile.data$configurations[[i]])
+        p.d$scores [[counter]] = profile.data$score[[i]]
+        p.d$gamma  [[counter]] = profile.data$moreInfo[[i]][[1]] ##the stationary variance
+        p.d$logLik [[counter]] = profile.data$moreInfo[[i]][[2]] ##the log likelihood
+
         counter = counter + 1
     }
     return(p.d)
