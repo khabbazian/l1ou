@@ -102,10 +102,12 @@ list_investigated_configs <- function(){
     tmpList = get_stored_config_score()
     c.s = list()
     c.s$scores = tmpList$scores
-    for( i in 1:length(c.s$scores)){
-        c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
-        #c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
-    }
+    c.s$configurations = lapply(tmpList$configurations, 
+                                FUN=function(x) as.numeric(unlist(strsplit(x, split=" ")) ) ) 
+    #for( i in 1:length(c.s$scores)){
+    #    c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
+    #    #c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
+    #}
     return(c.s)
 }
 

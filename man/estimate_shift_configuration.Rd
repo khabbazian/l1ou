@@ -4,8 +4,7 @@
 \alias{estimate_shift_configuration}
 \title{Detects evolutionary shifts under an OU model}
 \usage{
-estimate_shift_configuration(tree, Y,
-  max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
+estimate_shift_configuration(tree, Y, max.nShifts = 5, criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
