@@ -4,7 +4,8 @@
 \alias{estimate_shift_configuration}
 \title{Detects evolutionary shifts under an OU model}
 \usage{
-estimate_shift_configuration(tree, Y, max.nShifts = 5, criterion = c("pBIC",
+estimate_shift_configuration(tree, Y,
+  max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
@@ -49,7 +50,7 @@ estimate_shift_configuration(tree, Y, max.nShifts = 5, criterion = c("pBIC",
 \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 \item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimated number of shifts.}
-\item{optimums}{optimum values of the trait along the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
+\item{optimums}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 \item{mu}{fitted values, i.e. estimated trait means.}

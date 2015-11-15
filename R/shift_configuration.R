@@ -27,7 +27,7 @@
 #' \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 #' \item{shift.values}{estimates of the shift values.}
 #' \item{nShifts}{estimated number of shifts.}
-#' \item{optimums}{optimum values of the trait along the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
+#' \item{optimums}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 #' \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 #' \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 #' \item{mu}{fitted values, i.e. estimated trait means.}
