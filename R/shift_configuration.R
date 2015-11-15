@@ -527,14 +527,14 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         intercept      = c(intercept, fit$coefficients[[1]])
 
-        shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
+        if( length(shift.configuration) > 0 )
+            shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
 
         #optimums.tmp = rep(fit$coefficients[[1]], nEdges)
         #if( length(shift.configuration) > 0 )
         #    optimums.tmp = convert_shifts2regions(tree, shift.configuration, 
         #                               fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
 
-        stopifnot(length(shift.configuration)==length(fit$coefficients[2:(nShifts+1)]) )
         optimums.tmp = rep(fit$coefficients[[1]], nTips)
         if( length(shift.configuration) > 0 )
             for(sc in shift.configuration)
