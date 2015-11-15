@@ -49,7 +49,7 @@
 #' # rownames(dat) <- dat$species
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
-#' summary(eModel)
+#' print(eModel)
 #'
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
