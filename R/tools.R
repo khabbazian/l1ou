@@ -510,8 +510,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
 
     cat("\n")
     cat("optimum values at tips: \n")
-    cat(model$optimums)
-    cat("\n")
+    print(model$optimums)
 
     top.scores = min(nTop.scores, length(model$profile$scores))
     cat(paste0(c("\ntop", top.scores, "best scores:\n")))
