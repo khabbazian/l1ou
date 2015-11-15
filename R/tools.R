@@ -111,11 +111,13 @@ list_investigated_configs <- function(){
     return(c.s)
 }
 
-print_out <- function(eModel, silence){
-    if (silence == FALSE)
+print_out <- function(eModel, quietly){
+    if (quietly == FALSE){
         print( paste0( "EST: alpha: ", eModel$alpha, " sigma2: ",  
                  eModel$sigma2, " gamma: ", eModel$sigma2/(2*eModel$alpha),
                  " score: ", eModel$score, " nShifts: ", eModel$nShifts ) )
+        print("-------------------")
+    }
 }
 
 
