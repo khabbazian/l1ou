@@ -532,7 +532,6 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
 #' prints out a summary of the model 
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
-#'@param nTop.scores number of top scores and shift configuration to print out.
 #'@param ... further arguments. 
 #'
 #'@return none.
