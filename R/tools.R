@@ -112,19 +112,20 @@ list_investigated_configs <- function(){
 }
 
 print_out <- function(eModel, silence){
-    if ( silence == FALSE)
+    if (silence == FALSE)
         print( paste0( "EST: alpha: ", eModel$alpha, " sigma2: ",  
                  eModel$sigma2, " gamma: ", eModel$sigma2/(2*eModel$alpha),
-                 " score: ", eModel$score ) )
+                 " score: ", eModel$score, " nShifts: ", eModel$nShifts ) )
 }
 
 
 standardize_matrix <- function(Y){
-    ##TODO: use scale(Y, center=TRUE, scale=TRUE)
-    for(i in 1:ncol(Y)){
-        Y[,i] = Y[,i] - mean(Y[,i])
-    }
-    Y   = Y%*%(0.1*nrow(Y)*diag(apply(Y,2,lnorm,l=2)^-1))
+    #for(i in 1:ncol(Y)){
+    #    Y[,i] = Y[,i] - mean(Y[,i])
+    #}
+    #Y   = Y%*%(0.1*nrow(Y)*diag(apply(Y,2,lnorm,l=2)^-1))
+  
+    Y  <- 0.1*nrow(Y)*scale(Y, center=TRUE, scale=apply(Y,2,lnorm,l=2))
     return(Y)
 }
 
@@ -259,19 +260,19 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 
     options(warn = -1)
     if( length(shift.configuration) > 0)
-    for(itr in 1:length(shift.configuration) ){
-        eIdx     = shift.configuration[[itr]]
-        vIdx     = tree$edge[eIdx, 2]
+        for(itr in 1:length(shift.configuration) ){
+            eIdx     = shift.configuration[[itr]]
+            vIdx     = tree$edge[eIdx, 2]
 
-        o.vec.tmp = rep(0, nEdges)
+            o.vec.tmp = rep(0, nEdges)
 
-        path2tips = get.shortest.paths(g, vIdx, to=1:nTips, mode ="out", output="epath")$epath
-        o.vec.tmp[eIdx] = shift.values[[itr]]
-        for(i in 1:nTips){
-            o.vec.tmp[path2tips[[i]]] =  shift.values[[itr]]
+            path2tips = get.shortest.paths(g, vIdx, to=1:nTips, mode ="out", output="epath")$epath
+            o.vec.tmp[eIdx] = shift.values[[itr]]
+            for(i in 1:nTips){
+                o.vec.tmp[path2tips[[i]]] =  shift.values[[itr]]
+            }
+            o.vec = o.vec + o.vec.tmp 
         }
-        o.vec = o.vec + o.vec.tmp 
-    }
     options(warn = 0)
     return( o.vec )
 }
@@ -505,6 +506,11 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
 
     cat("estimated stationary variance (gamma): ")
     cat(model$sigma2/(2 * model$alpha))
+    cat("\n")
+
+    cat("\n")
+    cat("optimum values at tips: \n")
+    cat(model$optimums)
     cat("\n")
 
     top.scores = min(nTop.scores, length(model$profile$scores))

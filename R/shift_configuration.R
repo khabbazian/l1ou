@@ -430,7 +430,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@param alpha.starting.value optional starting value for the optimization of the phylogenetic adaptation rate. 
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
-#'@param fit.OU.model logical. If TRUE, ...
+#'@param fit.OU.model logical. If TRUE, it returns an object of class l1ou with all the parameters estimated.
 #'
 #'@return Information criterion value of the given shift configuration.
 #'
@@ -461,7 +461,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
                      criterion   = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-                     root.model  = c("OUrandomRoot", "OUfixedRoot"),
+                     root.model  = c("OUfixedRoot", "OUrandomRoot"),
                      alpha.starting.value = NA,
                      alpha.upper = alpha_upper_bound(tree), 
                      alpha.lower = NA,
@@ -471,6 +471,9 @@ configuration_ic <- function(tree, Y, shift.configuration,
     if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge))
         stop("the input phylogenetic tree is not in postorder. Use adjust_data function.")
+
+    Y  = as.matrix(Y)
+    if(!identical(rownames(Y), tree$tip.label)) stop("rownames of Y and tree$tip.label are not identical.")
 
     opt = list()
 
@@ -517,6 +520,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         alpha   = c(alpha,  fit$optpar)
         sigma2  = c(sigma2, fit$sigma2)
+
         ## E[Y]
         mu      = cbind(mu, fit$fitted.values)
         resi    = cbind(resi, fit$residuals)
@@ -525,13 +529,22 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
 
-        optimums.tmp = rep(fit$coefficients[[1]], nEdges)
+        #optimums.tmp = rep(fit$coefficients[[1]], nEdges)
+        #if( length(shift.configuration) > 0 )
+        #    optimums.tmp = convert_shifts2regions(tree, shift.configuration, 
+        #                               fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
+
+        stopifnot(length(shift.configuration)==length(fit$coefficients[2:(nShifts+1)]) )
+        optimums.tmp = rep(fit$coefficients[[1]], nTips)
         if( length(shift.configuration) > 0 )
-            optimums.tmp = convert_shifts2regions(tree, shift.configuration, 
-                                       fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
+            for(sc in shift.configuration)
+                optimums.tmp = optimums.tmp + opt$Z[,sc] * fit$coefficients[which(shift.configuration==sc)+1]
 
         optimums = cbind(optimums, optimums.tmp)
     }
+    optimums = as.matrix(optimums)
+    rownames(optimums) = tree$tip.label
+
     score = cmp_model_score (tree, Y, shift.configuration, opt)
 
     ##NOTE: adding the trait (response vector/matrix) which used to detect shift positions
