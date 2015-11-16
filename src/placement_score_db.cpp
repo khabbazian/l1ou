@@ -32,10 +32,12 @@ Rcpp::List get_stored_config_score(){
 
     std::vector<std::string> configVec, moreInfoVec;
     DoubleVector doubleVec;
-    for(auto &itr : myConfigVec){
-        doubleVec.push_back   (std::get<0>(itr));
-        configVec.push_back   (std::get<1>(itr));
-        moreInfoVec.push_back (std::get<2>(itr));
+    //for(auto &itr : myConfigVec)
+    for(auto itr=myConfigVec.begin(); itr !=myConfigVec.end(); ++itr)
+    {
+        doubleVec.push_back   (std::get<0>(*itr));
+        configVec.push_back   (std::get<1>(*itr));
+        moreInfoVec.push_back (std::get<2>(*itr));
     }
 
     return Rcpp::List::create( 
