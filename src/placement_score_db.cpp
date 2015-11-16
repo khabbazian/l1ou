@@ -26,9 +26,9 @@ void add_configuration_score_to_db(std::string str_key, double value, std::strin
 // [[Rcpp::export]]
 Rcpp::List get_stored_config_score(){
    
-    //std::sort(myConfigVec.begin(), myConfigVec.end(),
-    //        [](const ScoreConfig& lhs, const ScoreConfig& rhs) {
-    //        return std::get<0>(lhs) < std::get<0>(rhs); } );
+    std::sort(myConfigVec.begin(), myConfigVec.end(),
+            [](const ScoreConfig& lhs, const ScoreConfig& rhs) {
+            return std::get<0>(lhs) < std::get<0>(rhs); } );
 
     std::vector<std::string> configVec, moreInfoVec;
     DoubleVector doubleVec;
