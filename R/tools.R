@@ -439,7 +439,7 @@ plot.l1ou <- function (model, palette = NA,
 profile.l1ou <- function(model, ...)
 {
 
-    profile.data = eModel$profile
+    profile.data = model$profile
     p.d = list()
     profile.data$scores = profile.data$scores[order(profile.data$scores)]
     profile.data$configurations = profile.data$configurations[order(profile.data$scores)]
