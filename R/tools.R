@@ -409,6 +409,9 @@ plot.l1ou <- function (model, palette = NA,
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
                   digits = 2))
+
+            if(!is.null(colnames(Y)) && length(colnames(Y))>(i-1) )
+                title(colnames(Y)[[i]], cex=2, line=-2)
         }
     }
 }
