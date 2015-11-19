@@ -827,7 +827,14 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
             }
             delta = delta/4
             base.seq = unique(sort(base.seq.tmp))
-        }else { break }
+        }else { 
+            indices = which(df.vec > (opt$max.nShifts + 4))
+            if (length(indices) > 0) {
+                upper.idx = min(indices)
+                base.seq  = base.seq[1:upper.idx]
+            }
+            break 
+        }
     }
     lmbd = lmbdMax * (0.5^base.seq)
      capture.output(
