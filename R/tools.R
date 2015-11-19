@@ -17,7 +17,6 @@
 #'@export
 adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
-
     if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
         if(!quietly)

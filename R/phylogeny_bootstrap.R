@@ -11,12 +11,17 @@
 #'@param nItrs number of independent iterations (bootstrap replicates).
 #'@param multicore logical. If TRUE, nCores processes are used in parallel. 
 #'@param nCores desired number of parallel processes.
+#'@param quietly logical. If FALSE, a summary of each iteration will be printed out.
+#'
+#'
 #'@return vector of size the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge. 
+#'
 #'
 #'@details The results of sequential and parallel runs are not necessarily equal, because different seeds might be used for different bootstrap replicates.
 #'         For multiple cores to be used, the \code{parallel} library needs to be installed.
 #'         To change options for the analysis of each bootstrap replicate,
 #'         like the information criterion or the maximum allowed number of shifts, modify model$opt.
+#'
 #'
 #'@examples
 #' 
@@ -27,18 +32,18 @@
 #' # using only 2 replicates in vastly insufficient in general,
 #' # but used here to make the illustrative example run faster.
 #' nEdges <- length(lizard.tree$edge[,1])
-#' ew <- rep(1,nEdges) 
-#' ew[eModel$shift.configuration] <- 3
-#' el <- round(result * 100, digits=1)
+#' e.w <- rep(1,nEdges) 
+#' e.w[eModel$shift.configuration] <- 3
+#' e.l <- round(result * 100, digits=1)
 #' # to avoid annotating edges with support at or below 10%
-#' el <- ifelse(el>10, paste0(el,"%"), NA)
-#' plot(eModel, edge.label=el, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
+#' e.l <- ifelse(e.l>10, paste0(e.l,"%"), NA)
+#' plot(eModel, edge.label=e.l, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=e.w)
 #'
 #'
 #'@seealso   \code{\link{estimate_shift_configuration}}
 #'
 #'@export
-l1ou_bootstrap_support <- function(model, nItrs=100, multicore=FALSE, nCores = 2){
+l1ou_bootstrap_support <- function(model, nItrs=100, multicore=FALSE, nCores = 2, quietly=TRUE){
  
     if (!inherits(model, "l1ou"))  stop("object \"model\" is not of class \"l1ou\".")
 
@@ -47,14 +52,16 @@ l1ou_bootstrap_support <- function(model, nItrs=100, multicore=FALSE, nCores = 2
 
     tree = model$tree
     if(ncol(model$Y)==1){
-        return(bootstrap_support_univariate(tree=tree, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores))
+        return(bootstrap_support_univariate(tree=tree, model=model, nItrs=nItrs, 
+                                            multicore=multicore, nCores=nCores, quietly=quietly))
     }
     if(ncol(model$Y)>1){
-        return(bootstrap_support_multivariate(tree=tree, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores))
+        return(bootstrap_support_multivariate(tree=tree, model=model, nItrs=nItrs, 
+                                              multicore=multicore, nCores=nCores, quietly=quietly))
     }
 }
 
-bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nCores=2){
+bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nCores=2, quietly=FALSE){
 
     RE    = sqrt_OU_covariance(tree, alpha=model$alpha, 
                                check.order=F, check.ultramteric=F)
@@ -73,6 +80,11 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
             Ystar  = (C.H%*%YYstar) + model$mu 
             eM     = estimate_shift_configuration(tree, Ystar, l1ou.options = model$l1ou.options)
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
+            if(quietly==FALSE){
+                print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
+                             paste0(eM$shift.configuration, collapse=" ") ) )
+            }
+
         }
         return(detection.vec/nItrs)
     }
@@ -91,6 +103,11 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
                          return(NA) }  )
 
                      if(all(is.na(eM))) {return(NA)}
+
+                     if(quietly==FALSE){
+                         print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
+                                      paste0(eM$shift.configuration, collapse=" ") ) )
+                     }
                      return(eM$shift.configuration)
            }, mc.cores = nCores)
 
@@ -107,7 +124,7 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     return(detection.vec/valid.count)
 }
 
-bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, nCores=2){
+bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, nCores=2, quietly=FALSE){
 
     Y = as.matrix(model$Y)
     stopifnot( length(model$alpha) == ncol(Y) )
@@ -120,10 +137,12 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
         C.IH  = t(RE$sqrtInvSigma) 
         C.Hlist[[idx]] = RE$sqrtSigma
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx])
+
     }
 
     detection.vec = rep(0, nrow(tree$edge))
 
+    valid.count <- 0
     if( multicore == FALSE ){
         for(itr in 1:nItrs){
 
@@ -140,8 +159,17 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
                 return(NA) }  )
 
             if(all(is.na(eM))) {next}
+
+            if(quietly==FALSE){
+                print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
+                             paste0(eM$shift.configuration, collapse=" ") ) )
+            }
+
+            valid.count  <- valid.count + 1
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
         }
+        stopifnot( valid.count > 0 )
+        return(detection.vec/valid.count)
     }
 
     shift.configuration.list = 
@@ -160,6 +188,12 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
                          return(NA) }  )
 
                      if(all(is.na(eM))) {return(NA)}
+
+                     if(quietly==FALSE){
+                         print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
+                                      paste0(eM$shift.configuration, collapse=" ") ) )
+                     }
+
                      return(eM$shift.configuration)
                 }, mc.cores = nCores)
 
@@ -169,6 +203,7 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
             next
         }
         valid.count <- valid.count + 1
+        stopifnot( valid.count > 0 )
         detection.vec[ shift.configuration.list[[i]] ] = 
             detection.vec[ shift.configuration.list[[i]] ] + 1
     }
