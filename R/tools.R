@@ -549,6 +549,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
 #'@export
 #'
 print.l1ou <- function(model, ...){
+    nTop.scores = 5
     cat("number of shifts: ")
     cat(model$nShifts)
     cat("\n")
