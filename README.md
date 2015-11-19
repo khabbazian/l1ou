@@ -16,3 +16,5 @@ install_github("khabbazian/l1ou")
 require(l1ou)
 ```
 Windows users will first need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
+
+#### [l1ou Reference manual](http://homepages.cae.wisc.edu/~khabbazian/pdfs/l1ou.pdf)

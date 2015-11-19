@@ -20,9 +20,7 @@ adjust_data(tree, Y, normalize = TRUE, quietly = FALSE)
 \item{Y}{trait vector/matrix with adjusted row names and row order.}
 }
 \description{
-Creates a new tree and new data matrix, where the tree edges are in postorder,
-the trait matrix has tip labels as row names, and the tips come in the same order
-in the trait matrix as in the tree's tip.label vector.
+Returns a new tree and new data matrix, where the tree edges are in postorder, and the data row names match the order of the tree tip labels.
 }
 \examples{
 data(lizard.tree, lizard.traits)

@@ -8,8 +8,8 @@ estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
-  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
-  standardize = TRUE, num.top.configurations = max.nShifts/2,
+  alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
+  alpha.lower = NA, standardize = TRUE,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -28,13 +28,13 @@ estimate_shift_configuration(tree, Y,
 
 \item{quietly}{logical. If FALSE, a basic summary of the progress and results is printed.}
 
-\item{alpha.upper}{upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
+\item{alpha.starting.value}{optional starting value for the optimization of the phylogenetic adaptation rate.}
 
-\item{alpha.lower}{lower bound for the phylogenetic adaptation rate.}
+\item{alpha.upper}{optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
+
+\item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
 \item{standardize}{logical. If TRUE, the columns of the trait matrix are first standardized.}
-
-\item{num.top.configurations}{number of shift configurations on the lasso solution path chosen for further improvement.}
 
 \item{edge.length.threshold}{minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.}
 
@@ -46,15 +46,17 @@ estimate_shift_configuration(tree, Y,
 }
 \value{
 \item{Y}{input trait vector/matrix.}
+\item{tree}{input tree.}
 \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 \item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimated number of shifts.}
-\item{optimums}{optimum values of the trait along the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
+\item{optimums}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 \item{mu}{fitted values, i.e. estimated trait means.}
 \item{residuals}{residuals. These residuals are phylogenetically correlated.}
 \item{score}{information criterion value of the estimated shift configuration.}
+\item{profile}{list of shift configurations sorted by their ic scores.}
 \item{l1ou.options}{list of options that were used.}
 }
 \description{
@@ -71,21 +73,23 @@ data(lizard.tree, lizard.traits)
 # here lizard.traits already has row names:
 rownames(lizard.traits)
 # If your trait data "dat" does not have row names but instead has
-# the species names in a column called "species", then you can
-# create row names containing to species names like this:
+# species names in a column called "species", then you can
+# create row names containing the species names like this:
 # rownames(dat) <- dat$species
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+print(eModel)
+
 nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
-plot_l1ou(lizard$tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 
 # example to constrain the set of candidate branches with a shift
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, criterion="AICc")
 ce <- eModel$shift.configuration # set of candidate edges
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
-plot_l1ou(lizard$tree, eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
+plot(eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.

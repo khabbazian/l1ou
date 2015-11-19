@@ -4,12 +4,9 @@
 \alias{l1ou_bootstrap_support}
 \title{Computes bootstrap support for shift positions}
 \usage{
-l1ou_bootstrap_support(tree, model, nItrs = 100, multicore = FALSE,
-  nCores = 2)
+l1ou_bootstrap_support(model, nItrs = 100, multicore = FALSE, nCores = 2)
 }
 \arguments{
-\item{tree}{ultrametric phylogenetic tree of class phylo with branch lengths.}
-
 \item{model}{an object output by \code{\link{estimate_shift_configuration}}.}
 
 \item{nItrs}{number of independent iterations (bootstrap replicates).}
@@ -38,17 +35,16 @@ The results of sequential and parallel runs are not necessarily equal, because d
 data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
-result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2)
+result <- l1ou_bootstrap_support(eModel, nItrs=2)
 # using only 2 replicates in vastly insufficient in general,
 # but used here to make the illustrative example run faster.
 nEdges <- length(lizard.tree$edge[,1])
 ew <- rep(1,nEdges)
 ew[eModel$shift.configuration] <- 3
-lizard.tree$edge.label <- round(result * 100, digits=1)
-# below: code to avoid annotating edges with support at or below 10\%
-lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>10,
-                                 paste0(lizard.tree$edge.label,"\%"), NA)
-plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
+el <- round(result * 100, digits=1)
+# to avoid annotating edges with support at or below 10\%
+el <- ifelse(el>10, paste0(el,"\%"), NA)
+plot(eModel, edge.label=el, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}

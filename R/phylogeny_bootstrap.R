@@ -7,7 +7,6 @@
 #' one at each node. These residuals are sampled with replacement, then mapped back onto the tree
 #' to create bootstrap replicates. Each replicate is analyzed with the l1ou method and user-specified options.
 #'
-#'@param tree ultrametric phylogenetic tree of class phylo with branch lengths.
 #'@param model an object output by \code{\link{estimate_shift_configuration}}. 
 #'@param nItrs number of independent iterations (bootstrap replicates).
 #'@param multicore logical. If TRUE, nCores processes are used in parallel. 
@@ -24,26 +23,29 @@
 #' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1] 
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' result <- l1ou_bootstrap_support(lizard.tree, eModel, nItrs=2)
+#' result <- l1ou_bootstrap_support(eModel, nItrs=2)
 #' # using only 2 replicates in vastly insufficient in general,
 #' # but used here to make the illustrative example run faster.
 #' nEdges <- length(lizard.tree$edge[,1])
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
-#' lizard.tree$edge.label <- round(result * 100, digits=1)
-#' # below: code to avoid annotating edges with support at or below 10%
-#' lizard.tree$edge.label <- ifelse(lizard.tree$edge.label>10,
-#'                                  paste0(lizard.tree$edge.label,"%"), NA)
-#' plot_l1ou(lizard.tree, eModel, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
+#' el <- round(result * 100, digits=1)
+#' # to avoid annotating edges with support at or below 10%
+#' el <- ifelse(el>10, paste0(el,"%"), NA)
+#' plot(eModel, edge.label=el, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
+#'
 #'
 #'@seealso   \code{\link{estimate_shift_configuration}}
 #'
 #'@export
-l1ou_bootstrap_support <- function(tree, model, nItrs=100, multicore=FALSE, nCores = 2){
+l1ou_bootstrap_support <- function(model, nItrs=100, multicore=FALSE, nCores = 2){
+ 
+    if (!inherits(model, "l1ou"))  stop("object \"model\" is not of class \"l1ou\".")
 
     if(multicore)
         multicore = require("parallel")
 
+    tree = model$tree
     if(ncol(model$Y)==1){
         return(bootstrap_support_univariate(tree=tree, model=model, nItrs=nItrs, multicore=multicore, nCores=nCores))
     }

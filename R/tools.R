@@ -1,9 +1,7 @@
 #' Adjusts the tree and traits to meet the requirements of \code{estimate_shift_configuration}
 #'
-#' Creates a new tree and new data matrix, where the tree edges are in postorder, 
-#' the trait matrix has tip labels as row names, and the tips come in the same order 
-#' in the trait matrix as in the tree's tip.label vector.
-#' 
+#' Returns a new tree and new data matrix, where the tree edges are in postorder, and the data row names match the order of the tree tip labels.
+#'
 #'@param tree ultrametric tree of class phylo with branch lengths.
 #'@param Y trait vector/matrix without missing entries.
 #'@param normalize logical. If TRUE, normalizes branch lengths to a unit tree height.
@@ -19,6 +17,8 @@
 #'@export
 adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
+
+    if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
         if(!quietly)
             warning("the new tree edges are ordered differently, in postorder!")
@@ -70,8 +70,8 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         if(!quietly)
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
  
-        Y  <-  Y[order(rownames(Y)),  ]; 
-        Y  <-  Y[order(order(tr$tip.label)), ];
+        Y  <-  Y[order(rownames(Y)),  ] 
+        Y  <-  Y[order(order(tr$tip.label)), ]
     }
 
 
@@ -81,18 +81,15 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     return(list(tree=tree, Y=Y))
 }
 
+lnorm      <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
 
-lnorm          <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
-
-#my.time.format <-function()         { return(format(Sys.time(),"%y_%m_%d_%H_%M")) }
-
-
-add_configuration_score_to_list  <- function(shift.configuration, score){
+add_configuration_score_to_list  <- function(shift.configuration, score, moreInfo){
     shift.configuration = sort(shift.configuration)
-    add_configuration_score_to_db(paste0(shift.configuration, collapse=" "), score)
+    add_configuration_score_to_db( paste0(shift.configuration, collapse=" "), 
+                                  score, moreInfo )
 }
 
-get_configuration_score_to_list <- function(shift.configuration){
+get_configuration_score_from_list <- function(shift.configuration){
     shift.configuration = sort(shift.configuration)
     res = get_score_of_configuration(paste0(shift.configuration, collapse=" "))
     if( res$valid == FALSE){
@@ -101,23 +98,38 @@ get_configuration_score_to_list <- function(shift.configuration){
     return(res$value)
 }
 
-print_out <- function(eModel, silence){
-    if ( silence == FALSE)
+list_investigated_configs <- function(){
+    tmpList = get_stored_config_score()
+    c.s = list()
+    c.s$scores = tmpList$scores
+    c.s$configurations = lapply(tmpList$configurations, 
+                                FUN=function(x) as.numeric(unlist(strsplit(x, split=" ")) ) ) 
+    #for( i in 1:length(c.s$scores)){
+    #    c.s$configurations[[i]] = as.numeric(unlist(strsplit(tmpList$configurations[[i]], split=" ")) )
+    #    #c.s$moreInfo      [[i]] = as.numeric(unlist(strsplit(tmpList$moreInfo      [[i]], split=" ")) )
+    #}
+    return(c.s)
+}
+
+print_out <- function(eModel, quietly){
+    if (quietly == FALSE){
         print( paste0( "EST: alpha: ", eModel$alpha, " sigma2: ",  
                  eModel$sigma2, " gamma: ", eModel$sigma2/(2*eModel$alpha),
-                 " score: ", eModel$score ) )
+                 " score: ", eModel$score, " nShifts: ", eModel$nShifts ) )
+        print("-------------------")
+    }
 }
 
 
 standardize_matrix <- function(Y){
-    ##TODO: use scale(Y, center=TRUE, scale=TRUE)
-    for(i in 1:ncol(Y)){
-        Y[,i] = Y[,i] - mean(Y[,i])
-    }
-    Y   = Y%*%(0.1*nrow(Y)*diag(apply(Y,2,lnorm,l=2)^-1))
+    #for(i in 1:ncol(Y)){
+    #    Y[,i] = Y[,i] - mean(Y[,i])
+    #}
+    #Y   = Y%*%(0.1*nrow(Y)*diag(apply(Y,2,lnorm,l=2)^-1))
+  
+    Y  <- 0.1*nrow(Y)*scale(Y, center=TRUE, scale=apply(Y,2,lnorm,l=2))
     return(Y)
 }
-
 
 
 
@@ -143,7 +155,8 @@ effective.sample.size <- function(phy, edges=NULL,
         rootedge <- dim(phy$edge)[1]+1
         if (is.null(edges)){ sortededges <- rootedge }
         else{
-            o <- order(edges); r <- rank(edges)
+            o <- order(edges) 
+            r <- rank(edges)
             sortededges <- c(edges[o],rootedge)
         }
         tmp <- .C("effectiveSampleSize", as.integer(dim(phy$edge)[1]), # edges
@@ -249,19 +262,19 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 
     options(warn = -1)
     if( length(shift.configuration) > 0)
-    for(itr in 1:length(shift.configuration) ){
-        eIdx     = shift.configuration[[itr]]
-        vIdx     = tree$edge[eIdx, 2]
+        for(itr in 1:length(shift.configuration) ){
+            eIdx     = shift.configuration[[itr]]
+            vIdx     = tree$edge[eIdx, 2]
 
-        o.vec.tmp = rep(0, nEdges)
+            o.vec.tmp = rep(0, nEdges)
 
-        path2tips = get.shortest.paths(g, vIdx, to=1:nTips, mode ="out", output="epath")$epath
-        o.vec.tmp[eIdx] = shift.values[[itr]]
-        for(i in 1:nTips){
-            o.vec.tmp[path2tips[[i]]] =  shift.values[[itr]]
+            path2tips = get.shortest.paths(g, vIdx, to=1:nTips, mode ="out", output="epath")$epath
+            o.vec.tmp[eIdx] = shift.values[[itr]]
+            for(i in 1:nTips){
+                o.vec.tmp[path2tips[[i]]] =  shift.values[[itr]]
+            }
+            o.vec = o.vec + o.vec.tmp 
         }
-        o.vec = o.vec + o.vec.tmp 
-    }
     options(warn = 0)
     return( o.vec )
 }
@@ -295,8 +308,7 @@ normalize_tree <- function(tree){
 #'
 #' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
 #'
-#'@param tree phylogenetic tree of class phylo.
-#'@param model object returned by \code{\link{estimate_shift_configuration}}.
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
@@ -314,20 +326,22 @@ normalize_tree <- function(tree){
 #' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' nEdges <- length(lizard.tree$edge[,1]);
+#' nEdges <- length(lizard.tree$edge[,1])
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
-#' plot_l1ou(lizard.tree, eModel, cex=0.5, label.offset=0.02, edge.width=ew)
+#' plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #'@export
 #'
-plot_l1ou <- function (tree, model, palette = NA, 
+plot.l1ou <- function (model, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
-                       edge.label=NA,
+                       edge.label=c(),
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
+
+    tree = model$tree
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
 
     shift.configuration = sort(model$shift.configuration, decreasing = T)
@@ -371,7 +385,7 @@ plot_l1ou <- function (tree, model, palette = NA,
 
     if (edge.label.ann){
         if (length(tree$edge.label) == 0) {
-            if(is.na(edge.label)){
+            if(length(edge.label)==0){
                 stop("no edge labels are provided via tree$edge.label or edge.label!")
             }
             tree$edge.label = edge.label 
@@ -395,6 +409,174 @@ plot_l1ou <- function (tree, model, palette = NA,
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
                   digits = 2))
+
+            if(!is.null(colnames(Y)) && length(colnames(Y))>(i-1) )
+                title(colnames(Y)[[i]], cex=2, line=-2)
         }
+    }
+}
+
+#'
+#' Prints out a summary of the shift configurations investigated by \code{\link{estimate_shift_configuration}}  
+#'
+#' prints the list of the shift configurations sorted by number of shifts and corresponding ic scores.
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param ... further arguments. 
+#'
+#'@return 
+#'\item{shift.configurations}{list of shift configurations sorted by number of shifts.}
+#'\item{scores}{list of scores corresponding to shift.configurations.}
+#'\item{nShifts}{number of shifts corresponding to the shift configurations.}
+#'
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' model.profile  <- profile(eModel)
+#' plot(model.profile$nShifts, model.profile$scores)
+#'
+#'@export
+#'
+profile.l1ou <- function(model, ...)
+{
+
+    profile.data = model$profile
+    p.d = list()
+    profile.data$scores = profile.data$scores[order(profile.data$scores)]
+    profile.data$configurations = profile.data$configurations[order(profile.data$scores)]
+    lens = unlist(lapply(profile.data$configurations, length))
+    profile.data$scores = profile.data$scores[order(lens)]
+    profile.data$configurations = profile.data$configurations[order(lens)]
+    min.score = min(profile.data$scores)
+    clength = -1
+    counter = 1
+    for (i in 1:length(profile.data$scores)) {
+        if (clength == length(profile.data$configurations[[i]])) {
+            next
+        }
+        clength = length(profile.data$configurations[[i]])
+        p.d$shift.configurations[[counter]] = profile.data$configurations[[i]]
+
+        p.d$nShifts[[counter]] = length(profile.data$configurations[[i]])
+        p.d$scores [[counter]] = profile.data$score[[i]]
+        #p.d$gamma  [[counter]] = profile.data$moreInfo[[i]][[1]] ##the stationary variance
+        #p.d$logLik [[counter]] = profile.data$moreInfo[[i]][[2]] ##the log likelihood
+
+        counter = counter + 1
+    }
+    return(p.d)
+}
+
+#'
+#' Prints out a summary of the model 
+#'
+#' prints out a summary of the model 
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param nTop.scores number of top scores and shift configuration to print out.
+#'@param ... further arguments. 
+#'
+#'@return none.
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' summary(eModel)
+#'
+#'@export
+#'
+summary.l1ou <- function(model, nTop.scores=5, ...){
+    cat("number of shifts: ")
+    cat(model$nShifts)
+    cat("\n")
+
+    cat("edge indices of the shift configuration: ")
+    cat(model$shift.configuration)
+    cat("\n")
+
+    cat(paste0(model$l1ou.options$criterion, " score: "))
+    cat(model$score)
+    cat("\n")
+
+    cat("estimated adaptation rate (alpha): ")
+    cat(model$alpha)
+    cat("\n")
+
+    cat("estimated variance (sigma2): ")
+    cat(model$sigma2)
+    cat("\n")
+
+    cat("estimated stationary variance (gamma): ")
+    cat(model$sigma2/(2 * model$alpha))
+    cat("\n")
+
+    cat("\n")
+    cat("optimum values at tips: \n")
+    print(model$optimums)
+
+    top.scores = min(nTop.scores, length(model$profile$scores))
+    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat("scores\t\tshift.configurations\n")
+    for (i in 1:top.scores){
+        cat(model$profile$scores[[i]])
+        cat("\t")
+        cat(model$profile$configurations[[i]])
+        cat("\n")
+    }
+}
+
+
+
+#'
+#' Prints out a summary of the model 
+#'
+#' prints out a summary of the model 
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param ... further arguments. 
+#'
+#'@return none.
+#'@examples
+#' 
+#' data(lizard.traits, lizard.tree)
+#' Y <- lizard.traits[,1]
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' print(eModel)
+#'
+#'@export
+#'
+print.l1ou <- function(model, ...){
+    nTop.scores = 5
+    cat("number of shifts: ")
+    cat(model$nShifts)
+    cat("\n")
+
+    cat("edge indices of the shift configuration: ")
+    cat(model$shift.configuration)
+    cat("\n")
+
+    cat("estimated adaptation rate (alpha): ")
+    cat(model$alpha)
+    cat("\n")
+
+    cat("estimated variance (sigma2): ")
+    cat(model$sigma2)
+    cat("\n")
+
+    cat("estimated stationary variance (gamma): ")
+    cat(model$sigma2/(2 * model$alpha))
+    cat("\n")
+
+    top.scores = min(nTop.scores, length(model$profile$scores))
+    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat("scores\t\tshift.configurations\n")
+    for (i in 1:top.scores){
+        cat(model$profile$scores[[i]])
+        cat("\t")
+        cat(model$profile$configurations[[i]])
+        cat("\n")
     }
 }
