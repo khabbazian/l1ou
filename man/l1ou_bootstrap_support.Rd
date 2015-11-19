@@ -4,7 +4,8 @@
 \alias{l1ou_bootstrap_support}
 \title{Computes bootstrap support for shift positions}
 \usage{
-l1ou_bootstrap_support(model, nItrs = 100, multicore = FALSE, nCores = 2)
+l1ou_bootstrap_support(model, nItrs = 100, multicore = FALSE, nCores = 2,
+  quietly = TRUE)
 }
 \arguments{
 \item{model}{an object output by \code{\link{estimate_shift_configuration}}.}
@@ -14,6 +15,8 @@ l1ou_bootstrap_support(model, nItrs = 100, multicore = FALSE, nCores = 2)
 \item{multicore}{logical. If TRUE, nCores processes are used in parallel.}
 
 \item{nCores}{desired number of parallel processes.}
+
+\item{quietly}{logical. If FALSE, a summary of each iteration will be printed out.}
 }
 \value{
 vector of size the number of edges in the tree. Each entry is the proportion of bootstrap replicates for which a shift is detected on the corresponding edge.
@@ -39,12 +42,12 @@ result <- l1ou_bootstrap_support(eModel, nItrs=2)
 # using only 2 replicates in vastly insufficient in general,
 # but used here to make the illustrative example run faster.
 nEdges <- length(lizard.tree$edge[,1])
-ew <- rep(1,nEdges)
-ew[eModel$shift.configuration] <- 3
-el <- round(result * 100, digits=1)
+e.w <- rep(1,nEdges)
+e.w[eModel$shift.configuration] <- 3
+e.l <- round(result * 100, digits=1)
 # to avoid annotating edges with support at or below 10\%
-el <- ifelse(el>10, paste0(el,"\%"), NA)
-plot(eModel, edge.label=el, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=ew)
+e.l <- ifelse(e.l>10, paste0(e.l,"\%"), NA)
+plot(eModel, edge.label=e.l, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=e.w)
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}
