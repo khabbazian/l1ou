@@ -74,11 +74,24 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
 
     detection.vec = rep(0, nrow(tree$edge))
 
+    if(quietly==FALSE)
+        print(paste0("iteration #:nShifts:shift configuraitons"))
+
+    valid.count <- 0
     if(multicore == FALSE){
         for(itr in 1:nItrs){
             YYstar = sample(YY, replace = TRUE)
             Ystar  = (C.H%*%YYstar) + model$mu 
-            eM     = estimate_shift_configuration(tree, Ystar, l1ou.options = model$l1ou.options)
+
+            eM  <-  tryCatch({
+                estimate_shift_configuration(tree, Ystar, l1ou.options =model$l1ou.options)
+            }, error = function(e) {
+                print("l1OU error, return NA")
+                return(NA) }  )
+            if(all(is.na(eM))) {return(NA)}
+
+            valid.count <- valid.count + 1
+
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
             if(quietly==FALSE){
                 print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
@@ -86,7 +99,7 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
             }
 
         }
-        return(detection.vec/nItrs)
+        return(detection.vec/valid.count)
     }
 
     shift.configuration.list = 
@@ -138,6 +151,11 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
         C.Hlist[[idx]] = RE$sqrtSigma
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx])
 
+    }
+
+    if(quietly==FALSE){
+        print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
+                     paste0(eM$shift.configuration, collapse=" ") ) )
     }
 
     detection.vec = rep(0, nrow(tree$edge))
