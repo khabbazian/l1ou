@@ -431,6 +431,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
 #'@param fit.OU.model logical. If TRUE, it returns an object of class l1ou with all the parameters estimated.
+#'@param l1ou.options if provided, all the default values will be ignored. 
 #'
 #'@return Information criterion value of the given shift configuration.
 #'
@@ -460,13 +461,14 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
-                     criterion   = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-                     root.model  = c("OUfixedRoot", "OUrandomRoot"),
+                     criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+                     root.model   = c("OUfixedRoot", "OUrandomRoot"),
                      alpha.starting.value = NA,
-                     alpha.upper = alpha_upper_bound(tree), 
-                     alpha.lower = NA,
-                     fit.OU.model = FALSE
-                     ){
+                     alpha.upper  = alpha_upper_bound(tree), 
+                     alpha.lower  = NA,
+                     fit.OU.model = FALSE, 
+                     l1ou.options = NA
+                   ){
 
     if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge))
@@ -475,15 +477,19 @@ configuration_ic <- function(tree, Y, shift.configuration,
     Y  = as.matrix(Y)
     if(!identical(rownames(Y), tree$tip.label)) stop("rownames of Y and tree$tip.label are not identical.")
 
-    opt = list()
 
-    opt$criterion            <- match.arg(criterion)
-    opt$root.model           <- match.arg(root.model)
-    opt$alpha.starting.value <- alpha.starting.value
-    opt$alpha.upper.bound    <- alpha.upper
-    opt$alpha.lower.bound    <- alpha.lower
-    opt$Z                    <- generate_design_matrix(tree, "simpX")
-    opt$use.saved.scores     <- FALSE
+    opt = list()
+    if(!all(is.na(l1ou.options))){
+        opt = l1ou.options
+    }else{
+        opt$criterion            <- match.arg(criterion)
+        opt$root.model           <- match.arg(root.model)
+        opt$alpha.starting.value <- alpha.starting.value
+        opt$alpha.upper.bound    <- alpha.upper
+        opt$alpha.lower.bound    <- alpha.lower
+        opt$Z                    <- generate_design_matrix(tree, "simpX")
+        opt$use.saved.scores     <- FALSE
+    }
 
     s.c = correct_unidentifiability(tree, shift.configuration, opt)
     if( length(s.c) != length(shift.configuration) )
