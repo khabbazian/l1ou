@@ -209,11 +209,11 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, 
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, root.model = opt$root.model, 
                                         check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     } else{           ## OU model
         X   = generate_design_matrix(tree, "orgX", alpha=alpha )
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, 
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, root.model = opt$root.model, 
                                         check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     }
 
@@ -280,10 +280,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         X  = matrix(0,0,0)
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
-            RE  = sqrt_OU_covariance(tree,     alpha = 0, check.order=F, check.ultramteric=F )
+            RE  = sqrt_OU_covariance(tree, root.model = opt$root.model,
+                                     alpha = 0, check.order=F, check.ultramteric=F )
         } else {
             X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]])
-            RE  = sqrt_OU_covariance(tree,     alpha = alpha[[i]], 
+            RE  = sqrt_OU_covariance(tree,  root.model = opt$root.model,   
+                                     alpha = alpha[[i]], 
                                      check.order=F, check.ultramteric=F )
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
