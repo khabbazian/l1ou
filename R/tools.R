@@ -355,7 +355,7 @@ plot.l1ou <- function (model, palette = NA,
     if (plot.bar) {
         layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, rep(1,ncol(Y))))
     }
-    if (is.na(palette)) {
+    if (all(is.na(palette))) {
         palette = c(sample(rainbow(nShifts)), "gray")
     }
     stopifnot(length(palette) == model$nShifts + 1)
