@@ -450,6 +450,11 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' configuration_ic(lizard$tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
 #'
+#' ### building l1ou object out of the second best score 
+#' eModel2 = configuration_ic(eModel$tree, eModel$Y, eModel$profile$configurations[[2]], 
+#'                           fit.OU.model=TRUE, l1ou.options=eModel$l1ou.options)
+#' plot(eModel2)
+#'
 #'@seealso \code{\link{estimate_shift_configuration}} \code{\link{adjust_data}}
 #'
 #'@references

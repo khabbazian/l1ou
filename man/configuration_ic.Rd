@@ -50,6 +50,11 @@ data(lizard.tree, lizard.traits)
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 configuration_ic(lizard$tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
+
+### building l1ou object out of the second best score
+eModel2 = configuration_ic(eModel$tree, eModel$Y, eModel$profile$configurations[[2]],
+                          fit.OU.model=TRUE, l1ou.options=eModel$l1ou.options)
+plot(eModel2)
 }
 \references{
 Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.
