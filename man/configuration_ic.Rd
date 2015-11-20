@@ -8,7 +8,7 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
   "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), alpha.starting.value = NA,
   alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
-  fit.OU.model = FALSE)
+  fit.OU.model = FALSE, l1ou.options = NA)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo, with branch lengths, and edges in postorder.}
@@ -28,6 +28,8 @@ configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
 \item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
 \item{fit.OU.model}{logical. If TRUE, it returns an object of class l1ou with all the parameters estimated.}
+
+\item{l1ou.options}{if provided, all the default values will be ignored.}
 }
 \value{
 Information criterion value of the given shift configuration.
