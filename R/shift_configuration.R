@@ -69,7 +69,7 @@
 estimate_shift_configuration <- function(tree, Y, 
            max.nShifts            = floor(length(tree$tip.label)/2), 
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-           root.model             = c("OUfixedRoot", "OUrandomRoot"),
+           root.model             = c("OUrandomRoot", "OUfixedRoot"),
            candid.edges           = NA,
            quietly                = TRUE,
            alpha.starting.value   = NA, 
@@ -469,7 +469,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
                      criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-                     root.model   = c("OUfixedRoot", "OUrandomRoot"),
+                     root.model   = c("OUrandomRoot", "OUfixedRoot"),
                      alpha.starting.value = NA,
                      alpha.upper  = alpha_upper_bound(tree), 
                      alpha.lower  = NA,
