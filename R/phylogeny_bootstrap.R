@@ -152,11 +152,8 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx])
 
     }
-
-    if(quietly==FALSE){
-        print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
-                     paste0(eM$shift.configuration, collapse=" ") ) )
-    }
+    if(quietly==FALSE)
+        print(paste0("iteration #:nShifts:shift configuraitons"))
 
     detection.vec = rep(0, nrow(tree$edge))
 
