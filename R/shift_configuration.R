@@ -512,7 +512,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
     return(score)
 }
 
-
+# could you please export this function?
 fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
     Y       = as.matrix(Y)
@@ -522,6 +522,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     resi = mu = alpha = sigma2 = numeric()
     shift.values = optimums = numeric()
     intercept    = optimums.tmp = numeric()
+    logLik = numeric(ncol(Y))
 
     for(i in 1:ncol(Y)){
 
@@ -533,6 +534,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         alpha   = c(alpha,  fit$optpar)
         sigma2  = c(sigma2, fit$sigma2)
+        logLik[i] <- fit$logLik
 
         ## E[Y]
         mu      = cbind(mu, fit$fitted.values)
@@ -558,7 +560,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     optimums = as.matrix(optimums)
     rownames(optimums) = tree$tip.label
 
-    score = cmp_model_score (tree, Y, shift.configuration, opt)
+    score = cmp_model_score (tree, Y, shift.configuration, opt) # this will call my_phylolm_interface again to get logLik. Wasting time. Could you create a function that would just return the penalty, given the needed info from 'fit' on alpha etc.?
 
     ##NOTE: adding the trait (response vector/matrix) which used to detect shift positions
     model = list(Y=Y, 
@@ -573,6 +575,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  mu                 =mu, 
                  residuals          =resi,
                  score              =score,
+                 logLik             =logLik,
                  l1ou.options       =opt) 
 
     class(model) <- "l1ou"
