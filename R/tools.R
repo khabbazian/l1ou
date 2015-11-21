@@ -388,15 +388,15 @@ plot.l1ou <- function (model, palette = NA,
         }
     }
 
-    #if (edge.shift.ann) {
-    #    eLabels = rep(NA, nEdges)
-    #    for (shift in shift.configuration) {
-    #        eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
-    #                                     ], digits = 2), collapse = ",")
-    #    }
-    #    edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
-    #               frame = "none")
-    #}
+    if (edge.shift.ann) {
+        eLabels = rep(NA, nEdges)
+        for (shift in shift.configuration) {
+            eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
+                                         ], digits = 2), collapse = ",")
+        }
+        edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
+                   frame = "none")
+    }
 
     if (edge.label.ann) {
         if (length(tree$edge.label) == 0) {
@@ -427,16 +427,16 @@ plot.l1ou <- function (model, palette = NA,
     }
 
 
-    if (edge.label.ann){
-        if (length(tree$edge.label) == 0) {
-            if(length(edge.label)==0){
-                stop("no edge labels are provided via tree$edge.label or edge.label!")
-            }
-            tree$edge.label = edge.label 
-        }
-        edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
-                   frame = "none")
-    }
+    #if (edge.label.ann){
+    #    if (length(tree$edge.label) == 0) {
+    #        if(length(edge.label)==0){
+    #            stop("no edge labels are provided via tree$edge.label or edge.label!")
+    #        }
+    #        tree$edge.label = edge.label 
+    #    }
+    #    edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
+    #               frame = "none")
+    #}
 
     if (plot.bar) {
         nTips = length(tree$tip.label)
