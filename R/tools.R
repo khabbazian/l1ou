@@ -311,10 +311,11 @@ normalize_tree <- function(tree){
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
-#'@param start logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.
+#'@param star logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.
 #'@param edge.label vector of size number of edges.
 #'@param edge.label.ann logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label. 
 #'@param edge.label.adj adjustment argument to give to edgelabel() for labeling edges.
+#'@param edge.label.pos relative position of the edge.label on the edge. 0 for the beginning of the edge and 1 for the end of the edge. 
 #'@param edge.ann.cex amount by which the annotation text should be magnified relative to the default.
 #'@param plot.bar logical. If TRUE, the bars corresponding to the trait values will be plotted.
 #'@param bar.axis logical. If TRUE, the axis of of trait(s) range will be plotted. 
@@ -337,6 +338,7 @@ plot.l1ou <- function (model, palette = NA,
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
                        edge.label=c(), star = TRUE,
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
+                       edge.label.pos=NA,
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
@@ -395,6 +397,35 @@ plot.l1ou <- function (model, palette = NA,
         edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
                    frame = "none")
     }
+
+    if (edge.label.ann) {
+        if (length(tree$edge.label) == 0) {
+            if (length(edge.label) == 0) {
+                stop("no edge labels are provided via tree$edge.label or edge.label!")
+            }
+            tree$edge.label = edge.label
+        }
+
+        Z = l1ou:::generate_design_matrix(tree, type = "apprX")
+
+        if(!is.na(edge.label.pos))
+           if(edge.label.pos < 0 || edge.label.pos > 1) 
+               stop("edge.label.pos should be between 0 and 1") 
+
+        for (idx in 1:length(tree$edge.label)) {
+            if(is.na(tree$edge.label[[idx]]))
+                next
+            pos = max(Z[, idx])
+            if(!is.na(edge.label.pos) ){
+                pos   = pos - edge.label.pos * tree$edge.length[[idx]]
+            }
+            edge.labels = rep(NA, length(tree$edge[, 1]))
+            edge.labels[[idx]] = tree$edge.label[[idx]]
+            edgelabels(edge.labels, cex = edge.ann.cex, adj = edge.label.adj, 
+                       frame = "none", date= pos)
+        }
+    }
+
 
     if (edge.label.ann){
         if (length(tree$edge.label) == 0) {

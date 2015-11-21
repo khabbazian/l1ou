@@ -5,8 +5,8 @@
 \title{Computes the information criterion score for a given configuration}
 \usage{
 configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUfixedRoot",
-  "OUrandomRoot"), alpha.starting.value = NA,
+  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
+  "OUfixedRoot"), alpha.starting.value = NA,
   alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
   fit.OU.model = FALSE, l1ou.options = NA)
 }

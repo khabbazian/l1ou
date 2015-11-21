@@ -6,7 +6,7 @@
 \usage{
 estimate_shift_configuration(tree, Y, max.nShifts = 10,
   criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"),
-  root.model = c("OUfixedRoot", "OUrandomRoot"), candid.edges = NA,
+  root.model = c("OUrandomRoot", "OUfixedRoot"), candid.edges = NA,
   quietly = TRUE, alpha.starting.value = NA,
   alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
   standardize = TRUE, edge.length.threshold = .Machine$double.eps,
