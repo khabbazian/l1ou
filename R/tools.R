@@ -311,6 +311,7 @@ normalize_tree <- function(tree){
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
+#'@param start logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.
 #'@param edge.label vector of size number of edges.
 #'@param edge.label.ann logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label. 
 #'@param edge.label.adj adjustment argument to give to edgelabel() for labeling edges.
@@ -334,7 +335,7 @@ normalize_tree <- function(tree){
 #'
 plot.l1ou <- function (model, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
-                       edge.label=c(),
+                       edge.label=c(), star = TRUE,
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
@@ -371,6 +372,19 @@ plot.l1ou <- function (model, palette = NA,
         counter = counter + 1
     }
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
+
+
+    if(star){
+        Z = l1ou:::generate_design_matrix(tree, type="apprX")
+        for( idx in 1:length(model$shift.configuration) ){
+            sP   = model$shift.configuration[[idx]];
+            pos  = max(Z[,sP]);
+
+            edge.labels = rep(NA, length(tree$edge[,1]));
+            edge.labels[sP] = "*";
+            edgelabels(edge.labels, cex=3*edge.ann.cex, adj= c(0.5, .8), frame = "none", date=pos);
+        }
+    }
 
     if (edge.shift.ann) {
         eLabels = rep(NA, nEdges)
