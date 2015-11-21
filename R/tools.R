@@ -410,7 +410,7 @@ plot.l1ou <- function (model, palette = NA,
                   digits = 2))
 
             if(!is.null(colnames(Y)) && length(colnames(Y))>(i-1) )
-                title(colnames(Y)[[i]], cex=2, line=-2)
+                mtext(colnames(Y)[[i]], cex = 0.7, line = +1, side=1)
         }
     }
 }
