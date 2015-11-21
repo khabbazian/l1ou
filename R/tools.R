@@ -388,15 +388,15 @@ plot.l1ou <- function (model, palette = NA,
         }
     }
 
-    if (edge.shift.ann) {
-        eLabels = rep(NA, nEdges)
-        for (shift in shift.configuration) {
-            eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
-                                         ], digits = 2), collapse = ",")
-        }
-        edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
-                   frame = "none")
-    }
+    #if (edge.shift.ann) {
+    #    eLabels = rep(NA, nEdges)
+    #    for (shift in shift.configuration) {
+    #        eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
+    #                                     ], digits = 2), collapse = ",")
+    #    }
+    #    edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
+    #               frame = "none")
+    #}
 
     if (edge.label.ann) {
         if (length(tree$edge.label) == 0) {
