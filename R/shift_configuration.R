@@ -69,7 +69,7 @@
 estimate_shift_configuration <- function(tree, Y, 
            max.nShifts            = floor(length(tree$tip.label)/2), 
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-           root.model             = c("OUfixedRoot", "OUrandomRoot"),
+           root.model             = c("OUrandomRoot", "OUfixedRoot"),
            candid.edges           = NA,
            quietly                = TRUE,
            alpha.starting.value   = NA, 
@@ -209,11 +209,11 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, 
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, root.model = "OUfixedRoot", 
                                         check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     } else{           ## OU model
         X   = generate_design_matrix(tree, "orgX", alpha=alpha )
-        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, 
+        Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, root.model = opt$root.model, 
                                         check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
     }
 
@@ -280,10 +280,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         X  = matrix(0,0,0)
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
-            RE  = sqrt_OU_covariance(tree,     alpha = 0, check.order=F, check.ultramteric=F )
+            RE  = sqrt_OU_covariance(tree, root.model = "OUfixedRoot",
+                                     alpha = 0, check.order=F, check.ultramteric=F )
         } else {
             X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]])
-            RE  = sqrt_OU_covariance(tree,     alpha = alpha[[i]], 
+            RE  = sqrt_OU_covariance(tree,  root.model = opt$root.model,   
+                                     alpha = alpha[[i]], 
                                      check.order=F, check.ultramteric=F )
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
@@ -431,6 +433,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
 #'@param fit.OU.model logical. If TRUE, it returns an object of class l1ou with all the parameters estimated.
+#'@param l1ou.options if provided, all the default values will be ignored. 
 #'
 #'@return Information criterion value of the given shift configuration.
 #'
@@ -449,6 +452,11 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' configuration_ic(lizard$tree, eModel$Y, eModel$shift.configuration, criterion="pBIC")
 #'
+#' ### building l1ou object out of the second best score 
+#' eModel2 = configuration_ic(eModel$tree, eModel$Y, eModel$profile$configurations[[2]], 
+#'                           fit.OU.model=TRUE, l1ou.options=eModel$l1ou.options)
+#' plot(eModel2)
+#'
 #'@seealso \code{\link{estimate_shift_configuration}} \code{\link{adjust_data}}
 #'
 #'@references
@@ -460,13 +468,14 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
-                     criterion   = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
-                     root.model  = c("OUfixedRoot", "OUrandomRoot"),
+                     criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+                     root.model   = c("OUrandomRoot", "OUfixedRoot"),
                      alpha.starting.value = NA,
-                     alpha.upper = alpha_upper_bound(tree), 
-                     alpha.lower = NA,
-                     fit.OU.model = FALSE
-                     ){
+                     alpha.upper  = alpha_upper_bound(tree), 
+                     alpha.lower  = NA,
+                     fit.OU.model = FALSE, 
+                     l1ou.options = NA
+                   ){
 
     if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge))
@@ -475,15 +484,19 @@ configuration_ic <- function(tree, Y, shift.configuration,
     Y  = as.matrix(Y)
     if(!identical(rownames(Y), tree$tip.label)) stop("rownames of Y and tree$tip.label are not identical.")
 
-    opt = list()
 
-    opt$criterion            <- match.arg(criterion)
-    opt$root.model           <- match.arg(root.model)
-    opt$alpha.starting.value <- alpha.starting.value
-    opt$alpha.upper.bound    <- alpha.upper
-    opt$alpha.lower.bound    <- alpha.lower
-    opt$Z                    <- generate_design_matrix(tree, "simpX")
-    opt$use.saved.scores     <- FALSE
+    opt = list()
+    if(!all(is.na(l1ou.options))){
+        opt = l1ou.options
+    }else{
+        opt$criterion            <- match.arg(criterion)
+        opt$root.model           <- match.arg(root.model)
+        opt$alpha.starting.value <- alpha.starting.value
+        opt$alpha.upper.bound    <- alpha.upper
+        opt$alpha.lower.bound    <- alpha.lower
+        opt$Z                    <- generate_design_matrix(tree, "simpX")
+        opt$use.saved.scores     <- FALSE
+    }
 
     s.c = correct_unidentifiability(tree, shift.configuration, opt)
     if( length(s.c) != length(shift.configuration) )
