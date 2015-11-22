@@ -757,11 +757,14 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
                                 upper.bound    = opt$alpha.upper.bound), silent = opt$quietly)
     }else{
+        l = ifelse(is.na(opt$alpha.lower.bound), 0, opt$alpha.lower.bound)
+        u = opt$alpha.upper.bound
+        s = ifelse(is.na(opt$alpha.starting.value), max(0.5, l), opt$alpha.starting.value)
+
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
-                                starting.value = ifelse(is.na(opt$alpha.starting.value),max(0.5,opt$alpha.lower.bound),
-                                                        opt$alpha.starting.value), 
-                                lower.bound    = opt$alpha.lower.bound, 
-                                upper.bound    = opt$alpha.upper.bound ), silent = opt$quietly)
+                                starting.value = s, 
+                                lower.bound    = l, 
+                                upper.bound    = u), silent = opt$quietly)
     }
     options(warn = 0)
 

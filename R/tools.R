@@ -637,13 +637,13 @@ print.l1ou <- function(model, ...){
     print(tmp.mat)
     cat("\n")
 
-    top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
-    cat("scores\t\tshift.configurations\n")
-    for (i in 1:top.scores){
-        cat(model$profile$scores[[i]])
-        cat("\t")
-        cat(model$profile$configurations[[i]])
-        cat("\n")
-    }
+    #top.scores = min(nTop.scores, length(model$profile$scores))
+    #cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
+    #cat("scores\t\tshift.configurations\n")
+    #for (i in 1:top.scores){
+    #    cat(model$profile$scores[[i]])
+    #    cat("\t")
+    #    cat(model$profile$configurations[[i]])
+    #    cat("\n")
+    #}
 }
