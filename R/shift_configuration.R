@@ -67,8 +67,7 @@
 #'
 #'@export
 estimate_shift_configuration <- function(tree, Y, 
-           #max.nShifts            = floor(length(tree$tip.label)/2), 
-           max.nShifts            = 10, 
+           max.nShifts            = floor(length(tree$tip.label)/2), 
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
            root.model             = c("OUrandomRoot", "OUfixedRoot"),
            candid.edges           = NA,

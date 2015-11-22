@@ -553,16 +553,20 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat(model$score)
     cat("\n")
 
-    cat("estimated adaptation rate (alpha): ")
-    cat(model$alpha)
-    cat("\n")
-
-    cat("estimated variance (sigma2): ")
-    cat(model$sigma2)
-    cat("\n")
-
-    cat("estimated stationary variance (gamma): ")
-    cat(model$sigma2/(2 * model$alpha))
+    tmp.mat = rbind(model$alpha, 
+                    model$sigma, 
+                    model$sigma2/(2 * model$alpha),
+                    model$logLik
+                    )
+    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+                          "variance (sigma2)", 
+                          "stationary variance (gamma)",
+                          "logLik"
+                          )
+    if(!all(is.null(colnames(model$Y)))){
+        colnames(tmp.mat) = paste0(colnames(model$Y))
+    }
+    print(tmp.mat)
     cat("\n")
 
     cat("\n")
@@ -596,18 +600,20 @@ print.l1ou <- function(model, ...){
     print(tmp.mat)
     cat("\n")
 
-
-
-    cat("estimated adaptation rate (alpha): ")
-    cat(model$alpha)
-    cat("\n")
-
-    cat("estimated variance (sigma2): ")
-    cat(model$sigma2)
-    cat("\n")
-
-    cat("estimated stationary variance (gamma): ")
-    cat(model$sigma2/(2 * model$alpha))
+    tmp.mat = rbind(model$alpha, 
+                    model$sigma, 
+                    model$sigma2/(2 * model$alpha),
+                    model$logLik
+                    )
+    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+                          "variance (sigma2)", 
+                          "stationary variance (gamma)",
+                          "logLik"
+                          )
+    if(!all(is.null(colnames(model$Y)))){
+        colnames(tmp.mat) = paste0(colnames(model$Y))
+    }
+    print(tmp.mat)
     cat("\n")
 
     top.scores = min(nTop.scores, length(model$profile$scores))
