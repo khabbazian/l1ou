@@ -17,7 +17,7 @@ void one_step(const int i1, const int i2, const int e1, const int e2,
 
     const int nEdges = edgeList.nrow();
 
-    int e1=-1, e2=-1;
+    //int e1=-1, e2=-1;
     for (int i=0; i<nEdges; ++i)
         if (edgeList(i,1) == i1)
             e1 = i;
