@@ -7,7 +7,7 @@ typedef Matrix<REALSXP> NumericMatrix;
 #define RASSERT(condition){if(!(condition)){throw std::range_error(std::string("internal error!@")+__FILE__);}}
 
 // [[Rcpp::plugins(cpp11)]]
-void one_step(const int i1, const int i2, const int e1, const int e2,
+void one_step(const int i1, const int i2, int e1, int e2,
         const int counter, const int nTips,
         Rcpp::NumericMatrix &edgeList, //the third column contains lengths
         Rcpp::NumericVector &tips, 
