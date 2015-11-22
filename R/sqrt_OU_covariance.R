@@ -60,7 +60,8 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
     }
 
     my.edge.list <- cbind(tre$edge-1, tre$edge.length) 
-    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label))
+    tre$root.edge <- ifelse(is.null(tre$root.edge), 0, tre$root.edge)
+    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label), tre$root.edge)
     return(result)
 }
 
