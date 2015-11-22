@@ -514,7 +514,7 @@ profile.l1ou <- function(model, ...)
 }
 
 #'
-#' Returns the best shift configuration with a given number of shifts amonge the shift configurations that has been evaluated.
+#' Returns the best shift configuration with a given number of shifts among the shift configurations that have been evaluated.
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param nShifts number of shifts.

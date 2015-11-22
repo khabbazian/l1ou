@@ -240,8 +240,8 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     result  = select_best_solution(tree, Y, sol.path, opt)
     eModel  = fit_OU_model(tree, Y, result$shift.configuration, opt)
 
-    if(opt$quietly){
-        eModel
+    if(!opt$quietly){
+        print(eModel)
         print("-------")
     }
     return(eModel)
@@ -319,8 +319,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     result  = select_best_solution(tree, Y, sol, opt=opt)
     eModel  = fit_OU_model(tree, Y, result$shift.configuration, opt=opt)
 
-    if(opt$quietly){
-        eModel
+    if(!opt$quietly){
+        print(eModel)
         print("-------")
     }
     return(eModel)
