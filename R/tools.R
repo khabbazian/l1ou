@@ -537,10 +537,18 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration: ")
-    cat(model$shift.configuration)
-    cat("\n")
+    cat("edge indices of the shift configuration (first row) and the corresponding shift values:\n")
+    #cat(model$shift.configuration)
+    #cat(model$shift.values)
+    #cat("\n")
+    tmp.mat = t(as.matrix(model$shift.values))
+    colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(Y)))){
+        rownames(tmp.mat) = paste0(colnames(Y))
+    }
+    print(tmp.mat)
 
+    cat("\n")
     cat(paste0(model$l1ou.options$criterion, " score: "))
     cat(model$score)
     cat("\n")
@@ -562,7 +570,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     print(model$optimums)
 
     top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
     cat("scores\t\tshift.configurations\n")
     for (i in 1:top.scores){
         cat(model$profile$scores[[i]])
@@ -572,35 +580,23 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     }
 }
 
-
-
-#'
-#' Prints out a summary of the model 
-#'
-#' prints out a summary of the model 
-#'
-#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
-#'@param ... further arguments. 
-#'
-#'@return none.
-#'@examples
-#' 
-#' data(lizard.traits, lizard.tree)
-#' Y <- lizard.traits[,1]
-#' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' print(eModel)
-#'
 #'@export
-#'
 print.l1ou <- function(model, ...){
     nTop.scores = 5
     cat("number of shifts: ")
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration: ")
-    cat(model$shift.configuration)
+    cat("edge indices of the shift configuration (first row) and the corresponding shift values:\n")
+    tmp.mat = t(as.matrix(model$shift.values))
+    colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(Y)))){
+        rownames(tmp.mat) = paste0(colnames(Y))
+    }
+    print(tmp.mat)
     cat("\n")
+
+
 
     cat("estimated adaptation rate (alpha): ")
     cat(model$alpha)
@@ -615,7 +611,7 @@ print.l1ou <- function(model, ...){
     cat("\n")
 
     top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
     cat("scores\t\tshift.configurations\n")
     for (i in 1:top.scores){
         cat(model$profile$scores[[i]])
