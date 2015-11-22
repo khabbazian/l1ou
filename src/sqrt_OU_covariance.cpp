@@ -82,9 +82,8 @@ Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips, doubl
     Rcpp::NumericMatrix B(nTips,nTips);
 
     Rcpp::NumericVector tips(nTips);
-    //std::iota(tips.begin(),tips.end(),1);
     for(int i=0; i<tips.size(); ++i)
-        tips(i) = i+1;
+        tips[i] = i+1;
 
     int counter = 0;
     for(int i=0; i<edgeList.nrow() && tips.size() > 1; i+=2)
