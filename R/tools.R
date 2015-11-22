@@ -225,7 +225,7 @@ get_num_solutions <- function(sol.path){
 
 
 
-get_shift_configuration <- function(sol.path, index, Y, tidx=1){
+get_configuration_in_sol_path <- function(sol.path, index, Y, tidx=1){
     if ( grepl("lars",sol.path$call)[[1]]  ){
         beta      = sol.path$beta[index,]
         shift.configuration  = which( abs(beta) > 0 )
@@ -511,6 +511,27 @@ profile.l1ou <- function(model, ...)
         counter = counter + 1
     }
     return(p.d)
+}
+
+#'
+#' Returns the best shift configuration with a given number of shifts amonge the shift configurations that has been evaluated.
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param nShifts number of shifts.
+#'
+#'@return indices of the edges with shifts
+#'
+#'@export
+get_shift_configuration <- function(model, nShifts){
+    p.d = profile(model) 
+    if( nShifts > length(p.d$shift.configuration))
+        stop("There is no configuration with the given number of shifts")
+
+    for( i in 1:length(p.d$configuration)){
+        if( length(p.d$configuration[[i]]) == nShifts)
+            return(p.d$configuration[[i]])
+    }
+    stop("There is no configuration with the given number of shifts")
 }
 
 #'

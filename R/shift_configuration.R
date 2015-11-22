@@ -49,7 +49,7 @@
 #' # rownames(dat) <- dat$species
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
-#' print(eModel)
+#' eModel
 #'
 #' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
@@ -240,7 +240,10 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     result  = select_best_solution(tree, Y, sol.path, opt)
     eModel  = fit_OU_model(tree, Y, result$shift.configuration, opt)
 
-    print_out(eModel, opt$quietly)
+    if(opt$quietly){
+        eModel
+        print("-------")
+    }
     return(eModel)
 }
 
@@ -316,7 +319,10 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     result  = select_best_solution(tree, Y, sol, opt=opt)
     eModel  = fit_OU_model(tree, Y, result$shift.configuration, opt=opt)
 
-    print_out(eModel, opt$quietly)
+    if(opt$quietly){
+        eModel
+        print("-------")
+    }
     return(eModel)
 }
 
@@ -373,7 +379,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
     for(idx in 1:nSols) {
 
-        shift.configuration = get_shift_configuration(sol.path, idx, Y)
+        shift.configuration = get_configuration_in_sol_path(sol.path, idx, Y)
         shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
 
         if ( length(shift.configuration) > opt$max.nShifts           ){break}
