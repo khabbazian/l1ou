@@ -543,8 +543,8 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     #cat("\n")
     tmp.mat = t(as.matrix(model$shift.values))
     colnames(tmp.mat) = model$shift.configuration
-    if(!all(is.null(colnames(Y)))){
-        rownames(tmp.mat) = paste0(colnames(Y))
+    if(!all(is.null(colnames(model$Y)))){
+        rownames(tmp.mat) = paste0(colnames(model$Y))
     }
     print(tmp.mat)
 
@@ -590,8 +590,8 @@ print.l1ou <- function(model, ...){
     cat("edge indices of the shift configuration (first row) and the corresponding shift values:\n")
     tmp.mat = t(as.matrix(model$shift.values))
     colnames(tmp.mat) = model$shift.configuration
-    if(!all(is.null(colnames(Y)))){
-        rownames(tmp.mat) = paste0(colnames(Y))
+    if(!all(is.null(colnames(model$Y)))){
+        rownames(tmp.mat) = paste0(colnames(model$Y))
     }
     print(tmp.mat)
     cat("\n")
