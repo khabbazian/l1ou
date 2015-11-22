@@ -91,8 +91,8 @@ Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips, doubl
         one_step( edgeList(i,1), edgeList(i+1,1), i, i+1, counter++, nTips, edgeList, tips, F, G, D, B, rootEdge);
     
     for(int i=0; i<F.nrow(); ++i){
-        D(i,counter) = F(i,tips[0]-1)/std::sqrt(rootEdge);
-        B(i,counter) = G(i,tips[0]-1)*std::sqrt(rootEdge);
+        D(i,counter) = F(i,tips[0])/std::sqrt(rootEdge);
+        B(i,counter) = G(i,tips[0])*std::sqrt(rootEdge);
     }
 
     //sqrtInvSigma # instead of D
