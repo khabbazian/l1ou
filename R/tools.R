@@ -558,7 +558,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration (first row) and the corresponding shift values:\n")
+    cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
     #cat(model$shift.configuration)
     #cat(model$shift.values)
     #cat("\n")
@@ -612,7 +612,11 @@ print.l1ou <- function(model, ...){
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration (first row) and the corresponding shift values:\n")
+    cat(paste0(model$l1ou.options$criterion, " score: "))
+    cat(model$score)
+    cat("\n")
+
+    cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
     tmp.mat = t(as.matrix(model$shift.values))
     colnames(tmp.mat) = model$shift.configuration
     if(!all(is.null(colnames(model$Y)))){
