@@ -225,7 +225,7 @@ get_num_solutions <- function(sol.path){
 
 
 
-get_shift_configuration <- function(sol.path, index, Y, tidx=1){
+get_configuration_in_sol_path <- function(sol.path, index, Y, tidx=1){
     if ( grepl("lars",sol.path$call)[[1]]  ){
         beta      = sol.path$beta[index,]
         shift.configuration  = which( abs(beta) > 0 )
@@ -311,9 +311,11 @@ normalize_tree <- function(tree){
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
+#'@param star logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.
 #'@param edge.label vector of size number of edges.
 #'@param edge.label.ann logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label. 
 #'@param edge.label.adj adjustment argument to give to edgelabel() for labeling edges.
+#'@param edge.label.pos relative position of the edge.label on the edge. 0 for the beginning of the edge and 1 for the end of the edge. 
 #'@param edge.ann.cex amount by which the annotation text should be magnified relative to the default.
 #'@param plot.bar logical. If TRUE, the bars corresponding to the trait values will be plotted.
 #'@param bar.axis logical. If TRUE, the axis of of trait(s) range will be plotted. 
@@ -334,8 +336,9 @@ normalize_tree <- function(tree){
 #'
 plot.l1ou <- function (model, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
-                       edge.label=c(),
+                       edge.label=c(), star = TRUE,
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
+                       edge.label.pos=NA,
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
@@ -372,6 +375,19 @@ plot.l1ou <- function (model, palette = NA,
     }
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
 
+
+    if(star){
+        Z = l1ou:::generate_design_matrix(tree, type="apprX")
+        for( idx in 1:length(model$shift.configuration) ){
+            sP   = model$shift.configuration[[idx]];
+            pos  = max(Z[,sP]);
+
+            edge.labels = rep(NA, length(tree$edge[,1]));
+            edge.labels[sP] = "*";
+            edgelabels(edge.labels, cex=3*edge.ann.cex, adj= c(0.5, .8), frame = "none", date=pos);
+        }
+    }
+
     if (edge.shift.ann) {
         eLabels = rep(NA, nEdges)
         for (shift in shift.configuration) {
@@ -382,16 +398,45 @@ plot.l1ou <- function (model, palette = NA,
                    frame = "none")
     }
 
-    if (edge.label.ann){
+    if (edge.label.ann) {
         if (length(tree$edge.label) == 0) {
-            if(length(edge.label)==0){
+            if (length(edge.label) == 0) {
                 stop("no edge labels are provided via tree$edge.label or edge.label!")
             }
-            tree$edge.label = edge.label 
+            tree$edge.label = edge.label
         }
-        edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
-                   frame = "none")
+
+        Z = l1ou:::generate_design_matrix(tree, type = "apprX")
+
+        if(!is.na(edge.label.pos))
+           if(edge.label.pos < 0 || edge.label.pos > 1) 
+               stop("edge.label.pos should be between 0 and 1") 
+
+        for (idx in 1:length(tree$edge.label)) {
+            if(is.na(tree$edge.label[[idx]]))
+                next
+            pos = max(Z[, idx])
+            if(!is.na(edge.label.pos) ){
+                pos   = pos - edge.label.pos * tree$edge.length[[idx]]
+            }
+            edge.labels = rep(NA, length(tree$edge[, 1]))
+            edge.labels[[idx]] = tree$edge.label[[idx]]
+            edgelabels(edge.labels, cex = edge.ann.cex, adj = edge.label.adj, 
+                       frame = "none", date= pos)
+        }
     }
+
+
+    #if (edge.label.ann){
+    #    if (length(tree$edge.label) == 0) {
+    #        if(length(edge.label)==0){
+    #            stop("no edge labels are provided via tree$edge.label or edge.label!")
+    #        }
+    #        tree$edge.label = edge.label 
+    #    }
+    #    edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
+    #               frame = "none")
+    #}
 
     if (plot.bar) {
         nTips = length(tree$tip.label)
@@ -469,6 +514,27 @@ profile.l1ou <- function(model, ...)
 }
 
 #'
+#' Returns the best shift configuration with a given number of shifts among the shift configurations that have been evaluated.
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param nShifts number of shifts.
+#'
+#'@return indices of the edges with shifts
+#'
+#'@export
+get_shift_configuration <- function(model, nShifts){
+    p.d = profile(model) 
+    if( nShifts > length(p.d$shift.configuration))
+        stop("There is no configuration with the given number of shifts")
+
+    for( i in 1:length(p.d$configuration)){
+        if( length(p.d$configuration[[i]]) == nShifts)
+            return(p.d$configuration[[i]])
+    }
+    stop("There is no configuration with the given number of shifts")
+}
+
+#'
 #' Prints out a summary of the model 
 #'
 #' prints out a summary of the model 
@@ -492,24 +558,36 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration: ")
-    cat(model$shift.configuration)
-    cat("\n")
+    cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
+    #cat(model$shift.configuration)
+    #cat(model$shift.values)
+    #cat("\n")
+    tmp.mat = t(as.matrix(model$shift.values))
+    colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(model$Y)))){
+        rownames(tmp.mat) = paste0(colnames(model$Y))
+    }
+    print(tmp.mat)
 
+    cat("\n")
     cat(paste0(model$l1ou.options$criterion, " score: "))
     cat(model$score)
     cat("\n")
 
-    cat("estimated adaptation rate (alpha): ")
-    cat(model$alpha)
-    cat("\n")
-
-    cat("estimated variance (sigma2): ")
-    cat(model$sigma2)
-    cat("\n")
-
-    cat("estimated stationary variance (gamma): ")
-    cat(model$sigma2/(2 * model$alpha))
+    tmp.mat = rbind(model$alpha, 
+                    model$sigma, 
+                    model$sigma2/(2 * model$alpha),
+                    model$logLik
+                    )
+    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+                          "variance (sigma2)", 
+                          "stationary variance (gamma)",
+                          "logLik"
+                          )
+    if(!all(is.null(colnames(model$Y)))){
+        colnames(tmp.mat) = paste0(colnames(model$Y))
+    }
+    print(tmp.mat)
     cat("\n")
 
     cat("\n")
@@ -517,7 +595,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     print(model$optimums)
 
     top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
     cat("scores\t\tshift.configurations\n")
     for (i in 1:top.scores){
         cat(model$profile$scores[[i]])
@@ -527,55 +605,49 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     }
 }
 
-
-
-#'
-#' Prints out a summary of the model 
-#'
-#' prints out a summary of the model 
-#'
-#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
-#'@param ... further arguments. 
-#'
-#'@return none.
-#'@examples
-#' 
-#' data(lizard.traits, lizard.tree)
-#' Y <- lizard.traits[,1]
-#' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' print(eModel)
-#'
 #'@export
-#'
 print.l1ou <- function(model, ...){
     nTop.scores = 5
     cat("number of shifts: ")
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration: ")
-    cat(model$shift.configuration)
+    cat(paste0(model$l1ou.options$criterion, " score: "))
+    cat(model$score)
     cat("\n")
 
-    cat("estimated adaptation rate (alpha): ")
-    cat(model$alpha)
-    cat("\n")
-
-    cat("estimated variance (sigma2): ")
-    cat(model$sigma2)
-    cat("\n")
-
-    cat("estimated stationary variance (gamma): ")
-    cat(model$sigma2/(2 * model$alpha))
-    cat("\n")
-
-    top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
-    cat("scores\t\tshift.configurations\n")
-    for (i in 1:top.scores){
-        cat(model$profile$scores[[i]])
-        cat("\t")
-        cat(model$profile$configurations[[i]])
-        cat("\n")
+    cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
+    tmp.mat = t(as.matrix(model$shift.values))
+    colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(model$Y)))){
+        rownames(tmp.mat) = paste0(colnames(model$Y))
     }
+    print(tmp.mat)
+    cat("\n")
+
+    tmp.mat = rbind(model$alpha, 
+                    model$sigma, 
+                    model$sigma2/(2 * model$alpha),
+                    model$logLik
+                    )
+    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+                          "variance (sigma2)", 
+                          "stationary variance (gamma)",
+                          "logLik"
+                          )
+    if(!all(is.null(colnames(model$Y)))){
+        colnames(tmp.mat) = paste0(colnames(model$Y))
+    }
+    print(tmp.mat)
+    cat("\n")
+
+    #top.scores = min(nTop.scores, length(model$profile$scores))
+    #cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
+    #cat("scores\t\tshift.configurations\n")
+    #for (i in 1:top.scores){
+    #    cat(model$profile$scores[[i]])
+    #    cat("\t")
+    #    cat(model$profile$configurations[[i]])
+    #    cat("\n")
+    #}
 }
