@@ -857,7 +857,7 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
         if( all(is.na(fit)) ){
            return(NA)
         } 
-        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(fit$n), log=T)$modulus)
+        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(fit$sigma2*fit$n), log=T)$modulus)
         df.2  = 2*log(nTips) - ld
         score = score  -2*fit$logLik + df.2 
 
