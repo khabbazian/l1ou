@@ -849,7 +849,6 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
     df.1    = 2*(nShifts)*log(nEdges-1)
     score   = df.1
-
     alpha   = sigma2  = logLik = numeric()
 
     for(i in 1:ncol(Y)){
@@ -857,7 +856,8 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
         if( all(is.na(fit)) ){
            return(NA)
         } 
-        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(fit$sigma2*fit$n), log=T)$modulus)
+        varY = var(Y[,i])
+        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
         df.2  = 2*log(nTips) - ld
         score = score  -2*fit$logLik + df.2 
 
