@@ -39,9 +39,10 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
     ##NOTE: the function assumes reordering does not change the order of the 
     ##nodes and it just change the order of edges, so that column i in each 
     ##matrix still corresponds to internal node 
-    if( check.order ){
+    ##NOTE:  in case the tree is not binary; the order will change and it is no longer postorder. 
+    #if( check.order ){
         tree <- reorder(tree, "post")
-    }
+    #}
 
     if ( alpha > 0){
         ##NOTE: this step requires that the tree be ultrametric tree. 
