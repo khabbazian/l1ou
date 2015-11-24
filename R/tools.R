@@ -575,7 +575,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat("\n")
 
     tmp.mat = rbind(model$alpha, 
-                    model$sigma, 
+                    model$sigma2, 
                     model$sigma2/(2 * model$alpha),
                     model$logLik
                     )
@@ -607,7 +607,6 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
 
 #'@export
 print.l1ou <- function(model, ...){
-    nTop.scores = 5
     cat("number of shifts: ")
     cat(model$nShifts)
     cat("\n")
@@ -626,7 +625,7 @@ print.l1ou <- function(model, ...){
     cat("\n")
 
     tmp.mat = rbind(model$alpha, 
-                    model$sigma, 
+                    model$sigma2, 
                     model$sigma2/(2 * model$alpha),
                     model$logLik
                     )
