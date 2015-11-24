@@ -1,6 +1,6 @@
 Package: l1ou 
-Version: 0.34
-Date: 2015-11-21
+Version: 0.35
+Date: 2015-11-23
 Title: Tools for detecting past changes in the expected mean trait values and studying trait evolution from comparative data
 Author: Mohammad Khabbazian [aut], Cecile Ane [ctb]
 Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
