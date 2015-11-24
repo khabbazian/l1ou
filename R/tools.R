@@ -565,7 +565,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     tmp.mat = t(as.matrix(model$shift.values))
     colnames(tmp.mat) = model$shift.configuration
     if(!all(is.null(colnames(model$Y)))){
-        rownames(tmp.mat) = paste0(colnames(model$Y))
+        rownames(tmp.mat) = colnames(model$Y)
     }
     print(tmp.mat)
 
@@ -585,7 +585,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
                           "logLik"
                           )
     if(!all(is.null(colnames(model$Y)))){
-        colnames(tmp.mat) = paste0(colnames(model$Y))
+        colnames(tmp.mat) = colnames(model$Y)
     }
     print(tmp.mat)
     cat("\n")
@@ -619,7 +619,7 @@ print.l1ou <- function(model, ...){
     tmp.mat = t(as.matrix(model$shift.values))
     colnames(tmp.mat) = model$shift.configuration
     if(!all(is.null(colnames(model$Y)))){
-        rownames(tmp.mat) = paste0(colnames(model$Y))
+        rownames(tmp.mat) = colnames(model$Y)
     }
     print(tmp.mat)
     cat("\n")
@@ -635,7 +635,7 @@ print.l1ou <- function(model, ...){
                           "logLik"
                           )
     if(!all(is.null(colnames(model$Y)))){
-        colnames(tmp.mat) = paste0(colnames(model$Y))
+        colnames(tmp.mat) = colnames(model$Y)
     }
     print(tmp.mat)
     cat("\n")
