@@ -376,15 +376,17 @@ plot.l1ou <- function (model, palette = NA,
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
 
 
-    if(star){
-        Z = l1ou:::generate_design_matrix(tree, type="apprX")
-        for( idx in 1:length(model$shift.configuration) ){
-            sP   = model$shift.configuration[[idx]];
-            pos  = max(Z[,sP]);
+    if(length(model$shift.configuration)>0){
+        if(star){
+            Z = l1ou:::generate_design_matrix(tree, type="apprX")
+            for( idx in 1:length(model$shift.configuration) ){
+                sP   = model$shift.configuration[[idx]];
+                pos  = max(Z[,sP]);
 
-            edge.labels = rep(NA, length(tree$edge[,1]));
-            edge.labels[sP] = "*";
-            edgelabels(edge.labels, cex=3*edge.ann.cex, adj= c(0.5, .8), frame = "none", date=pos);
+                edge.labels = rep(NA, length(tree$edge[,1]));
+                edge.labels[sP] = "*";
+                edgelabels(edge.labels, cex=3*edge.ann.cex, adj= c(0.5, .8), frame = "none", date=pos);
+            }
         }
     }
 
