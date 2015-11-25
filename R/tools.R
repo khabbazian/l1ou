@@ -286,8 +286,12 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 #'@return normalized phylogenetic tree, of class phylo.
 #'
 #'@export
-normalize_tree <- function(tree){
-    stopifnot(is.ultrametric(tree))
+normalize_tree <- function(tree, check.ultrametric=TRUE){
+
+    if(check.ultrametric){
+        if(!is.ultrametric(tree)) 
+            stop("the input tree is not ultrametric")
+    }
 
     nTips  = length(tree$tip.label)
     rNode  = nTips + 1 
@@ -654,3 +658,4 @@ print.l1ou <- function(model, ...){
     #    cat("\n")
     #}
 }
+
