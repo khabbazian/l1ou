@@ -53,7 +53,7 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
             }
         }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree
-        tre <- normalize_tree(tre, check.ultramteric=FALSE)
+        tre <- normalize_tree(tre, check.ultrametric=FALSE)
     }else{
         tre <- tree
         if( root.model == "OUrandomRoot"){
