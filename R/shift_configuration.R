@@ -387,10 +387,12 @@ select_best_solution <- function(tree, Y, sol.path, opt){
         prev.shift.configuration  = shift.configuration
 
         ## sorting shifts based on their age in the solution path
-        all.shifts = c(all.shifts, shift.configuration)
-        freq.shifts = numeric()
+        all.shifts  = c(all.shifts, shift.configuration)
+        freq.shifts = rep(0, length(shift.configuration))
+        count = 1
         for( s in shift.configuration){
-            freq.shifts = c(freq.shifts, length( which(all.shifts == s) ) )
+            freq.shifts[[count]] = length( which(all.shifts == s) )
+            count = count + 1
         }
         names(shift.configuration)  <- freq.shifts
         shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
@@ -414,10 +416,12 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
         return(list(score=org.score, shift.configuration=shift.configuration)) 
     }  
 
-    for( sp in shift.configuration){
+    nShifts = length(shift.configuration)
+    removal.candids = shift.configuration[1:(nShifts-1)]
+    for( sp in removal.candids ){
         new.configuration = setdiff(shift.configuration, sp)
         new.score         = cmp_model_score(tree, Y, new.configuration, opt)      
-        if ( new.score < org.score){
+        if ( new.score < org.score ){
             shift.configuration = new.configuration
             org.score           = new.score
         }
@@ -750,13 +754,11 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
 
     preds = cbind(1, opt$Z[ ,shift.configuration])
-
     options(warn = -1)
-
     if( is.na(opt$alpha.lower.bound) & is.na(opt$alpha.starting.value) ){
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
                                 upper.bound    = opt$alpha.upper.bound), silent = opt$quietly)
-    }else{
+    } else {
         l = ifelse(is.na(opt$alpha.lower.bound), 0, opt$alpha.lower.bound)
         u = opt$alpha.upper.bound
         s = ifelse(is.na(opt$alpha.starting.value), max(0.5, l), opt$alpha.starting.value)
@@ -849,7 +851,7 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
     df.1    = 2*(nShifts)*log(nEdges-1)
     score   = df.1
-    alpha   = sigma2  = logLik = numeric()
+    alpha   = sigma2  = logLik = rep(0, ncol(Y))
 
     for(i in 1:ncol(Y)){
         fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
@@ -861,9 +863,9 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
         df.2  = 2*log(nTips) - ld
         score = score  -2*fit$logLik + df.2 
 
-        alpha  = c(alpha, fit$optpar)
-        sigma2 = c(sigma2, fit$sigma2)
-        logLik = c(logLik, fit$logLik)
+        alpha [[i]] = fit$optpar
+        sigma2[[i]] = fit$sigma2
+        logLik[[i]] = fit$logLik
     }
     return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
