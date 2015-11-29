@@ -180,13 +180,18 @@ correct_unidentifiability <- function(tree, shift.configuration, opt){
     nN       = nrow(opt$Z)
 
     all.covered.tips = numeric()
+    identifiable = TRUE
     for(sp in shift.configuration){
         covered.tips = which( opt$Z[,sp] > 0 )
         nUniqueTips = length( setdiff(covered.tips, all.covered.tips) )
-        if ( nUniqueTips == 0 )
+        if ( nUniqueTips == 0 ){
             shift.configuration = setdiff(shift.configuration, sp)
+            identifiable = FALSE
+        }
         all.covered.tips = union(covered.tips, all.covered.tips)
     }
+
+    if( identifiable ){ return(shift.configuration) }
 
     while ( length(shift.configuration) > 1 ) {
         coverage = c()
