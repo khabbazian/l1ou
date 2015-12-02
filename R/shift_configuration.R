@@ -230,8 +230,8 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     XX  = XX[,-to.be.removed]
 
     capture.output(
-                   sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
-                   )
+            sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
+        )
 
     Tmp = matrix(0, nrow(sol.path$beta), nP)
     Tmp[,-to.be.removed] = sol.path$beta
@@ -382,7 +382,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
         shift.configuration = get_configuration_in_sol_path(sol.path, idx, Y)
         shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
 
-        if ( length(shift.configuration) > opt$max.nShifts           ){break}
+        if ( length(shift.configuration) > opt$max.nShifts          ){break}
         if ( setequal(shift.configuration, prev.shift.configuration) ){next }
         prev.shift.configuration  = shift.configuration
 

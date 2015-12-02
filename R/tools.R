@@ -347,64 +347,60 @@ plot.l1ou <- function (model, palette = NA,
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
-
     tree = model$tree
+    s.c = model$shift.configuration
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
-
-    shift.configuration = sort(model$shift.configuration, decreasing = T)
     nShifts = model$nShifts
     nEdges = length(tree$edge.length)
     if (bar.axis) 
         par(oma = c(3, 0, 0, 3))
-
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
-
     if (plot.bar) {
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, rep(1,ncol(Y))))
+        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, 
+            rep(1, ncol(Y))))
     }
     if (all(is.na(palette))) {
         palette = c(sample(rainbow(nShifts)), "gray")
     }
+
     stopifnot(length(palette) == model$nShifts + 1)
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-    for (shift in shift.configuration) {
-        edgecol[[shift]] = palette[[counter]]
+
+    for (shift in sort(s.c, decreasing = T)) {
+        edgecol[[shift]] = palette[[which(s.c == shift)]]
         tips = which(Z[, shift] > 0)
         for (tip in tips) {
-            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[counter]]
+            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == shift)]]
         }
         counter = counter + 1
     }
-    plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
-
-
-    if(length(model$shift.configuration)>0){
-        if(star){
-            Z = l1ou:::generate_design_matrix(tree, type="apprX")
-            for( idx in 1:length(model$shift.configuration) ){
-                sP   = model$shift.configuration[[idx]];
-                pos  = max(Z[,sP]);
-
-                edge.labels = rep(NA, length(tree$edge[,1]));
-                edge.labels[sP] = "*";
-                edgelabels(edge.labels, cex=3*edge.ann.cex, adj= c(0.5, .8), frame = "none", date=pos);
+    plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, 
+        ...)
+    if (length(s.c) > 0) {
+        if (star) {
+            Z = l1ou:::generate_design_matrix(tree, type = "apprX")
+            for (idx in 1:length(s.c)) {
+                sP = s.c[[idx]]
+                pos = max(Z[, sP])
+                edge.labels = rep(NA, length(tree$edge[, 1]))
+                edge.labels[sP] = "*"
+                edgelabels(edge.labels, cex = 3 * edge.ann.cex, 
+                  adj = c(0.5, 0.8), frame = "none", date = pos)
             }
         }
     }
-
     if (edge.shift.ann) {
         eLabels = rep(NA, nEdges)
-        for (shift in shift.configuration) {
-            eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
-                                         ], digits = 2), collapse = ",")
+        for (shift in s.c) {
+            eLabels[shift] = paste(round(model$shift.values[which(s.c == 
+                shift), ], digits = 2), collapse = ",")
         }
         edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
-                   frame = "none")
+            frame = "none")
     }
-
     if (edge.label.ann) {
         if (length(tree$edge.label) == 0) {
             if (length(edge.label) == 0) {
@@ -412,39 +408,23 @@ plot.l1ou <- function (model, palette = NA,
             }
             tree$edge.label = edge.label
         }
-
         Z = l1ou:::generate_design_matrix(tree, type = "apprX")
-
-        if(!is.na(edge.label.pos))
-           if(edge.label.pos < 0 || edge.label.pos > 1) 
-               stop("edge.label.pos should be between 0 and 1") 
-
+        if (!is.na(edge.label.pos)) 
+            if (edge.label.pos < 0 || edge.label.pos > 1) 
+                stop("edge.label.pos should be between 0 and 1")
         for (idx in 1:length(tree$edge.label)) {
-            if(is.na(tree$edge.label[[idx]]))
+            if (is.na(tree$edge.label[[idx]])) 
                 next
             pos = max(Z[, idx])
-            if(!is.na(edge.label.pos) ){
-                pos   = pos - edge.label.pos * tree$edge.length[[idx]]
+            if (!is.na(edge.label.pos)) {
+                pos = pos - edge.label.pos * tree$edge.length[[idx]]
             }
             edge.labels = rep(NA, length(tree$edge[, 1]))
             edge.labels[[idx]] = tree$edge.label[[idx]]
             edgelabels(edge.labels, cex = edge.ann.cex, adj = edge.label.adj, 
-                       frame = "none", date= pos)
+                frame = "none", date = pos)
         }
     }
-
-
-    #if (edge.label.ann){
-    #    if (length(tree$edge.label) == 0) {
-    #        if(length(edge.label)==0){
-    #            stop("no edge labels are provided via tree$edge.label or edge.label!")
-    #        }
-    #        tree$edge.label = edge.label 
-    #    }
-    #    edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
-    #               frame = "none")
-    #}
-
     if (plot.bar) {
         nTips = length(tree$tip.label)
         barcol = rep("gray", nTips)
@@ -460,9 +440,10 @@ plot.l1ou <- function (model, palette = NA,
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
                   digits = 2))
-
-            if(!is.null(colnames(Y)) && length(colnames(Y))>(i-1) )
-                mtext(colnames(Y)[[i]], cex = 0.7, line = +1, side=1)
+            if (!is.null(colnames(Y)) && length(colnames(Y)) > 
+                (i - 1)) 
+                mtext(colnames(Y)[[i]], cex = 1, line = +1, 
+                  side = 1)
         }
     }
 }
