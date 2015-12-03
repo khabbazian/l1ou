@@ -357,26 +357,53 @@ plot.l1ou <- function (model, palette = NA,
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
     if (plot.bar) {
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, 
-            rep(1, ncol(Y))))
+        layout(matrix(c(1+ncol(Y),1:ncol(Y)), nrow=1), 
+               widths = c(2,rep(1, ncol(Y)))
+               )
     }
+
+    #NOTE: assiging colors the edges
     if (all(is.na(palette))) {
         palette = c(sample(rainbow(nShifts)), "gray")
     }
-
     stopifnot(length(palette) == model$nShifts + 1)
+
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-
     for (shift in sort(s.c, decreasing = T)) {
         edgecol[[shift]] = palette[[which(s.c == shift)]]
         tips = which(Z[, shift] > 0)
         for (tip in tips) {
-            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == shift)]]
+            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == 
+                shift)]]
         }
         counter = counter + 1
     }
+
+    #NOTE: plotting bar plot .....
+    if (plot.bar) {
+        nTips = length(tree$tip.label)
+        barcol = rep("gray", nTips)
+        for (i in 1:nTips) {
+            barcol[[i]] = edgecol[which(tree$edge[, 2] == i)]
+        }
+        if (bar.axis) 
+            par(mar = c(0, 0, 0, 3))
+        for (i in 1:ncol(Y)) {
+            normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
+            barplot(as.vector(normy), border = FALSE, col = barcol, 
+                horiz = TRUE, names.arg = "", xaxt = "n")
+            if (bar.axis) 
+                axis(1, at = range(normy), labels = round(range(normy), 
+                  digits = 2))
+            if (!is.null(colnames(Y)) && length(colnames(Y)) > 
+                (i - 1)) 
+                mtext(colnames(Y)[[i]], cex = 1, line = +1, side = 1)
+        }
+    }
+
+    #NOTE: plotting the tree etc etc
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, 
         ...)
     if (length(s.c) > 0) {
@@ -423,27 +450,6 @@ plot.l1ou <- function (model, palette = NA,
             edge.labels[[idx]] = tree$edge.label[[idx]]
             edgelabels(edge.labels, cex = edge.ann.cex, adj = edge.label.adj, 
                 frame = "none", date = pos)
-        }
-    }
-    if (plot.bar) {
-        nTips = length(tree$tip.label)
-        barcol = rep("gray", nTips)
-        for (i in 1:nTips) {
-            barcol[[i]] = edgecol[which(tree$edge[, 2] == i)]
-        }
-        if (bar.axis) 
-            par(mar = c(0, 0, 0, 3))
-        for (i in 1:ncol(Y)) {
-            normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
-            barplot(as.vector(normy), border = FALSE, col = barcol, 
-                horiz = TRUE, names.arg = "", xaxt = "n")
-            if (bar.axis) 
-                axis(1, at = range(normy), labels = round(range(normy), 
-                  digits = 2))
-            if (!is.null(colnames(Y)) && length(colnames(Y)) > 
-                (i - 1)) 
-                mtext(colnames(Y)[[i]], cex = 1, line = +1, 
-                  side = 1)
         }
     }
 }
