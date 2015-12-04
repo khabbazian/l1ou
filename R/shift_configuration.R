@@ -416,7 +416,9 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
         return(list(score=org.score, shift.configuration=shift.configuration)) 
     }  
 
-    for( sp in shift.configuration ){
+    nShifts = length(shift.configuration)
+    removal.candids = shift.configuration[1:(nShifts-1)]
+    for( sp in removal.candids ){
         new.configuration = setdiff(shift.configuration, sp)
         new.score         = cmp_model_score(tree, Y, new.configuration, opt)      
         if ( new.score < org.score ){
