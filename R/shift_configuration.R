@@ -68,7 +68,7 @@
 #'@export
 estimate_shift_configuration <- function(tree, Y, 
            max.nShifts            = floor(length(tree$tip.label)/2), 
-           criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+           criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
            root.model             = c("OUrandomRoot", "OUfixedRoot"),
            candid.edges           = NA,
            quietly                = TRUE,
@@ -450,7 +450,6 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@return Information criterion value of the given shift configuration.
 #'
 #'@details
-#'AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
 #'AICc gives the usual small-sample size modification of AIC. 
 #'BIC gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters. 
 #'mBIC is the modified BIC proposed by Ho and Ané (2014).
@@ -480,7 +479,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
-                     criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+                     criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
                      root.model   = c("OUrandomRoot", "OUfixedRoot"),
                      alpha.starting.value = NA,
                      alpha.upper  = alpha_upper_bound(tree), 
@@ -541,7 +540,6 @@ configuration_ic <- function(tree, Y, shift.configuration,
 #'@return an object of class l1ou similar to \code{\link{estimate_shift_configuration}}.
 #'
 #'@details
-#'AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
 #'AICc gives the usual small-sample size modification of AIC. 
 #'BIC gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters. 
 #'mBIC is the modified BIC proposed by Ho and Ané (2014).
@@ -570,7 +568,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
 #'
 #'@export
 fit_OU <- function(tree, Y, shift.configuration, 
-                     criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AIC", "AICc"), 
+                     criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
                      root.model   = c("OUrandomRoot", "OUfixedRoot"),
                      alpha.starting.value = NA,
                      alpha.upper  = alpha_upper_bound(tree), 
@@ -701,9 +699,6 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     if( ic == "BIC"){
         df.1  = log(nEdges-1)*(nShifts)
         df.2  = log(nTips)*(nShifts + 3)
-    } else if( ic == "AIC"){
-        df.1  = 2*nShifts
-        df.2  = 2*3
     } else if( ic == "AICc"){
         ## AICc implemented in SURFACE
         p = nShifts + (nShifts + 2)*ncol(Y)

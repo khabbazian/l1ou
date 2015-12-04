@@ -5,7 +5,7 @@
 \title{Fits an OU model based on a given configuration}
 \usage{
 fit_OU(tree, Y, shift.configuration, criterion = c("pBIC", "pBICess", "mBIC",
-  "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot", "OUfixedRoot"),
+  "BIC", "AICc"), root.model = c("OUrandomRoot", "OUfixedRoot"),
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
   alpha.lower = NA, l1ou.options = NA)
 }
@@ -35,7 +35,6 @@ an object of class l1ou similar to \code{\link{estimate_shift_configuration}}.
 Fits an OU model based on a given configuration
 }
 \details{
-AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
 AICc gives the usual small-sample size modification of AIC.
 BIC gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters.
 mBIC is the modified BIC proposed by Ho and Ané (2014).
