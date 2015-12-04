@@ -5,7 +5,7 @@
 \title{Visualizes a shift configuration: tree and trait(s)}
 \usage{
 \method{plot}{l1ou}(model, palette = NA, edge.shift.ann = TRUE,
-  edge.shift.adj = c(0.5, -0.025), edge.label = c(), star = TRUE,
+  edge.shift.adj = c(0.5, -0.025), edge.label = c(), asterisk = TRUE,
   edge.label.ann = FALSE, edge.label.adj = c(0.5, 1), edge.label.pos = NA,
   edge.ann.cex = 1, plot.bar = TRUE, bar.axis = TRUE, ...)
 }
@@ -20,7 +20,7 @@
 
 \item{edge.label}{vector of size number of edges.}
 
-\item{star}{logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.}
+\item{asterisk}{logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.}
 
 \item{edge.label.ann}{logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label.}
 
