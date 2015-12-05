@@ -697,7 +697,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     nShifts = length(shift.configuration)
 
     if( ic == "BIC"){
-        df.1  = log(nEdges-1)*(nShifts)
+        df.1  = log(nTips)*(nShifts)
         df.2  = log(nTips)*(nShifts + 3)
     } else if( ic == "AICc"){
         ## AICc implemented in SURFACE
