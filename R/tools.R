@@ -120,7 +120,7 @@ print_out <- function(eModel, quietly){
 }
 
 
-standardize_matrix <- function(Y){
+rescale_matrix <- function(Y){
     #for(i in 1:ncol(Y)){
     #    Y[,i] = Y[,i] - mean(Y[,i])
     #}

@@ -16,7 +16,7 @@
 #'@param alpha.starting.value optional starting value for the optimization of the phylogenetic adaptation rate. 
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
-#'@param standardize logical. If TRUE, the columns of the trait matrix are first standardized.
+#'@param rescale logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.
 #'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.
 #'@param grp.delta internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
 #'@param grp.seq.ub (used for multiple traits). The input lambda sequence for grplasso will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
@@ -27,7 +27,7 @@
 #' \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 #' \item{shift.values}{estimates of the shift values.}
 #' \item{nShifts}{estimated number of shifts.}
-#' \item{optimums}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
+#' \item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 #' \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 #' \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 #' \item{mu}{fitted values, i.e. estimated trait means.}
@@ -51,7 +51,7 @@
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' eModel
 #'
-#' nEdges <- length(lizard.tree$edge[,1]) # total number of edges
+#' nEdges <- length(lizard.tree$edge[,1:2]) # total number of edges
 #' ew <- rep(1,nEdges)                    # to set default edge width of 1
 #' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
 #' plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
@@ -75,7 +75,7 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.starting.value   = NA, 
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
-           standardize            = TRUE,
+           rescale            = TRUE,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
            grp.seq.ub             = 5,
@@ -168,7 +168,7 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$alpha.upper.bound      <- alpha.upper
         l1ou.options$alpha.lower.bound      <- alpha.lower
         l1ou.options$edge.length.threshold  <- edge.length.threshold
-        l1ou.options$standardize            <- standardize
+        l1ou.options$rescale            <- rescale
 
         l1ou.options$grp.seq.ub   <- grp.seq.ub
         l1ou.options$grp.delta    <- grp.delta
@@ -256,9 +256,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         stopifnot(ncol(Y) == length(alpha))
     }
 
-    ## standardizing
-    if(opt$standardize==TRUE){
-        Y  = standardize_matrix(Y)
+    if(opt$rescale==TRUE){
+        Y  = rescale_matrix(Y)
     }
 
     nVariables    = ncol(Y)
@@ -615,8 +614,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     nTips   = length(tree$tip.label)
 
     resi = mu = alpha = sigma2 = numeric()
-    shift.values = optimums = numeric()
-    intercept    = optimums.tmp = numeric()
+    shift.values = optima = numeric()
+    intercept    = optima.tmp = numeric()
     logLik = numeric(ncol(Y))
 
     for(i in 1:ncol(Y)){
@@ -640,20 +639,20 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         if( length(shift.configuration) > 0 )
             shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
 
-        #optimums.tmp = rep(fit$coefficients[[1]], nEdges)
+        #optima.tmp = rep(fit$coefficients[[1]], nEdges)
         #if( length(shift.configuration) > 0 )
-        #    optimums.tmp = convert_shifts2regions(tree, shift.configuration, 
+        #    optima.tmp = convert_shifts2regions(tree, shift.configuration, 
         #                               fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
 
-        optimums.tmp = rep(fit$coefficients[[1]], nTips)
+        optima.tmp = rep(fit$coefficients[[1]], nTips)
         if( length(shift.configuration) > 0 )
             for(sc in shift.configuration)
-                optimums.tmp = optimums.tmp + opt$Z[,sc] * fit$coefficients[which(shift.configuration==sc)+1]
+                optima.tmp = optima.tmp + opt$Z[,sc] * fit$coefficients[which(shift.configuration==sc)+1]
 
-        optimums = cbind(optimums, optimums.tmp)
+        optima = cbind(optima, optima.tmp)
     }
-    optimums = as.matrix(optimums)
-    rownames(optimums) = tree$tip.label
+    optima = as.matrix(optima)
+    rownames(optima) = tree$tip.label
 
     score = cmp_model_score (tree, Y, shift.configuration, opt) # this will call my_phylolm_interface again to get logLik. Wasting time. Could you create a function that would just return the penalty, given the needed info from 'fit' on alpha etc.?
 
@@ -663,7 +662,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  shift.configuration=shift.configuration, 
                  shift.values       =shift.values,
                  nShifts            =length(shift.configuration), 
-                 optimums           =optimums, 
+                 optima           =optima, 
                  alpha              =alpha, 
                  sigma2             =sigma2, 
                  intercept          =intercept, 
@@ -874,7 +873,7 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     seq.ub = opt$grp.seq.ub
     max.nTries = 7
     suppressMessages(
-                     lmbdMax  <-  1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, standardize = FALSE) + 1
+                     lmbdMax  <-  1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, rescale = FALSE) + 1
                      )
 
     base.seq = seq(0, seq.ub, delta)
@@ -882,7 +881,7 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
         lmbd = lmbdMax * (0.5^base.seq)
 
         capture.output(
-                       sol  <-  grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
+                       sol  <-  grplasso(grpX, y = grpY, rescale = FALSE, center = FALSE, 
                                          lambda = lmbd, model = LinReg(), index = grpIdx, 
                                          control = grpl.control(tol = 0.01))
                        )
@@ -947,7 +946,7 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     }
     lmbd = lmbdMax * (0.5^base.seq)
      capture.output(
-             sol  <-  grplasso(grpX, y = grpY, standardize = FALSE, center = FALSE, 
+             sol  <-  grplasso(grpX, y = grpY, rescale = FALSE, center = FALSE, 
                                lambda = lmbd, model = LinReg(), index = grpIdx, 
                                control = grpl.control(tol = 1e-6) )
              )
