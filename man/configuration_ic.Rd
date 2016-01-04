@@ -5,7 +5,7 @@
 \title{Computes the information criterion score for a given configuration}
 \usage{
 configuration_ic(tree, Y, shift.configuration, criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
+  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUrandomRoot",
   "OUfixedRoot"), alpha.starting.value = NA,
   alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
   fit.OU.model = FALSE, l1ou.options = NA)
@@ -38,7 +38,6 @@ Information criterion value of the given shift configuration.
 Computes the information criterion score for a given configuration
 }
 \details{
-AIC gives the usual Akaike information criterion, counting each shift as 2 parameters (one for the shift magnitude and one for the shift position, as if this position were a continuous parameter).
 AICc gives the usual small-sample size modification of AIC.
 BIC gives the usual Bayesian information criterion, here penalizing each shift as 2 parameters.
 mBIC is the modified BIC proposed by Ho and Ané (2014).

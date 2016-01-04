@@ -4,11 +4,12 @@
 \alias{estimate_shift_configuration}
 \title{Detects evolutionary shifts under an OU model}
 \usage{
-estimate_shift_configuration(tree, Y, max.nShifts = 5, criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AIC", "AICc"), root.model = c("OUrandomRoot",
+estimate_shift_configuration(tree, Y,
+  max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
+  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUrandomRoot",
   "OUfixedRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = NA, standardize = TRUE,
+  alpha.lower = NA, rescale = TRUE,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -33,7 +34,7 @@ estimate_shift_configuration(tree, Y, max.nShifts = 5, criterion = c("pBIC",
 
 \item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
-\item{standardize}{logical. If TRUE, the columns of the trait matrix are first standardized.}
+\item{rescale}{logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.}
 
 \item{edge.length.threshold}{minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.}
 
@@ -49,7 +50,7 @@ estimate_shift_configuration(tree, Y, max.nShifts = 5, criterion = c("pBIC",
 \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 \item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimated number of shifts.}
-\item{optimums}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
+\item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 \item{mu}{fitted values, i.e. estimated trait means.}
@@ -79,7 +80,7 @@ lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 eModel
 
-nEdges <- length(lizard.tree$edge[,1]) # total number of edges
+nEdges <- length(lizard.tree$edge[,1:2]) # total number of edges
 ew <- rep(1,nEdges)                    # to set default edge width of 1
 ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
 plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
