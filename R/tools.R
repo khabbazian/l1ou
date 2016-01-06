@@ -411,6 +411,7 @@ plot.l1ou <- function (model, palette = NA,
     #NOTE: plotting the tree etc etc
     plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, 
         ...)
+
     if (length(s.c) > 0) {
         if (asterisk) {
             Z = l1ou:::generate_design_matrix(tree, type = "apprX")
