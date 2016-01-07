@@ -367,10 +367,17 @@ plot.l1ou <- function (model, palette = NA,
                )
     }
 
-    #NOTE: assiging colors the edges
+    #NOTE: assiging colors the shifts
     if (all(is.na(palette))) {
         palette = c(sample(rainbow(nShifts)), "gray")
+        if( !is.null(names(s.c)) ){
+            ids = unique(names(s.c))
+            tmp = sample(rainbow(length(ids)))
+            for( id in ids )
+                palette[which(names(s.c)==id)] = tmp[which(ids==id)]
+        }
     }
+
     stopifnot(length(palette) == model$nShifts + 1)
 
     edgecol = rep(palette[nShifts + 1], nEdges)
