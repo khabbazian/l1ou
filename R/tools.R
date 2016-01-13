@@ -52,6 +52,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
                  tip.label are unavailable.\n")
         }
     }
+
     if(!identical(rownames(Y), tree$tip.label)){
         diffres = setdiff(rownames(Y), tree$tip.label)
         if( length(diffres) > 0 ){
@@ -70,7 +71,8 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
  
         Y  <-  Y[order(rownames(Y)),  ] 
-        Y  <-  Y[order(order(tr$tip.label)), ]
+        Y  <-  Y[order(order(tree$tip.label)), ]
+
     }
 
 

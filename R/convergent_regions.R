@@ -159,7 +159,7 @@ generate_relation <-function(tr, shift.configuration){
     return( M )
 }
 
-find_convergent_regions <- function(tr, Y, alpha, criterion, regimes){
+find_convergent_regimes <- function(tr, Y, alpha, criterion, regimes){
     stopifnot(ncol(Y)==1)
     library("magic")
     stopifnot(all( row.names(Y) == tr$tip.label))
@@ -197,9 +197,9 @@ find_convergent_regions <- function(tr, Y, alpha, criterion, regimes){
 }
 
 
-#' Detects convergent regions under an OU model
+#' Detects convergent regimes under an OU model
 #'
-#' Given estimated evolutionary shifts this function finds convergent regions
+#' Given estimated evolutionary shifts this function finds convergent regimes
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
@@ -210,11 +210,11 @@ find_convergent_regions <- function(tr, Y, alpha, criterion, regimes){
 #'Y <- lizard.traits[, 1:1]
 #'
 #'eModel <- estimate_shift_configuration(lizard.tree, Y, criterion = "AICc")
-#'eModel <- estimate_convergent_regions(eModel, criterion="AICc")
+#'eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
 #'plot(eModel)
 #'
 #'@export
-estimate_convergent_regions <- function(model, 
+estimate_convergent_regimes <- function(model, 
                                         criterion = c("AICc", "pBIC")
                                         ){
 
@@ -231,7 +231,7 @@ estimate_convergent_regions <- function(model,
     ar.counter   = 1
     
     for(iter in 1:length(model$shift.configuration) ){
-        out <- find_convergent_regions(tr, Y, model$alpha, criterion, regimes = c.regimes )
+        out <- find_convergent_regimes(tr, Y, model$alpha, criterion, regimes = c.regimes )
         for(num.digits in c(12,13,15,16)){
             for( idx in 1:length(out$beta[1,]) ){
     
@@ -247,9 +247,8 @@ estimate_convergent_regions <- function(model,
                 }
     
                 g     = graph.edgelist(elist, directed = FALSE)
-                ## extracting connected components as the convergent regions 
-                cc    = decompose.graph(g, min.vertices = 0)
-    
+                ## extracting connected components as the convergent regimes 
+                cc    = decompose.graph(g, min.vertices = 0) 
                 s.p.tmp = model$shift.configuration
                 regimes = list()
                 counter = 1
