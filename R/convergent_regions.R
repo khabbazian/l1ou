@@ -118,7 +118,8 @@ cmp.pBIC.new <- function(tr, Y, shift.configuration, conv.regimes, alpha){
         if( all( is.na(fit) ) ){
            return(Inf)
         } 
-        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/fit$n, log=T)$modulus)
+        varY = var(Y[,i])
+        ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
         df.2  = 3*log(nTips) - ld
         score = score  -2*fit$logLik + df.2
     }
