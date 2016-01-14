@@ -70,8 +70,9 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         if(!quietly)
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
  
-        Y  <-  Y[order(rownames(Y)),  ] 
-        Y  <-  Y[order(order(tree$tip.label)), ]
+        #Y  <-  Y[order(rownames(Y)),  ] 
+        #Y  <-  Y[order(order(tree$tip.label)), ]
+        Y <- as.matrix(Y[tree$tip.label, ])
 
     }
 
