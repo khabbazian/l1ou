@@ -212,10 +212,10 @@ estimate_convergent_regimes_surface <- function(model,
     new.cmp.score <- function(){
          if( criterion == "AICc"){
              score = cmp.AICc.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
-         }
-         if( criterion == "pBIC"){
+         } else { #if( criterion == "pBIC")
              score = cmp.pBIC.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
          }
+         return(score)
     }
 
     elist.ref <- numeric()
