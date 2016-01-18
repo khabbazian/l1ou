@@ -12,17 +12,17 @@ estimate_convergent_regimes(model, criterion = c("AICc", "pBIC"),
 
 \item{criterion}{information criterion for model selection (see Details in \code{\link{configuration_ic}}).}
 
-\item{method}{``rr'' is based on genlasso, a regularized regression. ``backward'' is a heuristic method similar to \code{surface_backward} function.}
+\item{method}{method for finding convergent regimes. ``rr'' is based on genlasso, a regularized regression. ``backward'' is a heuristic method similar to \code{surface_backward} function.}
 }
 \description{
-Given estimated evolutionary shifts this function finds convergent regimes
+Given estimated evolutionary shift positions this function finds convergent regimes.
 }
 \examples{
 library(l1ou)
 data("lizard.traits", "lizard.tree")
 Y <- lizard.traits[, 1:1]
 
-eModel <- estimate_shift_configuration(lizard.tree, Y, criterion = "AICc")
+eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
 eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
 plot(eModel)
 }
