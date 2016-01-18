@@ -332,7 +332,7 @@ estimate_convergent_regimes <- function(model,
                                      ){
     method <-  match.arg(method)
     if(method == "backward"){
-        return(estimate_convergent_regimes_surface(model, criterion, method))
+        return(estimate_convergent_regimes_surface(model, criterion))
     }
 
     criterion  <-  match.arg(criterion)
