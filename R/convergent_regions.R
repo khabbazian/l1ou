@@ -424,7 +424,7 @@ estimate_convergent_regimes <- function(model,
           }
       }
       model$shift.configuration = sc
-      model$score <- new.cmp.score(tr, Y, model$shift.configuration, c.regimes, criterion, model$alpha)
+      model$score <- new.cmp.score(tr, model$Y, model$shift.configuration, c.regimes, criterion, model$alpha)
       #model$score = min.score 
 
       return(model)
