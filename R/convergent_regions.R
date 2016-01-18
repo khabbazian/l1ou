@@ -198,12 +198,121 @@ find_convergent_regimes <- function(tr, Y, alpha, criterion, regimes){
 }
 
 
+
+estimate_convergent_regimes_surface <- function(model, 
+                                        criterion = c("AICc", "pBIC")
+                                        ){
+    criterion  <-  match.arg(criterion)
+    Y  <- as.matrix(model$Y)
+    tr <- model$tree
+
+    sc.prev <- sc <- model$shift.configuration
+    current.num.cc <- length(sc)
+    prev.min.score <- min.score <- Inf
+    new.cmp.score <- function(){
+         if( criterion == "AICc"){
+             score = cmp.AICc.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
+         }
+         if( criterion == "pBIC"){
+             score = cmp.pBIC.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
+         }
+    }
+
+    elist.ref <- numeric()
+    for(u in sc ){ elist.ref <- rbind( elist.ref , as.character(c(u,u)) ) }
+
+    for( iter in 1:(2*length(sc)) ){
+
+        has.progress <- FALSE
+        ##NOTE: merges regimes if the IC decreases 
+        for( u in sc ){ 
+            for( v in sc ){
+
+                ##NOTE: test if we should add (u, v)
+                if( u == v ){ next }
+
+                elist <- as.matrix( rbind(elist.ref, as.character(c(u,v)) ) )
+                g  <- graph_from_edgelist(elist, directed = FALSE)
+                cc <- decompose.graph(g) 
+                if( length(cc) >= current.num.cc ){ next }
+                regimes <- sapply(cc, function(x) as.numeric(names(V(x)))  )
+
+                sc.tmp <- sort(sc)
+                for( thelist in lapply(regimes, sort) ){
+                    names(sc.tmp)[sc.tmp %in% thelist] = thelist[[1]] 
+                }
+                if(identical(names(sc.tmp), names(sc.prev))){ next }
+                sc.prev <- sc.tmp
+
+
+                #score <- cmp.AICc.new(tr, Y, sc, conv.regimes = regimes, alpha=model$alpha)
+                score <- new.cmp.score()
+
+                if( min.score > score ){
+                    min.score  <- score
+                    min.regimes <- regimes
+                    elist.min  <- elist
+                    has.progress <- TRUE
+                    print( c(score, length(min.regimes) ) )
+                }
+            }
+        }
+
+        current.num.cc <- length(min.regimes) 
+        elist.ref  <- elist.min
+
+        ## break regimes if IC decreases 
+        for( e.idx in 1:length(elist.ref[,1]) ){
+            u <- elist.ref[e.idx, 1]
+            v <- elist.ref[e.idx, 2]
+            if(u==v){next}
+
+            elist  <- elist.ref[ -e.idx, ]
+            g  <- graph_from_edgelist(elist, directed = FALSE)
+            cc <- decompose.graph(g) 
+            if( length(cc) <= current.num.cc ){ next }
+
+            regimes <- sapply(cc, function(x) as.numeric(names(V(x)))  )
+
+            #score <- cmp.AICc.new(tr, Y, sc, conv.regimes = regimes, alpha=model$alpha)
+            score <- new.cmp.score()
+
+            if( min.score > score ){
+                min.score    <- score
+                elist.min    <- elist
+                min.regimes  <- regimes
+                print( c("rm:", score) )
+            }
+        }
+        elist.ref <- elist.min
+        current.num.cc <- length(min.regimes) 
+
+        #if no progress then terminate
+        if( !has.progress ){ break }
+        prev.min.score  <- min.score
+    }
+    
+
+    for( idx in 1:length(min.regimes) ){
+        for( item in min.regimes[[idx]] ){
+            names(sc)[which(sc==item)] = idx 
+        }
+    }
+
+    model$shift.configuration = sc
+    model$score = min.score 
+    return(model)
+}
+
+
+
 #' Detects convergent regimes under an OU model
 #'
 #' Given estimated evolutionary shifts this function finds convergent regimes
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
+#'@param method ``rr'' is based on genlasso, a regularized regression. ``backward'' is a heuristic method similar to \code{surface_backward} function.
 #'@examples
 #' 
 #'library(l1ou)
@@ -214,10 +323,17 @@ find_convergent_regimes <- function(tr, Y, alpha, criterion, regimes){
 #'eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
 #'plot(eModel)
 #'
+#'@seealso   \code{\link{estimate_shift_configuration}}
+#'
 #'@export
 estimate_convergent_regimes <- function(model, 
-                                        criterion = c("AICc", "pBIC")
-                                        ){
+                                        criterion = c("AICc", "pBIC"),
+                                        method = c("backward", "rr")
+                                     ){
+    method <-  match.arg(method)
+    if(method == "backward"){
+        return(estimate_convergent_regimes_surface(model, criterion, method))
+    }
 
     criterion  <-  match.arg(criterion)
     Y  <- model$Y

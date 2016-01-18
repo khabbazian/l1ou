@@ -4,12 +4,15 @@
 \alias{estimate_convergent_regimes}
 \title{Detects convergent regimes under an OU model}
 \usage{
-estimate_convergent_regimes(model, criterion = c("AICc", "pBIC"))
+estimate_convergent_regimes(model, criterion = c("AICc", "pBIC"),
+  method = c("backward", "rr"))
 }
 \arguments{
 \item{model}{object of class l1ou returned by \code{\link{estimate_shift_configuration}}.}
 
 \item{criterion}{information criterion for model selection (see Details in \code{\link{configuration_ic}}).}
+
+\item{method}{``rr'' is based on genlasso, a regularized regression. ``backward'' is a heuristic method similar to \code{surface_backward} function.}
 }
 \description{
 Given estimated evolutionary shifts this function finds convergent regimes
@@ -22,5 +25,8 @@ Y <- lizard.traits[, 1:1]
 eModel <- estimate_shift_configuration(lizard.tree, Y, criterion = "AICc")
 eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
 plot(eModel)
+}
+\seealso{
+\code{\link{estimate_shift_configuration}}
 }
 
