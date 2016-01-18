@@ -290,10 +290,12 @@ estimate_convergent_regimes_surface  <-  function(model,
         prev.min.score   <-  min.score
     }
     
-
-    for( idx in 1:length(min.regimes) ){
-        for( item in min.regimes[[idx]] ){
-            names(sc)[which(sc==item)]  <-  idx 
+    sc <- model$shift.configuration
+    map  <- 1:length(sc)
+    names(map) <- sc
+    for( reg in min.regimes ){
+        for( item in sort(reg) ){
+            names(sc)[which(sc==item)] <- map[paste(reg[[1]])] 
         }
     }
 
@@ -414,11 +416,14 @@ estimate_convergent_regimes  <-  function(model,
       }
 
       sc <- model$shift.configuration
-      for( len in 1:length(c.regimes) ){
-          for( item in c.regimes[[len]] ){
-              names(sc)[which(sc==item)] <- len
+      map  <- 1:length(sc)
+      names(map) <- sc
+      for( reg in c.regimes ){
+          for( item in sort(reg) ){
+              names(sc)[which(sc==item)] <- map[paste(reg[[1]])] 
           }
       }
+
       model$shift.configuration <- sc
       model$score  <-  new.cmp.score(tr, model$Y, model$shift.configuration, c.regimes, criterion, model$alpha)
 
