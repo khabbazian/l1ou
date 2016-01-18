@@ -198,6 +198,14 @@ find_convergent_regimes <- function(tr, Y, alpha, criterion, regimes){
 }
 
 
+new.cmp.score <- function(tr, Y, sc, regimes, criterion, alpha){
+     if( criterion == "AICc"){
+         score = cmp.AICc.new(tr, Y, sc, conv.regimes = regimes, alpha=alpha)
+     } else { #if( criterion == "pBIC")
+         score = cmp.pBIC.new(tr, Y, sc, conv.regimes = regimes, alpha=alpha)
+     }
+     return(score)
+}
 
 estimate_convergent_regimes_surface <- function(model, 
                                         criterion = c("AICc", "pBIC")
@@ -209,14 +217,6 @@ estimate_convergent_regimes_surface <- function(model,
     sc.prev <- sc <- model$shift.configuration
     current.num.cc <- length(sc)
     prev.min.score <- min.score <- Inf
-    new.cmp.score <- function(){
-         if( criterion == "AICc"){
-             score = cmp.AICc.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
-         } else { #if( criterion == "pBIC")
-             score = cmp.pBIC.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
-         }
-         return(score)
-    }
 
     elist.ref <- numeric()
     for(u in sc ){ elist.ref <- rbind( elist.ref , as.character(c(u,u)) ) }
@@ -246,14 +246,13 @@ estimate_convergent_regimes_surface <- function(model,
 
 
                 #score <- cmp.AICc.new(tr, Y, sc, conv.regimes = regimes, alpha=model$alpha)
-                score <- new.cmp.score()
+                score <- new.cmp.score(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
 
                 if( min.score > score ){
                     min.score  <- score
                     min.regimes <- regimes
                     elist.min  <- elist
                     has.progress <- TRUE
-                    print( c(score, length(min.regimes) ) )
                 }
             }
         }
@@ -275,13 +274,12 @@ estimate_convergent_regimes_surface <- function(model,
             regimes <- sapply(cc, function(x) as.numeric(names(V(x)))  )
 
             #score <- cmp.AICc.new(tr, Y, sc, conv.regimes = regimes, alpha=model$alpha)
-            score <- new.cmp.score()
+            score <- new.cmp.score(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
 
             if( min.score > score ){
                 min.score    <- score
                 elist.min    <- elist
                 min.regimes  <- regimes
-                print( c("rm:", score) )
             }
         }
         elist.ref <- elist.min
@@ -336,9 +334,13 @@ estimate_convergent_regimes <- function(model,
     }
 
     criterion  <-  match.arg(criterion)
-    Y  <- model$Y
+    #Y  <- model$Y
+    Y  <- 32*model$Y/norm(model$Y)
     Y  <- as.matrix(Y)
     tr <- model$tree
+
+
+
 
     stopifnot( ncol(Y) == 1 ) # this method only works for univariate trait
 
@@ -398,20 +400,13 @@ estimate_convergent_regimes <- function(model,
                 all.regimes[[ ar.counter ]] = regimes
                 ar.counter <- ar.counter + 1
     
-    
-                if( criterion == "AICc"){
-                    score = cmp.AICc.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
-                }
-                if( criterion == "pBIC"){
-                    score = cmp.pBIC.new(tr, Y, model$shift.configuration, conv.regimes = regimes, alpha=model$alpha)
-                }
+                score <- new.cmp.score(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
     
                 if( min.score > score ){
                     min.score      = score
                     min.cr.regimes = regimes
                     min.digits     = num.digits
                 }
-    
             }
         }
 
@@ -428,11 +423,15 @@ estimate_convergent_regimes <- function(model,
               names(sc)[which(sc==item)] = len
           }
       }
-
       model$shift.configuration = sc
-      model$score = min.score 
+      model$score <- new.cmp.score(tr, Y, model$shift.configuration, c.regimes, criterion, model$alpha)
+      #model$score = min.score 
+
       return(model)
 }
+
+
+
 
 
 
