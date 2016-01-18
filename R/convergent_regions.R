@@ -287,20 +287,20 @@ estimate_convergent_regimes_surface  <-  function(model,
 
         #if no progress then terminate
         if( !has.progress ){ break }
-        prev.min.score   <-  min.score
+        prev.min.score <- min.score
     }
     
     sc <- model$shift.configuration
-    map  <- 1:length(sc)
-    names(map) <- sc
+    counter <- 1
     for( reg in min.regimes ){
         for( item in sort(reg) ){
-            names(sc)[which(sc==item)] <- map[paste(reg[[1]])] 
+            names(sc)[which(sc==item)] <- counter
         }
+        counter <- counter + 1
     }
 
-    model$shift.configuration  <-  sc
-    model$score   <-   min.score 
+    model$shift.configuration <- sc
+    model$score               <- min.score 
     return(model)
 }
 
@@ -416,12 +416,12 @@ estimate_convergent_regimes  <-  function(model,
       }
 
       sc <- model$shift.configuration
-      map  <- 1:length(sc)
-      names(map) <- sc
+      counter <- 1
       for( reg in c.regimes ){
           for( item in sort(reg) ){
-              names(sc)[which(sc==item)] <- map[paste(reg[[1]])] 
+              names(sc)[which(sc==item)] <- counter 
           }
+          counter <- counter + 1
       }
 
       model$shift.configuration <- sc
