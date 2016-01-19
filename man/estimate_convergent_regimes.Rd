@@ -24,6 +24,7 @@ Y <- lizard.traits[, 1:1]
 
 eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
 eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
+eModel
 plot(eModel)
 }
 \seealso{

@@ -636,6 +636,16 @@ print.l1ou <- function(model, ...){
     print(tmp.mat)
     cat("\n")
 
+
+    sc <- model$shift.configuration
+    if( !is.null(names(sc)) ){
+        cat("convergent regimes and edge indices of the shift configuration\n")
+        for( reg in sort(unique(names(sc))) )
+            cat( paste0( "regime ", reg, "-> ", paste0(sc[which(names(sc)==reg)], collapse=", "), "\n" ) )
+        cat("\n")
+    }
+
+
     tmp.mat = rbind(model$alpha, 
                     model$sigma2, 
                     model$sigma2/(2 * model$alpha),

@@ -316,6 +316,7 @@ estimate_convergent_regimes_surface  <-  function(model,
 #'
 #'eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
 #'eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
+#'eModel
 #'plot(eModel)
 #'
 #'@seealso   \code{\link{estimate_shift_configuration}}
