@@ -2,24 +2,21 @@
 
 generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alpha, designMatrix=F){
 
-    nTips           <-  length(tr$tip.label)
+    nTips   <-  length(tr$tip.label)
     if ( is.na(alpha) ){
-        #FIXME in package
-        X           <-  l1ou:::generate_design_matrix(tr, "apprX")
+        X   <-  generate_design_matrix(tr, "apprX")
     }else{
-        #FIXME in package
-        X           <-  l1ou:::generate_design_matrix(tr, "orgX",  alpha <- alpha)
+        X   <-  generate_design_matrix(tr, "orgX",  alpha <- alpha)
     }
 
     if(designMatrix){
-        Cinvh   <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot")$sqrtInvSigma )
-        #Cinvh   <- t( cmp.OU.covariance(tr, alpha=alpha)$D ) 
-        X  <- Cinvh%*%X
+        Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot")$sqrtInvSigma )
+        X     <- Cinvh%*%X
     }
 
-    Z               <- l1ou:::generate_design_matrix(tr, "simpX")
-    preds           <- X[,shift.configuration] 
-    template.Z      <- Z[,shift.configuration] 
+    Z           <- generate_design_matrix(tr, "simpX")
+    preds       <- X[,shift.configuration] 
+    template.Z  <- Z[,shift.configuration] 
 
     colnames(preds)      <- shift.configuration 
     colnames(template.Z) <- shift.configuration 
@@ -42,18 +39,16 @@ generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alp
             stopifnot( length(set1) > 0 )
 
             if ( length(set1) > 1){
-                preds.2 <- cbind( preds.2, rowSums( preds[,set1] ) ) 
+                preds.2 <- cbind( preds.2, rowSums( preds[, paste(set1)] ) ) 
             } else{
-                preds.2 <- cbind( preds.2,  preds[,set1] ) 
+                preds.2 <- cbind( preds.2,  preds[, paste(set1) ] ) 
             }
             colnames(preds.2)[length(preds.2[1,])] <- i
         }
     }
 
-    #preds <- cbind(1, preds)
     preds <- cbind(1, preds.2)
     return(preds)
-
 }
 
 my.phylolm.interface.new  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA){
