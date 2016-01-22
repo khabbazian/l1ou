@@ -4,12 +4,11 @@
 \alias{estimate_shift_configuration}
 \title{Detects evolutionary shifts under an OU model}
 \usage{
-estimate_shift_configuration(tree, Y,
-  max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"), candid.edges = NA, quietly = TRUE,
-  alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = NA, rescale = TRUE,
+estimate_shift_configuration(tree, Y, max.nShifts = 10,
+  criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"),
+  root.model = c("OUrandomRoot", "OUfixedRoot"), candid.edges = NA,
+  quietly = TRUE, alpha.starting.value = NA,
+  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA, rescale = TRUE,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }

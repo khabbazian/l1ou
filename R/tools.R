@@ -360,10 +360,17 @@ plot.l1ou <- function (model, palette = NA,
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
     nShifts = model$nShifts
     nEdges = length(tree$edge.length)
-    if (bar.axis) 
-        par(oma = c(3, 0, 0, 3))
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
+
+    ##A dummy plot just to get the plotting order
+    plot.phylo(tree, plot=FALSE)
+    lastPP = get("last_plot.phylo", envir = .PlotPhyloEnv)
+    o = order(lastPP$yy[1:length(tree$tip.label)])
+
+    if (bar.axis) 
+        par(oma = c(3, 0, 0, 3))
+
     if (plot.bar) {
         layout(matrix(c(1+ncol(Y),1:ncol(Y)), nrow=1), 
                widths = c(2,rep(1, ncol(Y)))
@@ -407,7 +414,7 @@ plot.l1ou <- function (model, palette = NA,
             par(mar = c(0, 0, 0, 3))
         for (i in 1:ncol(Y)) {
             normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
-            barplot(as.vector(normy), border = FALSE, col = barcol, 
+            barplot(as.vector(normy[o]), border = FALSE, col = barcol[o], 
                 horiz = TRUE, names.arg = "", xaxt = "n")
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
