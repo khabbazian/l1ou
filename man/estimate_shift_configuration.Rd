@@ -50,6 +50,7 @@ estimate_shift_configuration(tree, Y, max.nShifts = 10,
 \item{shift.values}{estimates of the shift values.}
 \item{nShifts}{estimated number of shifts.}
 \item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
+\item{edge.optima}{optimum values of the trait on the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
 \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 \item{mu}{fitted values, i.e. estimated trait means.}

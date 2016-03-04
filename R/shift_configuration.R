@@ -28,6 +28,7 @@
 #' \item{shift.values}{estimates of the shift values.}
 #' \item{nShifts}{estimated number of shifts.}
 #' \item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
+#' \item{edge.optima}{optimum values of the trait on the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
 #' \item{alpha}{maximum likelihood estimate(s) of the adaptation rate \eqn{\alpha}{alpha}, one per trait.}
 #' \item{sigma2}{maximum likelihood estimate(s) of the variance rate \eqn{\sigma^2}{sigma^2}, one per trait.}
 #' \item{mu}{fitted values, i.e. estimated trait means.}
@@ -75,7 +76,7 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.starting.value   = NA, 
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
-           rescale            = TRUE,
+           rescale                = TRUE,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
            grp.seq.ub             = 5,
@@ -168,7 +169,7 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$alpha.upper.bound      <- alpha.upper
         l1ou.options$alpha.lower.bound      <- alpha.lower
         l1ou.options$edge.length.threshold  <- edge.length.threshold
-        l1ou.options$rescale            <- rescale
+        l1ou.options$rescale                <- rescale
 
         l1ou.options$grp.seq.ub   <- grp.seq.ub
         l1ou.options$grp.delta    <- grp.delta
@@ -614,8 +615,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     nTips   = length(tree$tip.label)
 
     resi = mu = alpha = sigma2 = numeric()
-    shift.values = optima = numeric()
-    intercept    = optima.tmp = numeric()
+    shift.values = optima = edge.optima = numeric()
+    intercept    = optima.tmp = edge.optima.tmp = numeric()
     logLik = numeric(ncol(Y))
 
     for(i in 1:ncol(Y)){
@@ -639,10 +640,10 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         if( length(shift.configuration) > 0 )
             shift.values   = cbind(shift.values, fit$coefficients[2:(nShifts+1)])
 
-        #optima.tmp = rep(fit$coefficients[[1]], nEdges)
-        #if( length(shift.configuration) > 0 )
-        #    optima.tmp = convert_shifts2regions(tree, shift.configuration, 
-        #                               fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
+        edge.optima.tmp = rep(fit$coefficients[[1]], nEdges)
+        if( length(shift.configuration) > 0 )
+            edge.optima.tmp = convert_shifts2regions(tree, shift.configuration, 
+                                       fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
 
         optima.tmp = rep(fit$coefficients[[1]], nTips)
         if( length(shift.configuration) > 0 )
@@ -650,19 +651,21 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                 optima.tmp = optima.tmp + opt$Z[,sc] * fit$coefficients[which(shift.configuration==sc)+1]
 
         optima = cbind(optima, optima.tmp)
+        edge.optima = cbind(edge.optima, edge.optima.tmp);
     }
     optima = as.matrix(optima)
     rownames(optima) = tree$tip.label
+    edge.optima = as.matrix(edge.optima)
 
     score = cmp_model_score (tree, Y, shift.configuration, opt) # this will call my_phylolm_interface again to get logLik. Wasting time. Could you create a function that would just return the penalty, given the needed info from 'fit' on alpha etc.?
 
-    ##NOTE: adding the trait (response vector/matrix) which used to detect shift positions
     model = list(Y=Y, 
                  tree               =tree,
                  shift.configuration=shift.configuration, 
                  shift.values       =shift.values,
                  nShifts            =length(shift.configuration), 
-                 optima           =optima, 
+                 optima             =optima, 
+                 edge.optima        =edge.optima,
                  alpha              =alpha, 
                  sigma2             =sigma2, 
                  intercept          =intercept, 
