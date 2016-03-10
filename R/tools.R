@@ -52,6 +52,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
                  tip.label are unavailable.\n")
         }
     }
+
     if(!identical(rownames(Y), tree$tip.label)){
         diffres = setdiff(rownames(Y), tree$tip.label)
         if( length(diffres) > 0 ){
@@ -69,8 +70,10 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         if(!quietly)
             warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
  
-        Y  <-  Y[order(rownames(Y)),  ] 
-        Y  <-  Y[order(order(tr$tip.label)), ]
+        #Y  <-  Y[order(rownames(Y)),  ] 
+        #Y  <-  Y[order(order(tree$tip.label)), ]
+        Y <- as.matrix(Y[tree$tip.label, ])
+
     }
 
 
@@ -120,7 +123,7 @@ print_out <- function(eModel, quietly){
 }
 
 
-standardize_matrix <- function(Y){
+rescale_matrix <- function(Y){
     #for(i in 1:ncol(Y)){
     #    Y[,i] = Y[,i] - mean(Y[,i])
     #}
@@ -180,13 +183,18 @@ correct_unidentifiability <- function(tree, shift.configuration, opt){
     nN       = nrow(opt$Z)
 
     all.covered.tips = numeric()
+    identifiable = TRUE
     for(sp in shift.configuration){
         covered.tips = which( opt$Z[,sp] > 0 )
         nUniqueTips = length( setdiff(covered.tips, all.covered.tips) )
-        if ( nUniqueTips == 0 )
+        if ( nUniqueTips == 0 ){
             shift.configuration = setdiff(shift.configuration, sp)
+            identifiable = FALSE
+        }
         all.covered.tips = union(covered.tips, all.covered.tips)
     }
+
+    if( identifiable ){ return(shift.configuration) }
 
     while ( length(shift.configuration) > 1 ) {
         coverage = c()
@@ -225,7 +233,7 @@ get_num_solutions <- function(sol.path){
 
 
 
-get_shift_configuration <- function(sol.path, index, Y, tidx=1){
+get_configuration_in_sol_path <- function(sol.path, index, Y, tidx=1){
     if ( grepl("lars",sol.path$call)[[1]]  ){
         beta      = sol.path$beta[index,]
         shift.configuration  = which( abs(beta) > 0 )
@@ -282,12 +290,17 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 #'
 #' Normalizes all branch lengths by the same factor, so that the distance from the root to all tips is equal to one. 
 #'@param tree ultrametric tree of class phylo with branch lengths, and edges in postorder.
+#'@param check.ultrametric logical. If TRUE, it checks if the input tree is ultrametric.
 #'
 #'@return normalized phylogenetic tree, of class phylo.
 #'
 #'@export
-normalize_tree <- function(tree){
-    stopifnot(is.ultrametric(tree))
+normalize_tree <- function(tree, check.ultrametric=TRUE){
+
+    if(check.ultrametric){
+        if(!is.ultrametric(tree)) 
+            stop("the input tree is not ultrametric")
+    }
 
     nTips  = length(tree$tip.label)
     rNode  = nTips + 1 
@@ -311,7 +324,7 @@ normalize_tree <- function(tree){
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).
 #'@param edge.shift.ann logical. If TRUE, annotates edges by shift values. 
 #'@param edge.shift.adj adjustment argument to give to edgelabel() for labeling edges by shift values.
-#'@param star logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.
+#'@param asterisk logical. If TRUE, the shift positions will be annotated by "*". It is useful for gray scale plots.
 #'@param edge.label vector of size number of edges.
 #'@param edge.label.ann logical. If TRUE, annotates edges by labels in tree$edge.label, if non-empty, or edge.label. 
 #'@param edge.label.adj adjustment argument to give to edgelabel() for labeling edges.
@@ -336,108 +349,61 @@ normalize_tree <- function(tree){
 #'
 plot.l1ou <- function (model, palette = NA, 
                        edge.shift.ann=TRUE,  edge.shift.adj=c(0.5,-.025),
-                       edge.label=c(), star = TRUE,
+                       edge.label=c(), asterisk = TRUE,
                        edge.label.ann=FALSE, edge.label.adj=c(0.5,    1), 
                        edge.label.pos=NA,
                        edge.ann.cex = 1, 
                        plot.bar = TRUE, bar.axis = TRUE, ...) 
 {
-
     tree = model$tree
+    s.c = model$shift.configuration
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
-
-    shift.configuration = sort(model$shift.configuration, decreasing = T)
     nShifts = model$nShifts
     nEdges = length(tree$edge.length)
-    if (bar.axis) 
-        par(oma = c(3, 0, 0, 3))
-
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
 
+    ##A dummy plot just to get the plotting order
+    plot.phylo(tree, plot=FALSE)
+    lastPP = get("last_plot.phylo", envir = .PlotPhyloEnv)
+    o = order(lastPP$yy[1:length(tree$tip.label)])
+
+    if (bar.axis) 
+        par(oma = c(3, 0, 0, 3))
+
     if (plot.bar) {
-        layout(matrix(1:(1 + ncol(Y)), 1, (1 + ncol(Y))), widths = c(2, rep(1,ncol(Y))))
+        layout(matrix(c(1+ncol(Y),1:ncol(Y)), nrow=1), 
+               widths = c(2,rep(1, ncol(Y)))
+               )
     }
+
+    #NOTE: assiging colors the shifts
     if (all(is.na(palette))) {
         palette = c(sample(rainbow(nShifts)), "gray")
+        if( !is.null(names(s.c)) ){
+            ids = unique(names(s.c))
+            tmp = sample(rainbow(length(ids)))
+            for( id in ids )
+                palette[which(names(s.c)==id)] = tmp[which(ids==id)]
+        }
     }
+
     stopifnot(length(palette) == model$nShifts + 1)
+
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-    for (shift in shift.configuration) {
-        edgecol[[shift]] = palette[[counter]]
+    for (shift in sort(s.c, decreasing = T)) {
+        edgecol[[shift]] = palette[[which(s.c == shift)]]
         tips = which(Z[, shift] > 0)
         for (tip in tips) {
-            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[counter]]
+            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == 
+                shift)]]
         }
         counter = counter + 1
     }
-    plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, ...)
 
-
-    if(star){
-        Z = l1ou:::generate_design_matrix(tree, type="apprX")
-        for( idx in 1:length(model$shift.configuration) ){
-            sP   = model$shift.configuration[[idx]];
-            pos  = max(Z[,sP]);
-
-            edge.labels = rep(NA, length(tree$edge[,1]));
-            edge.labels[sP] = "*";
-            edgelabels(edge.labels, cex=3*edge.ann.cex, adj= c(0.5, .8), frame = "none", date=pos);
-        }
-    }
-
-    if (edge.shift.ann) {
-        eLabels = rep(NA, nEdges)
-        for (shift in shift.configuration) {
-            eLabels[shift] = paste(round(model$shift.values[which(shift.configuration==shift), 
-                                         ], digits = 2), collapse = ",")
-        }
-        edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
-                   frame = "none")
-    }
-
-    if (edge.label.ann) {
-        if (length(tree$edge.label) == 0) {
-            if (length(edge.label) == 0) {
-                stop("no edge labels are provided via tree$edge.label or edge.label!")
-            }
-            tree$edge.label = edge.label
-        }
-
-        Z = l1ou:::generate_design_matrix(tree, type = "apprX")
-
-        if(!is.na(edge.label.pos))
-           if(edge.label.pos < 0 || edge.label.pos > 1) 
-               stop("edge.label.pos should be between 0 and 1") 
-
-        for (idx in 1:length(tree$edge.label)) {
-            if(is.na(tree$edge.label[[idx]]))
-                next
-            pos = max(Z[, idx])
-            if(!is.na(edge.label.pos) ){
-                pos   = pos - edge.label.pos * tree$edge.length[[idx]]
-            }
-            edge.labels = rep(NA, length(tree$edge[, 1]))
-            edge.labels[[idx]] = tree$edge.label[[idx]]
-            edgelabels(edge.labels, cex = edge.ann.cex, adj = edge.label.adj, 
-                       frame = "none", date= pos)
-        }
-    }
-
-
-    if (edge.label.ann){
-        if (length(tree$edge.label) == 0) {
-            if(length(edge.label)==0){
-                stop("no edge labels are provided via tree$edge.label or edge.label!")
-            }
-            tree$edge.label = edge.label 
-        }
-        edgelabels(tree$edge.label, cex = edge.ann.cex, adj = edge.label.adj, 
-                   frame = "none")
-    }
-
+    #NOTE: plotting bar plot .....
     if (plot.bar) {
         nTips = length(tree$tip.label)
         barcol = rep("gray", nTips)
@@ -448,14 +414,65 @@ plot.l1ou <- function (model, palette = NA,
             par(mar = c(0, 0, 0, 3))
         for (i in 1:ncol(Y)) {
             normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
-            barplot(as.vector(normy), border = FALSE, col = barcol, 
+            barplot(as.vector(normy[o]), border = FALSE, col = barcol[o], 
                 horiz = TRUE, names.arg = "", xaxt = "n")
             if (bar.axis) 
                 axis(1, at = range(normy), labels = round(range(normy), 
                   digits = 2))
+            if (!is.null(colnames(Y)) && length(colnames(Y)) > 
+                (i - 1)) 
+                mtext(colnames(Y)[[i]], cex = 1, line = +1, side = 1)
+        }
+    }
 
-            if(!is.null(colnames(Y)) && length(colnames(Y))>(i-1) )
-                mtext(colnames(Y)[[i]], cex = 0.7, line = +1, side=1)
+    #NOTE: plotting the tree etc etc
+    plot.phylo(tree, edge.color = edgecol, no.margin = TRUE, 
+        ...)
+
+    if (length(s.c) > 0) {
+        if (asterisk) {
+            Z = l1ou:::generate_design_matrix(tree, type = "apprX")
+            for (idx in 1:length(s.c)) {
+                sP = s.c[[idx]]
+                pos = max(Z[, sP])
+                edge.labels = rep(NA, length(tree$edge[, 1]))
+                edge.labels[sP] = "*"
+                edgelabels(edge.labels, cex = 3 * edge.ann.cex, 
+                  adj = c(0.5, 0.8), frame = "none", date = pos)
+            }
+        }
+    }
+    if (edge.shift.ann) {
+        eLabels = rep(NA, nEdges)
+        for (shift in s.c) {
+            eLabels[shift] = paste(round(model$shift.values[which(s.c == 
+                shift), ], digits = 2), collapse = ",")
+        }
+        edgelabels(eLabels, cex = edge.ann.cex, adj = edge.shift.adj, 
+            frame = "none")
+    }
+    if (edge.label.ann) {
+        if (length(tree$edge.label) == 0) {
+            if (length(edge.label) == 0) {
+                stop("no edge labels are provided via tree$edge.label or edge.label!")
+            }
+            tree$edge.label = edge.label
+        }
+        Z = l1ou:::generate_design_matrix(tree, type = "apprX")
+        if (!is.na(edge.label.pos)) 
+            if (edge.label.pos < 0 || edge.label.pos > 1) 
+                stop("edge.label.pos should be between 0 and 1")
+        for (idx in 1:length(tree$edge.label)) {
+            if (is.na(tree$edge.label[[idx]])) 
+                next
+            pos = max(Z[, idx])
+            if (!is.na(edge.label.pos)) {
+                pos = pos - edge.label.pos * tree$edge.length[[idx]]
+            }
+            edge.labels = rep(NA, length(tree$edge[, 1]))
+            edge.labels[[idx]] = tree$edge.label[[idx]]
+            edgelabels(edge.labels, cex = edge.ann.cex, adj = edge.label.adj, 
+                frame = "none", date = pos)
         }
     }
 }
@@ -514,6 +531,27 @@ profile.l1ou <- function(model, ...)
 }
 
 #'
+#' Returns the best shift configuration with a given number of shifts among the shift configurations that have been evaluated.
+#'
+#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param nShifts number of shifts.
+#'
+#'@return indices of the edges with shifts
+#'
+#'@export
+get_shift_configuration <- function(model, nShifts){
+    p.d = profile(model) 
+    if( nShifts > length(p.d$shift.configuration))
+        stop("There is no configuration with the given number of shifts")
+
+    for( i in 1:length(p.d$configuration)){
+        if( length(p.d$configuration[[i]]) == nShifts)
+            return(p.d$configuration[[i]])
+    }
+    stop("There is no configuration with the given number of shifts")
+}
+
+#'
 #' Prints out a summary of the model 
 #'
 #' prints out a summary of the model 
@@ -537,24 +575,37 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration: ")
-    cat(model$shift.configuration)
-    cat("\n")
+    cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
+    #cat(model$shift.configuration)
+    #cat(model$shift.values)
+    #cat("\n")
+    tmp.mat = t(as.matrix(model$shift.values))
+    if(length(model$shift.configuration)>0)
+        colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(model$Y)))){
+        rownames(tmp.mat) = colnames(model$Y)
+    }
+    print(tmp.mat)
 
+    cat("\n")
     cat(paste0(model$l1ou.options$criterion, " score: "))
     cat(model$score)
     cat("\n")
 
-    cat("estimated adaptation rate (alpha): ")
-    cat(model$alpha)
-    cat("\n")
-
-    cat("estimated variance (sigma2): ")
-    cat(model$sigma2)
-    cat("\n")
-
-    cat("estimated stationary variance (gamma): ")
-    cat(model$sigma2/(2 * model$alpha))
+    tmp.mat = rbind(model$alpha, 
+                    model$sigma2, 
+                    model$sigma2/(2 * model$alpha),
+                    model$logLik
+                    )
+    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+                          "variance (sigma2)", 
+                          "stationary variance (gamma)",
+                          "logLik"
+                          )
+    if(!all(is.null(colnames(model$Y)))){
+        colnames(tmp.mat) = colnames(model$Y)
+    }
+    print(tmp.mat)
     cat("\n")
 
     cat("\n")
@@ -562,7 +613,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     print(model$optimums)
 
     top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
+    cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
     cat("scores\t\tshift.configurations\n")
     for (i in 1:top.scores){
         cat(model$profile$scores[[i]])
@@ -572,55 +623,60 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     }
 }
 
-
-
-#'
-#' Prints out a summary of the model 
-#'
-#' prints out a summary of the model 
-#'
-#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
-#'@param ... further arguments. 
-#'
-#'@return none.
-#'@examples
-#' 
-#' data(lizard.traits, lizard.tree)
-#' Y <- lizard.traits[,1]
-#' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' print(eModel)
-#'
 #'@export
-#'
 print.l1ou <- function(model, ...){
-    nTop.scores = 5
     cat("number of shifts: ")
     cat(model$nShifts)
     cat("\n")
 
-    cat("edge indices of the shift configuration: ")
-    cat(model$shift.configuration)
+    cat(paste0(model$l1ou.options$criterion, " score: "))
+    cat(model$score)
     cat("\n")
 
-    cat("estimated adaptation rate (alpha): ")
-    cat(model$alpha)
+    cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
+    tmp.mat = t(as.matrix(model$shift.values))
+    if(length(model$shift.configuration)>0)
+        colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(model$Y)))){
+        rownames(tmp.mat) = colnames(model$Y)
+    }
+    print(tmp.mat)
     cat("\n")
 
-    cat("estimated variance (sigma2): ")
-    cat(model$sigma2)
-    cat("\n")
 
-    cat("estimated stationary variance (gamma): ")
-    cat(model$sigma2/(2 * model$alpha))
-    cat("\n")
-
-    top.scores = min(nTop.scores, length(model$profile$scores))
-    cat(paste0(c("\ntop", top.scores, "best scores:\n")))
-    cat("scores\t\tshift.configurations\n")
-    for (i in 1:top.scores){
-        cat(model$profile$scores[[i]])
-        cat("\t")
-        cat(model$profile$configurations[[i]])
+    sc <- model$shift.configuration
+    if( !is.null(names(sc)) ){
+        cat("convergent regimes and edge indices of the shift configuration\n")
+        for( reg in sort(unique(names(sc))) )
+            cat( paste0( "regime ", reg, "-> ", paste0(sc[which(names(sc)==reg)], collapse=", "), "\n" ) )
         cat("\n")
     }
+
+
+    tmp.mat = rbind(model$alpha, 
+                    model$sigma2, 
+                    model$sigma2/(2 * model$alpha),
+                    model$logLik
+                    )
+    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+                          "variance (sigma2)", 
+                          "stationary variance (gamma)",
+                          "logLik"
+                          )
+    if(!all(is.null(colnames(model$Y)))){
+        colnames(tmp.mat) = colnames(model$Y)
+    }
+    print(tmp.mat)
+    cat("\n")
+
+    #top.scores = min(nTop.scores, length(model$profile$scores))
+    #cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
+    #cat("scores\t\tshift.configurations\n")
+    #for (i in 1:top.scores){
+    #    cat(model$profile$scores[[i]])
+    #    cat("\t")
+    #    cat(model$profile$configurations[[i]])
+    #    cat("\n")
+    #}
 }
+

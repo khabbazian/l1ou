@@ -1,6 +1,6 @@
 Package: l1ou 
-Version: 0.32
-Date: 2015-10-05
+Version: 1.20
+Date: 2015-12-05
 Title: Tools for detecting past changes in the expected mean trait values and studying trait evolution from comparative data
 Author: Mohammad Khabbazian [aut], Cecile Ane [ctb]
 Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
@@ -9,7 +9,7 @@ License: GPL (>= 3)
 URL: https://github.com/khabbazian/l1ou
 Encoding: UTF-8
 NeedsCompilation: yes
-Depends: R (>= 3.1.0), igraph, ape, phylolm (>= 2.0.0), lars, parallel, grplasso, magic
+Depends: R (>= 3.1.0), igraph, ape, phylolm (>= 2.0.0), lars, parallel, grplasso, magic, genlasso
 Imports: Rcpp
 LinkingTo: Rcpp
 VignetteBuilder: knitr

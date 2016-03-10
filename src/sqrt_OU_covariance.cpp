@@ -33,8 +33,7 @@ void one_step(const int i1, const int i2, const int e1, const int e2,
     const double t2 = edgeList(e2,2);
 
     int e3 = -1; // -1 means root index
-    //for(int i=0; i<nEdges; ++i) 
-    for(int i=e2+1; i<nEdges; ++i) 
+    for(int i=0; i<nEdges; ++i) 
         if( edgeList(i,1) == i3){
             e3 = i;
             break;
@@ -69,7 +68,7 @@ void one_step(const int i1, const int i2, const int e1, const int e2,
 
 
 // [[Rcpp::export]]
-Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips){
+Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips, double rootEdge){
 
     //TODO assert( edgeList.ncol == 3);
 
@@ -82,12 +81,10 @@ Rcpp::List cmp_sqrt_OU_covariance(Rcpp::NumericMatrix edgeList, int nTips){
     Rcpp::NumericMatrix B(nTips,nTips);
 
     Rcpp::NumericVector tips(nTips);
-    //std::iota(tips.begin(),tips.end(),1);
     for(int i=0; i<tips.size(); ++i)
-        tips(i) = i+1;
+        tips[i] = i+1;
 
     int counter = 0;
-    double rootEdge = 0;
     for(int i=0; i<edgeList.nrow() && tips.size() > 1; i+=2)
         one_step( edgeList(i,1), edgeList(i+1,1), i, i+1, counter++, nTips, edgeList, tips, F, G, D, B, rootEdge);
     

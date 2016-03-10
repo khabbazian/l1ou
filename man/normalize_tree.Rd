@@ -4,10 +4,12 @@
 \alias{normalize_tree}
 \title{Normalizes branch lengths to a unit tree height}
 \usage{
-normalize_tree(tree)
+normalize_tree(tree, check.ultrametric = TRUE)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo with branch lengths, and edges in postorder.}
+
+\item{check.ultrametric}{logical. If TRUE, it checks if the input tree is ultrametric.}
 }
 \value{
 normalized phylogenetic tree, of class phylo.
