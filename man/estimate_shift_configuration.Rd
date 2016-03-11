@@ -4,11 +4,12 @@
 \alias{estimate_shift_configuration}
 \title{Detects evolutionary shifts under an OU model}
 \usage{
-estimate_shift_configuration(tree, Y, max.nShifts = 10,
-  criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"),
-  root.model = c("OUrandomRoot", "OUfixedRoot"), candid.edges = NA,
-  quietly = TRUE, alpha.starting.value = NA,
-  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA, rescale = TRUE,
+estimate_shift_configuration(tree, Y,
+  max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
+  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUrandomRoot",
+  "OUfixedRoot"), candid.edges = NA, quietly = FALSE,
+  alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
+  alpha.lower = NA, rescale = TRUE,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -72,6 +73,8 @@ For information criteria: see \code{\link{configuration_ic}}.
 data(lizard.tree, lizard.traits)
 # here lizard.traits already has row names:
 rownames(lizard.traits)
+# also, it is a matrix (not data frame) so columns retain row names:
+names(lizard.traits[,1])
 # If your trait data "dat" does not have row names but instead has
 # species names in a column called "species", then you can
 # create row names containing the species names like this:
@@ -92,6 +95,8 @@ eModel <- estimate_shift_configuration(lizard$tree, lizard$Y, candid.edges = ce)
 plot(eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 }
 \references{
-Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
+Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
+"Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
+Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534
 }
 
