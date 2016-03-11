@@ -12,28 +12,33 @@
 #' \item{Y}{trait vector/matrix with adjusted row names and row order.}
 #'@examples
 #' data(lizard.tree, lizard.traits)
+#' # here, lizard.traits is a matrix, so columns retain row names:
+#' names(lizard.traits[,1])
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' 
+#' # for a data frame, make sure to retain row names if a single column is selected:
+#' lizard.traits <- as.data.frame(lizard.traits)
+#' lizard <- adjust_data(lizard.tree, subset(lizard.traits, select=1))
 #'@export
 adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
     if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if( !identical(tree$edge, reorder(tree, "postorder")$edge)){
         if(!quietly)
-            warning("the new tree edges are ordered differently, in postorder!")
+            cat("the new tree edges are ordered differently: in postorder.\n")
         tree  <- reorder(tree, "postorder")
     }
 
     if( normalize ){
         tree <- normalize_tree(tree)
         if(!quietly)
-            warning("the new tree is normalized: each tip is at distance 1 from the root.")
+            cat("the new tree is normalized: each tip at distance 1 from the root.\n")
     }
 
     if( class(Y) != "matrix"){
         Y <- as.matrix(Y)
         if(!quietly)
-            warning(paste("new Y: matrix of size", nrow(Y), "x", ncol(Y), "\n" ))
+            cat(paste("new Y: matrix of size", nrow(Y), "x", ncol(Y), "\n" ))
     }
 
     if( nrow(Y) != length(tree$tip.label)){
@@ -42,9 +47,8 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     }
 
     if( is.null(rownames(Y)) ){
-        if(!quietly)
-            warning("no names provided for the trait(s) entries/rows. so it is assumed that 
-                    entries/rows match the tip labels in the same order.\n", immediate.=TRUE)
+        warning("no names provided for the trait(s) entries/rows.\nAssuming that rows match the tip labels in the same order.",
+                immediate.=TRUE)
         rownames(Y)  <- tree$tip.label
     } else{
         if( any(is.na(rownames(Y))) ){
@@ -68,7 +72,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         }
 
         if(!quietly)
-            warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
+            cat("reordered the rows of the trait vector/matrix (Y) to match the order of the tip labels.\n")
  
         #Y  <-  Y[order(rownames(Y)),  ] 
         #Y  <-  Y[order(order(tree$tip.label)), ]
