@@ -44,6 +44,8 @@
 #' data(lizard.tree, lizard.traits)
 #' # here lizard.traits already has row names:
 #' rownames(lizard.traits)
+#' # also, it is a matrix (not data frame) so columns retain row names:
+#' rownames(lizard.traits[,1])
 #' # If your trait data "dat" does not have row names but instead has
 #' # species names in a column called "species", then you can
 #' # create row names containing the species names like this:
@@ -99,7 +101,7 @@ estimate_shift_configuration <- function(tree, Y,
 
     if( class(Y) != "matrix"){
         Y <- as.matrix(Y)
-        warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
+        #warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
     }
 
     if( nrow(Y) != length(tree$tip.label)){
