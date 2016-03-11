@@ -127,12 +127,12 @@ estimate_shift_configuration <- function(tree, Y,
         diffres = setdiff(tree$tip.label, rownames(Y))
         if( length(diffres) > 0 ){
             cat(diffres)
-            stop(" do(es) not exist in the input trait. you may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
+            stop(" do(es) not exist in the input trait. You may want to use drop.tip(tree, setdiff(tree$tip.label,rownames(Y))) 
                  to drop extra tips in the tree.\n")
         }
 
         stop("the order of entries/rows of the trait vector/matrix (Y) does not matche 
-             the order of the tip labels. use adjust_data function to fix that\n")
+             the order of the tip labels. Use adjust_data function to fix that\n")
     }
 
     stopifnot(all(rownames(Y) == tree$tip.label))
