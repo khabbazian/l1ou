@@ -45,7 +45,7 @@
 #' # here lizard.traits already has row names:
 #' rownames(lizard.traits)
 #' # also, it is a matrix (not data frame) so columns retain row names:
-#' rownames(lizard.traits[,1])
+#' names(lizard.traits[,1])
 #' # If your trait data "dat" does not have row names but instead has
 #' # species names in a column called "species", then you can
 #' # create row names containing the species names like this:
@@ -66,7 +66,9 @@
 #' plot(eModel, edge.ann.cex=0.7, cex=0.5, label.offset=0.02)
 #'
 #'@references
-#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
+#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
+#' "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
+#' Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534
 #'
 #'@export
 estimate_shift_configuration <- function(tree, Y, 
@@ -74,7 +76,7 @@ estimate_shift_configuration <- function(tree, Y,
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
            root.model             = c("OUrandomRoot", "OUfixedRoot"),
            candid.edges           = NA,
-           quietly                = TRUE,
+           quietly                = FALSE,
            alpha.starting.value   = NA, 
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
@@ -181,9 +183,13 @@ estimate_shift_configuration <- function(tree, Y,
 
     if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
 
+    if (!quietly)
+        cat("Starting first LASSO (alpha=0) to find a list of candidate configurations.\n")
     if (ncol(Y) == 1) {
         eModel1 = estimate_shift_configuration_known_alpha(tree, 
             Y, est.alpha = TRUE, opt = l1ou.options)
+        if (!quietly)
+            cat("Starting second LASSO (alpha=",round(eModel1$alpha,2),") for another list of candidates.\n")
         eModel = estimate_shift_configuration_known_alpha(tree, 
             Y, alpha = eModel1$alpha, opt = l1ou.options)
         if (eModel$score > eModel1$score) 
@@ -192,6 +198,8 @@ estimate_shift_configuration <- function(tree, Y,
     if (ncol(Y) > 1) {
         eModel1 = estimate_shift_configuration_known_alpha_multivariate(tree, 
             Y, est.alpha = TRUE, opt = l1ou.options)
+        if (!quietly)
+            cat("Starting second LASSO (alpha=",round(eModel1$alpha,2),") for another list of candidates.\n")
         eModel = estimate_shift_configuration_known_alpha_multivariate(tree, 
             Y, alpha = eModel1$alpha, opt = l1ou.options)
         if (eModel$score > eModel1$score) 
@@ -245,7 +253,7 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
 
     if(!opt$quietly){
         print(eModel)
-        print("-------")
+        cat("-------\n")
     }
     return(eModel)
 }
@@ -477,7 +485,9 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'
 #'Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. 5(11):1133-1146.
 #'
-#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
+#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
+#' "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
+#' Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534
 #'
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
@@ -566,7 +576,9 @@ configuration_ic <- function(tree, Y, shift.configuration,
 #'
 #'Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. 5(11):1133-1146.
 #'
-#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review. 
+#'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
+#' "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
+#' Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534
 #'
 #'@export
 fit_OU <- function(tree, Y, shift.configuration, 
