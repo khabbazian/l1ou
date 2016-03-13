@@ -545,12 +545,12 @@ profile.l1ou <- function(model, ...)
 #'@export
 get_shift_configuration <- function(model, nShifts){
     p.d = profile(model) 
-    if( nShifts > length(p.d$shift.configuration))
+    if( nShifts > length(p.d$shift.configurations)+1) # starts at 0 shifts
         stop("There is no configuration with the given number of shifts")
 
-    for( i in 1:length(p.d$configuration)){
-        if( length(p.d$configuration[[i]]) == nShifts)
-            return(p.d$configuration[[i]])
+    for( i in 1:length(p.d$shift.configurations)){
+        if( length(p.d$shift.configurations[[i]]) == nShifts)
+            return(p.d$shift.configurations[[i]])
     }
     stop("There is no configuration with the given number of shifts")
 }
