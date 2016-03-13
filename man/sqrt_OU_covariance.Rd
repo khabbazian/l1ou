@@ -37,7 +37,9 @@ all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma), Sigma) # TRUE
 all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma), solve(Sigma)) # TRUE
 }
 \references{
-Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
+Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
+"Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
+Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534
 
 Eric A. Stone. 2011. "Why the phylogenetic regression appears robust to tree misspecification". Systematic Biology, 60(3):245-260.
 }

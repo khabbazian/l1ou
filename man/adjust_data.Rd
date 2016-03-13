@@ -24,6 +24,12 @@ Returns a new tree and new data matrix, where the tree edges are in postorder, a
 }
 \examples{
 data(lizard.tree, lizard.traits)
+# here, lizard.traits is a matrix, so columns retain row names:
+names(lizard.traits[,1])
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
+
+# for a data frame, make sure to retain row names if a single column is selected:
+lizard.traits <- as.data.frame(lizard.traits)
+lizard <- adjust_data(lizard.tree, subset(lizard.traits, select=1))
 }
 

@@ -60,7 +60,9 @@ Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelat
 
 Ho, L. S. T. and Ané, C. 2014.  "Intrinsic inference difficulties for trait evolution with Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. 5(11):1133-1146.
 
-Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". In review.
+Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
+"Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
+Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534
 }
 \seealso{
 \code{\link{estimate_shift_configuration}} \code{\link{adjust_data}}
