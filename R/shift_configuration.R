@@ -103,7 +103,6 @@ estimate_shift_configuration <- function(tree, Y,
 
     if( class(Y) != "matrix"){
         Y <- as.matrix(Y)
-        #warning(paste("Y changed to a", nrow(Y), "x", ncol(Y), "matrix\n" ))
     }
 
     if( nrow(Y) != length(tree$tip.label)){
@@ -112,7 +111,7 @@ estimate_shift_configuration <- function(tree, Y,
     }
 
     if( is.null(rownames(Y)) ){
-        warning("no names provided for the trait(s) entries/rows. so it is assumed that 
+        warning("no names provided for the trait(s) entries/rows. So it is assumed that 
                 entries/rows match with the tip labels in the same order.\n", , immediate.=TRUE)
         rownames(Y)  <- tree$tip.label
     } else{
@@ -146,8 +145,8 @@ estimate_shift_configuration <- function(tree, Y,
         warning("max.nShifts should be a positive number less than number of tips. I set it to number of tips.\n")
         max.nShifts  <-  length(tree$tip.label)
     }
-    if( max.nShifts < 1){
-        warning("max.nShifts should be a positive number less than number of tips. I set it to 1.\n")
+    if( max.nShifts < 0){
+        warning("max.nShifts should be a positive number less than number of tips. I set it to 0.\n")
         max.nShifts  <- 1 
     }
     if(!is.na(alpha.lower))
@@ -179,6 +178,11 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$grp.delta    <- grp.delta
         l1ou.options$candid.edges <- candid.edges
         l1ou.options$Z            <- generate_design_matrix(tree, "simpX")
+    }
+
+    if(length(l1ou.options$candid.edges)==0 || l1ou.options$max.nShifts == 0){
+        l1ou.options$use.saved.scores <- FALSE
+        return( fit_OU(tree, Y, shift.configuration=c(), l1ou.options=l1ou.options) )
     }
 
     if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
@@ -235,7 +239,7 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     XX  = Cinvh%*%X
 
     nP  = ncol(XX)
-    XX  = XX[,-to.be.removed]
+    XX  = as.matrix(XX[,-to.be.removed])
 
     capture.output(
             sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
@@ -307,7 +311,7 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
 
     np     = ncol(grpX)
     grpY   = c(YY)
-    grpX   = grpX[,-to.be.removed]
+    grpX   = as.matrix(grpX[,-to.be.removed])
     grpIdx = rep(1:ncol(X), ncol(Y))[-to.be.removed]
     ##grpIdx = rep(c(1:(ncol(X)-1),NA), ncol(Y))[-to.be.removed]
 

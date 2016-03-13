@@ -397,15 +397,16 @@ plot.l1ou <- function (model, palette = NA,
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-    for (shift in sort(s.c, decreasing = T)) {
-        edgecol[[shift]] = palette[[which(s.c == shift)]]
-        tips = which(Z[, shift] > 0)
-        for (tip in tips) {
-            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == 
-                shift)]]
+    if(length(s.c) > 0)
+        for (shift in sort(s.c, decreasing = T)) {
+            edgecol[[shift]] = palette[[which(s.c == shift)]]
+            tips = which(Z[, shift] > 0)
+            for (tip in tips) {
+                edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == 
+                    shift)]]
+            }
+            counter = counter + 1
         }
-        counter = counter + 1
-    }
 
     #NOTE: plotting bar plot .....
     if (plot.bar) {
