@@ -76,7 +76,7 @@ estimate_shift_configuration <- function(tree, Y,
            criterion              = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
            root.model             = c("OUrandomRoot", "OUfixedRoot"),
            candid.edges           = NA,
-           quietly                = FALSE,
+           quietly                = TRUE,
            alpha.starting.value   = NA, 
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
@@ -183,13 +183,11 @@ estimate_shift_configuration <- function(tree, Y,
 
     if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
 
-    if (!quietly)
-        cat("Starting first LASSO (alpha=0) to find a list of candidate configurations.\n")
+    cat("Starting first LASSO (alpha=0) to find a list of candidate configurations.\n")
     if (ncol(Y) == 1) {
         eModel1 = estimate_shift_configuration_known_alpha(tree, 
             Y, est.alpha = TRUE, opt = l1ou.options)
-        if (!quietly)
-            cat("Starting second LASSO (alpha=",round(eModel1$alpha,2),") for another list of candidates.\n")
+        cat("Starting second LASSO (alpha=",round(eModel1$alpha,2),") for another list of candidates.\n")
         eModel = estimate_shift_configuration_known_alpha(tree, 
             Y, alpha = eModel1$alpha, opt = l1ou.options)
         if (eModel$score > eModel1$score) 
@@ -198,8 +196,7 @@ estimate_shift_configuration <- function(tree, Y,
     if (ncol(Y) > 1) {
         eModel1 = estimate_shift_configuration_known_alpha_multivariate(tree, 
             Y, est.alpha = TRUE, opt = l1ou.options)
-        if (!quietly)
-            cat("Starting second LASSO (alpha=",round(eModel1$alpha,2),") for another list of candidates.\n")
+        cat("Starting second LASSO (alpha=",round(eModel1$alpha,2),") for another list of candidates.\n")
         eModel = estimate_shift_configuration_known_alpha_multivariate(tree, 
             Y, alpha = eModel1$alpha, opt = l1ou.options)
         if (eModel$score > eModel1$score) 
