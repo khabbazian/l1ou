@@ -774,8 +774,9 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
                 if(length(n.s)==0){
                     ##FIXME: first figure out the correct strategy and then
                     ##fix it in old.order array not here to be fast. 
+                }else{
+                    s.c <- c(s.c, n.s)
                 }
-                s.c <- c(s.c, n.s)
             }
             stopifnot(length(tr$tip.label)==nrow(y))
         }else{
