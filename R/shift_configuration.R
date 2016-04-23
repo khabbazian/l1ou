@@ -75,7 +75,7 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.starting.value   = NA, 
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
-           rescale            = TRUE,
+           rescale                = TRUE,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
            grp.seq.ub             = 5,
@@ -92,9 +92,13 @@ estimate_shift_configuration <- function(tree, Y,
 
     Y <- as.matrix(Y)
 
+    na.err.str <- "some of the entries of the trait vector/matrix (Y) are
+        missing.  you may use drop.tip to drop corresponding tips from the tree.\n" 
     if( any(is.na(Y)) )
-        stop("some of the entries of the trait vector/matrix (Y) are missing. 
-             you may use drop.tip to drop corresponding tips from the tree.\n")
+        if( ncol(Y) == 1)
+            stop(na.err.str)
+        else
+            warning(na.err.str, ,immediate.=TRUE)
 
     if( class(Y) != "matrix"){
         Y <- as.matrix(Y)
@@ -156,7 +160,7 @@ estimate_shift_configuration <- function(tree, Y,
             alpha.upper  <- alpha.lower
         }
 
-    if (all(is.na(l1ou.options))) {
+    if (all(is.na(l1ou.options))){
         l1ou.options                   <- list()
         l1ou.options$use.saved.scores  <- TRUE
         l1ou.options$max.nShifts       <- max.nShifts
@@ -168,12 +172,15 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$alpha.upper.bound      <- alpha.upper
         l1ou.options$alpha.lower.bound      <- alpha.lower
         l1ou.options$edge.length.threshold  <- edge.length.threshold
-        l1ou.options$rescale            <- rescale
+        l1ou.options$rescale                <- rescale
 
         l1ou.options$grp.seq.ub   <- grp.seq.ub
         l1ou.options$grp.delta    <- grp.delta
         l1ou.options$candid.edges <- candid.edges
         l1ou.options$Z            <- generate_design_matrix(tree, "simpX")
+        ## each tree in tree.list represents a trait where the tips corresponding
+        ## to NA values in the trail have been dropped.
+        l1ou.options$tree.list    <- gen_tree_array(tree, Y)
     }
 
     if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
@@ -220,7 +227,7 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     if(!all(is.na(opt$candid.edges))){
         to.be.removed  = setdiff(1:length(tree$edge.length), opt$candid.edges)
     }else{
-        to.be.removed   = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
+        to.be.removed  = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
     }
 
     YY  = Cinvh%*%Y
@@ -230,7 +237,8 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     XX  = XX[,-to.be.removed]
 
     capture.output(
-            sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE, intercept=TRUE, max.steps=opt$max.nShifts)
+            sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE,
+                              intercept=TRUE, max.steps=opt$max.nShifts)
         )
 
     Tmp = matrix(0, nrow(sol.path$beta), nP)
@@ -257,29 +265,32 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     }
 
     if(opt$rescale==TRUE){
+        stop("take care of NA values")
         Y  = rescale_matrix(Y)
     }
 
     nVariables    = ncol(Y)
-    X             = generate_design_matrix(tree, "apprX")
-
+    nEdges        = Nedge(tree)
+    ##X             = generate_design_matrix(tree, "apprX")
     ##X             = cbind(X,1)
     ##ncolX         = ncol(X)
     ##to.be.removed = c(ncolX-1, which(tree$edge.length < opt$edge.length.threshold))
 
+    stop()
     if(!all(is.na(opt$candid.edges))){
         to.be.removed  = setdiff(1:length(tree$edge.length), opt$candid.edges)
     }else{
-        to.be.removed = c(ncol(X), which(tree$edge.length < opt$edge.length.threshold))
+        to.be.removed = c(nEdges, which(tree$edge.length < opt$edge.length.threshold))
     }
 
-    offset        = rep(ncol(X)*(0:(ncol(Y)-1)), each=length(to.be.removed))
+    offset        = rep(nEdges*(0:(ncol(Y)-1)), each=length(to.be.removed))
     to.be.removed = rep(to.be.removed, ncol(Y)) + offset
 
     YY  = Y
     grpX = matrix(0,0,0) #empty matrix
-    for( i in 1:ncol(YY)){
-        X  = matrix(0,0,0)
+    for( i in 1:ncol(Y)){
+        X     = matrix(0,0,0)
+
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
             RE  = sqrt_OU_covariance(tree, root.model = "OUfixedRoot",
@@ -291,9 +302,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
                                      check.order=F, check.ultramteric=F )
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
-        YY[,i]  = Cinvh%*%YY[,i]
+
+        y.ava       = !is.na(Y[,i])
+        YY[y.ava, i] = Cinvh[y.ava, y.ava] %*% Y[y.ava, i]
+
         ##X     = cbin(Cinvh%*%X,1)
-        ##grpX    = adiag(grpX, X)  
+        ##grpX  = adiag(grpX, X)  
         grpX    = adiag(grpX, Cinvh%*%X)  
     }
 
@@ -304,12 +318,25 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     ##grpIdx = rep(c(1:(ncol(X)-1),NA), ncol(Y))[-to.be.removed]
 
 
-    sol    = run_grplasso(grpX, grpY, nVariables, grpIdx, opt)
+    ###NOTE: handling NAs in grpY
+    grpY.ava = !is.na(grpY)
+    grpY     = grpY[grpY.ava]
+    grpX     = grpX[grpY.ava, ]
 
+    grpX.col.nZero.idx = which(colSums(abs(grpX))!=0)
+    grpX.nCol      = ncol(grpX)
+    grpX               = grpX[,grpX.col.nZero.idx]
+    grpIdx             = grpIdx[grpX.col.nZero.idx]
+
+    sol = run_grplasso(grpX, grpY, nVariables, grpIdx, opt)
+
+    Tmp                      = matrix(0, length(grpX.nCol), ncol(sol$coefficients))
+    Tmp[grpX.col.nZero.idx,] = matrix(sol$coefficients)
+    sol$coefficients         = Tmp
+    ###end NOTE:
+    
     Tmp                  = matrix(0, np, ncol(sol$coefficients))
     Tmp[-to.be.removed,] = matrix(sol$coefficients)
-
-    ##Tmp                  = Tmp[-seq(ncol(X),np,ncol(X)),]
     sol$coefficients     = Tmp
 
     ##removing the intercept results
@@ -369,7 +396,7 @@ generate_design_matrix <- function(tree, type="apprX", alpha){
 
 select_best_solution <- function(tree, Y, sol.path, opt){
 
-    nSols   = get_num_solutions(sol.path)
+    nSols = get_num_solutions(sol.path)
     stopifnot( nSols > 0 )
 
     all.shifts = numeric()
@@ -381,9 +408,9 @@ select_best_solution <- function(tree, Y, sol.path, opt){
         shift.configuration = get_configuration_in_sol_path(sol.path, idx, Y)
         shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
 
-        if ( length(shift.configuration) > opt$max.nShifts          ){break}
-        if ( setequal(shift.configuration, prev.shift.configuration) ){next }
-        prev.shift.configuration  = shift.configuration
+        if ( length(shift.configuration) > opt$max.nShifts ){break}
+        if ( setequal(shift.configuration, prev.shift.configuration) ){next}
+        prev.shift.configuration = shift.configuration
 
         ## sorting shifts based on their age in the solution path
         all.shifts  = c(all.shifts, shift.configuration)
@@ -398,11 +425,10 @@ select_best_solution <- function(tree, Y, sol.path, opt){
 
         res = do_backward_correction(tree, Y, shift.configuration, opt)
 
-        if ( min.score > res$score){
-            min.score   = res$score
+        if (min.score > res$score){
+            min.score = res$score
             best.shift.configuration = res$shift.configuration
         }
-
     }
     return ( list(score=min.score, shift.configuration=best.shift.configuration) )
 }
@@ -662,7 +688,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  shift.configuration=shift.configuration, 
                  shift.values       =shift.values,
                  nShifts            =length(shift.configuration), 
-                 optima           =optima, 
+                 optima             =optima, 
                  alpha              =alpha, 
                  sigma2             =sigma2, 
                  intercept          =intercept, 
@@ -690,6 +716,27 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     }
     ic = opt$criterion
 
+    if( ic == "pBICess"){
+        res   = cmp_pBICess(tree, Y, shift.configuration, opt) 
+        if(all(is.na(res))) return(Inf)
+        score = res$score
+        if( opt$use.saved.scores){
+            add_configuration_score_to_list(shift.configuration, score,
+               paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
+        }
+        return( score )
+    } else if(ic == "pBIC"){
+        res = cmp_pBIC(tree, Y, shift.configuration, opt) 
+        if(all(is.na(res))) return(Inf)
+        score = res$score
+        if( opt$use.saved.scores ){
+            add_configuration_score_to_list(shift.configuration, score,
+                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
+        }
+        return( score )
+    } 
+
+
     Y       = as.matrix(Y)
     nEdges  = length(tree$edge.length)
     nTips   = length(tree$tip.label)
@@ -708,58 +755,62 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
             return(Inf)
         df.2 = 0
     } else if( ic == "mBIC"){
-        res =  cmp_mBIC_df(tree, shift.configuration, opt)  
+        res  = cmp_mBIC_df(tree, shift.configuration, opt)  
         df.1 = res$df.1
         df.2 = res$df.2
-    } else if( ic == "pBICess"){
-        res   = cmp_pBICess(tree, Y, shift.configuration, opt) 
-        if(all(is.na(res))) return(Inf)
-        score = res$score
-        if( opt$use.saved.scores){
-            add_configuration_score_to_list(shift.configuration, score,
-                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
-        }
-        return( score )
-    } else if(ic == "pBIC"){
-        res = cmp_pBIC(tree, Y, shift.configuration, opt) 
-        if(all(is.na(res))) return(Inf)
-        score = res$score
-        if( opt$use.saved.scores ){
-            add_configuration_score_to_list(shift.configuration, score,
-                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
-        }
-        return( score )
     } 
 
     score = df.1
     for( i in 1:ncol(Y)){
-        fit   = my_phylolm_interface(tree, Y[,i], shift.configuration, opt)
-        if ( all(is.na(fit)) ){
-            return(Inf)
-        } 
+        ##FIXME: df.2 needs to be adjusted what about df.1?
+        if(!is.null(l1ou.options$tree.list)){
+            tr    <- tree.list[[i]]
+            y.ava <- !is.na(Y[,i])
+            y     <- as.matrix(Y[y.ava, i])
+            #s.c   <- shift.configuration
+            s.c   <- c()
+            for(s in shift.configuration){
+                n.s <- which(tr$old.order==s)
+                if(length(n.s)==0){
+                    ##FIXME: first figure out the correct strategy and then
+                    ##fix it in old.order array not here to be fast. 
+                }
+                s.c <- c(s.c, n.s)
+            }
+            stopifnot(length(tr$tip.label)==nrow(y))
+        }else{
+            tr    <- tree
+            y     <- as.matrix(Y[,i])
+            s.c   <- shift.configuration
+        }
+
+        fit   = my_phylolm_interface(tr, y, s.c, opt)
+        if ( all(is.na(fit)) ){ return(Inf) } 
         score = score  -2*fit$logLik + df.2
     }
 
     if( opt$use.saved.scores ){
         add_configuration_score_to_list(shift.configuration, score,
-                                        paste0(c(fit$sigma2/(2*fit$optpar), fit$logLik),collapse=" "))
+            paste0(c(fit$sigma2/(2*fit$optpar), fit$logLik),collapse=" "))
     }
     return(score)
 }
 
 my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
 
+    ##FIXME:
     preds = cbind(1, opt$Z[ ,shift.configuration])
     options(warn = -1)
     if( is.na(opt$alpha.lower.bound) & is.na(opt$alpha.starting.value) ){
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
-                                upper.bound    = opt$alpha.upper.bound), silent = opt$quietly)
+                 upper.bound  = opt$alpha.upper.bound), silent = opt$quietly)
     } else {
         l = ifelse(is.na(opt$alpha.lower.bound), 0, opt$alpha.lower.bound)
         u = opt$alpha.upper.bound
         s = ifelse(is.na(opt$alpha.starting.value), max(0.5, l), opt$alpha.starting.value)
 
-        fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
+        fit    <-  try( phylolm(Y~preds-1, phy = tree, 
+                                model          = opt$root.model,
                                 starting.value = s, 
                                 lower.bound    = l, 
                                 upper.bound    = u), silent = opt$quietly)
@@ -873,21 +924,23 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     seq.ub = opt$grp.seq.ub
     max.nTries = 7
     suppressMessages(
-                     lmbdMax  <-  1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, rescale = FALSE) + 1
-                     )
+      lmbdMax  <-  1.2 * lambdamax(grpX, grpY, model = LinReg(), index = grpIdx, rescale = FALSE) + 1
+    )
 
     base.seq = seq(0, seq.ub, delta)
     for (itrTmp in 1:max.nTries) {
         lmbd = lmbdMax * (0.5^base.seq)
 
         capture.output(
-                       sol  <-  grplasso(grpX, y = grpY, rescale = FALSE, center = FALSE, 
-                                         lambda = lmbd, model = LinReg(), index = grpIdx, 
-                                         control = grpl.control(tol = 0.01))
-                       )
+          sol  <-  grplasso(grpX, y = grpY, rescale = FALSE, center = FALSE, 
+                            lambda = lmbd, model = LinReg(), index = grpIdx, 
+                            control = grpl.control(tol = 0.01))
+          )
 
         #df.vec = apply(sol$coefficients, 2, function(x) length(which(abs(x) > 0))/nVariables)
-        df.vec = apply(sol$coefficients, 2, function(x) length(which(rowSums(matrix(ifelse(abs(x[!is.na(grpIdx)])>0,1,0),ncol=nVariables))>nVariables-1)))
+        df.vec = apply( sol$coefficients, 2, 
+           function(x) length(which(rowSums(matrix(ifelse(abs(x[!is.na(grpIdx)])>0,1,0),
+           ncol=nVariables))>nVariables-1)) )
 
         df.missing = setdiff(0:(opt$max.nShifts+1), df.vec)
 

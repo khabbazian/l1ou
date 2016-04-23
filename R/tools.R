@@ -67,7 +67,8 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
         }
 
         if(!quietly)
-            warning("reordered the entries/rows of the trait vector/matrix (Y) so that it matches the order of the tip labels.\n")
+            warning("reordered the entries/rows of the trait vector/matrix (Y)
+                    so that it matches the order of the tip labels.\n")
  
         Y  <-  Y[order(rownames(Y)),  ] 
         Y  <-  Y[order(order(tr$tip.label)), ]
@@ -81,6 +82,26 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 }
 
 lnorm      <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
+
+gen_tree_array <- function(tree, Y){
+    ## here I assume the tree tip labels match the Y matrix rows
+    ## in the same order.
+    tree.list <- list()
+    for(i in 1:ncol(Y)){
+        availables <- rownames(Y)[!is.na(Y[,i])]
+        tr <- drop.tip(tree, setdiff(tree$tip.label, availables))
+        tr <- reorder(tr,"postorder")
+        ## make a new mapping, it is not exactly what it should be.
+        dummyTr <- tree
+        names(dummyTr$edge.length) <- 1:length(tree$edge.length)
+        dummyTr <- drop.tip(dummyTr, setdiff(tree$tip.label, availables))
+        dummyTr <- reorder (dummyTr,"postorder")
+
+        tr$old.order    <- as.numeric(names(dummyTr$edge.length))
+        tree.list[[i]]  <-  tr
+    }
+    return(tree.list)
+}
 
 add_configuration_score_to_list  <- function(shift.configuration, score, moreInfo){
     shift.configuration = sort(shift.configuration)
