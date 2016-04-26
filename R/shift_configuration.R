@@ -98,7 +98,7 @@ estimate_shift_configuration <- function(tree, Y,
         if( ncol(Y) == 1)
             stop(na.err.str)
         else
-            warning(na.err.str, ,immediate.=TRUE)
+            warning(na.err.str,immediate.=TRUE)
 
     if( class(Y) != "matrix"){
         Y <- as.matrix(Y)
@@ -265,7 +265,6 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     }
 
     if(opt$rescale==TRUE){
-        stop("take care of NA values")
         Y  = rescale_matrix(Y)
     }
 

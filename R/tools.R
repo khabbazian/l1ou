@@ -81,7 +81,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     return(list(tree=tree, Y=Y))
 }
 
-lnorm      <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
+lnorm <- function(v,l=1)   { return( (sum(abs(v)^l, na.rm=TRUE))^(1/l) ) }
 
 gen_tree_array <- function(tree, Y){ 
     ## here I assume the tree tip labels match the Y matrix rows 
