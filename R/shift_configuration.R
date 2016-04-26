@@ -764,7 +764,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     for( i in 1:ncol(Y)){
         ##FIXME: what about df.1?
         if(!is.null(opt$tree.list)){
-            tr    <- tree.list[[i]]
+            tr    <- opt$tree.list[[i]]
             y.ava <- !is.na(Y[,i])
             y     <- as.matrix(Y[y.ava, i])
             s.c   <- c()
@@ -806,7 +806,9 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
 
     ##FIXME:
-    preds = cbind(1, opt$Z[ ,shift.configuration])
+    #preds = cbind(1, opt$Z[ ,shift.configuration])
+    Z <- generate_design_matrix(tree, type="simpX")
+    preds = cbind(1, Z[ ,shift.configuration])
     options(warn = -1)
     if( is.na(opt$alpha.lower.bound) & is.na(opt$alpha.starting.value) ){
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
