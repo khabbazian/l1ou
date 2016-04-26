@@ -323,7 +323,7 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     grpX     = grpX[grpY.ava, ]
 
     grpX.col.nZero.idx = which(colSums(abs(grpX))!=0)
-    grpX.nCol      = ncol(grpX)
+    grpX.nCol          = ncol(grpX)
     grpX               = grpX[,grpX.col.nZero.idx]
     grpIdx             = grpIdx[grpX.col.nZero.idx]
 
@@ -716,6 +716,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     ic = opt$criterion
 
     if( ic == "pBICess"){
+        stop()
         res   = cmp_pBICess(tree, Y, shift.configuration, opt) 
         if(all(is.na(res))) return(Inf)
         score = res$score
@@ -725,12 +726,13 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         }
         return( score )
     } else if(ic == "pBIC"){
+        stop()
         res = cmp_pBIC(tree, Y, shift.configuration, opt) 
         if(all(is.na(res))) return(Inf)
         score = res$score
         if( opt$use.saved.scores ){
             add_configuration_score_to_list(shift.configuration, score,
-                                            paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
+                 paste0(c(res$sigma2/(2*res$alpha),res$logLik),collapse=" "))
         }
         return( score )
     } 
@@ -743,7 +745,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
     if( ic == "BIC"){
         df.1  = log(nTips)*(nShifts)
-        df.2  = log(nTips)*(nShifts + 3)
+        #df.2  = log(nTips)*(nShifts + 3)
     } else if( ic == "AICc"){
         ## AICc implemented in SURFACE
         p = nShifts + (nShifts + 2)*ncol(Y)
@@ -752,37 +754,43 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
         ## FIXME I am not sure about the following ...
         if( p > N-2)
             return(Inf)
-        df.2 = 0
+        #df.2 = 0
     } else if( ic == "mBIC"){
         res  = cmp_mBIC_df(tree, shift.configuration, opt)  
         df.1 = res$df.1
-        df.2 = res$df.2
+        #df.2 = res$df.2
     } 
 
     score = df.1
     for( i in 1:ncol(Y)){
-        ##FIXME: df.2 needs to be adjusted what about df.1?
+        ##FIXME: what about df.1?
         if(!is.null(l1ou.options$tree.list)){
             tr    <- tree.list[[i]]
             y.ava <- !is.na(Y[,i])
             y     <- as.matrix(Y[y.ava, i])
-            #s.c   <- shift.configuration
             s.c   <- c()
             for(s in shift.configuration){
-                n.s <- which(tr$old.order==s)
-                if(length(n.s)==0){
-                    ##FIXME: first figure out the correct strategy and then
-                    ##fix it in old.order array not here to be fast. 
-                }else{
+                n.s <- tr$old.order[[s]]
+                if(!is.na(n.s)){
                     s.c <- c(s.c, n.s)
                 }
             }
             stopifnot(length(tr$tip.label)==nrow(y))
-        }else{
-            tr    <- tree
-            y     <- as.matrix(Y[,i])
-            s.c   <- shift.configuration
+        } else{
+            tr  <- tree
+            y   <- as.matrix(Y[,i])
+            s.c <- shift.configuration
         }
+
+        ##### df.2 cmp
+        if( ic == "BIC"){
+            df.2  = log(nrow(y))*(length(s.c)+ 3)
+        } else if( ic == "AICc"){
+            df.2 = 0
+        } else if(ic == "mBIC"){
+            res  = cmp_mBIC_df(tr, s.c, opt)  
+            df.2 = res$df.2
+        } 
 
         fit   = my_phylolm_interface(tr, y, s.c, opt)
         if ( all(is.na(fit)) ){ return(Inf) } 
