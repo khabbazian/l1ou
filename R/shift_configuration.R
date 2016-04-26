@@ -328,7 +328,7 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
 
     sol = run_grplasso(grpX, grpY, nVariables, grpIdx, opt)
 
-    Tmp                      = matrix(0, length(grpX.nCol), ncol(sol$coefficients))
+    Tmp                      = matrix(0, grpX.nCol, ncol(sol$coefficients))
     Tmp[grpX.col.nZero.idx,] = matrix(sol$coefficients)
     sol$coefficients         = Tmp
     ###end NOTE:
@@ -763,7 +763,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     score = df.1
     for( i in 1:ncol(Y)){
         ##FIXME: what about df.1?
-        if(!is.null(l1ou.options$tree.list)){
+        if(!is.null(opt$tree.list)){
             tr    <- tree.list[[i]]
             y.ava <- !is.na(Y[,i])
             y     <- as.matrix(Y[y.ava, i])
