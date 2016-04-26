@@ -99,8 +99,7 @@ cmp.AICc.new <- function(tr, Y, shift.configuration, conv.regimes, alpha){
 cmp.pBIC.new <- function(tr, Y, shift.configuration, conv.regimes, alpha){
 
     nShifts = length(shift.configuration)
-
-    nEdges  = length(tr$edge[,1])
+    nEdges  = Nedge(tr)
     nTips   = length(tr$tip.label)
 
     df.1   = 0
@@ -130,7 +129,7 @@ generate_relation <-function(tr, shift.configuration){
 
     s.p     = shift.configuration
     n.s.p   = length(s.p)
-    nEdges  = length(tr$edge.length)
+    nEdges  = Nedge(tr)
 
     M  = numeric()
     tmp.s.p = s.p

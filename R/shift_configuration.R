@@ -51,9 +51,9 @@
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' eModel
 #'
-#' nEdges <- length(lizard.tree$edge[,1:2]) # total number of edges
-#' ew <- rep(1,nEdges)                    # to set default edge width of 1
-#' ew[eModel$shift.configuration] <- 3    # to widen edges with a shift 
+#' nEdges <- Nedge(lizard.tree) # total number of edges
+#' ew <- rep(1,nEdges)  # to set default edge width of 1
+#' ew[eModel$shift.configuration] <- 3   # to widen edges with a shift 
 #' plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 #'
 #' # example to constrain the set of candidate branches with a shift
@@ -276,7 +276,6 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     ##ncolX         = ncol(X)
     ##to.be.removed = c(ncolX-1, which(tree$edge.length < opt$edge.length.threshold))
 
-    stop()
     if(!all(is.na(opt$candid.edges))){
         to.be.removed  = setdiff(1:length(tree$edge.length), opt$candid.edges)
     }else{
@@ -365,11 +364,11 @@ generate_design_matrix <- function(tree, type="apprX", alpha){
     g  = graph.edgelist(tree$edge, directed = TRUE)
     X  = matrix(0, nTips, nEdges)
 
-    root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode = "out", output="epath")$epath
+    root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode="out", output="epath")$epath
     ## there must be always a path.
     stopifnot( all( lapply( root2tip, length ) > 0) ) 
     ## since it is ultrametric.
-    Tval  = sum(tree$edge.length[root2tip[[1]] ]) 
+    Tval  = sum(tree$edge.length[root2tip[[1]]]) 
 
     if(type == "orgX"){
         for(i in 1:nTips){
@@ -635,9 +634,9 @@ fit_OU <- function(tree, Y, shift.configuration,
 
 fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
-    Y       = as.matrix(Y)
-    nEdges  = length(tree$edge.length)
-    nTips   = length(tree$tip.label)
+    Y      = as.matrix(Y)
+    nEdges = Nedge(tree)
+    nTips  = length(tree$tip.label)
 
     resi = mu = alpha = sigma2 = numeric()
     shift.values = optima = numeric()
@@ -738,7 +737,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
 
 
     Y       = as.matrix(Y)
-    nEdges  = length(tree$edge.length)
+    nEdges  = Nedge(tree)
     nTips   = length(tree$tip.label)
     nShifts = length(shift.configuration)
 
@@ -865,7 +864,7 @@ cmp_mBIC_df <- function(tree, shift.configuration, opt){
 cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
     nShifts = length(shift.configuration)
-    nEdges  = length(tree$edge[,1])
+    nEdges  = Nedge(tree)
     nTips   = length(tree$tip.label)
 
     df.1  = 2*(nShifts)*log(nEdges-1)
@@ -894,7 +893,7 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
     nShifts = length(shift.configuration)
-    nEdges  = length(tree$edge[,1])
+    nEdges  = Nedge(tree)
     nTips   = length(tree$tip.label)
 
     df.1    = 2*(nShifts)*log(nEdges-1)

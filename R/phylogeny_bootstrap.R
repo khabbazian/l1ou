@@ -31,7 +31,7 @@
 #' result <- l1ou_bootstrap_support(eModel, nItrs=2)
 #' # using only 2 replicates in vastly insufficient in general,
 #' # but used here to make the illustrative example run faster.
-#' nEdges <- length(lizard.tree$edge[,1])
+#' nEdges <- Nedge(lizard.tree)
 #' e.w <- rep(1,nEdges) 
 #' e.w[eModel$shift.configuration] <- 3
 #' e.l <- round(result * 100, digits=1)
