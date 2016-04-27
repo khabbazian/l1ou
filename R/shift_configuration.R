@@ -649,7 +649,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
             tr <- opt$tree.list[[i]]
             y  <- as.matrix(Y[!is.na(Y[,i]), i])
             if(length(shift.configuration > 0))
-                augmented.s.c <- tr$old.order[[shift.configuration]]
+                augmented.s.c <- tr$old.order[shift.configuration]
             else
                 augmented.s.c <- c()
             for(s in shift.configuration){
