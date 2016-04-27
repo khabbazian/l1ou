@@ -648,12 +648,15 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         if(!is.null(opt$tree.list)){
             tr <- opt$tree.list[[i]]
             y  <- as.matrix(Y[!is.na(Y[,i]), i])
-            augmented.s.c <- tr$old.order[[shift.configuration]]
+            if(length(shift.configurations > 0))
+                augmented.s.c <- tr$old.order[[shift.configuration]]
+            else
+                augmented.s.c <- c()
             for(s in shift.configuration){
                 n.s <- tr$old.order[[s]]
                 if(!is.na(n.s)){ s.c <- c(s.c, n.s) }
             }
-        }else{
+        } else{
             tr  <- tree
             y   <- as.matrix(Y[,i])
             s.c <- shift.configuration
@@ -671,8 +674,12 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         logLik[i] <- fit$logLik
 
         ## E[Y]
-        mu   = cbind(mu, fit$fitted.values)
-        resi = cbind(resi, fit$residuals)
+        f.v  = as.matrix(Y[,i])
+        f.v[!is.na(Y[,i])] = fit$fitted.values
+        mu   = cbind(mu, f.v)
+        f.r  = as.matrix(Y[,i])
+        f.r[!is.na(Y[,i])] = fit$residuals 
+        resi = cbind(resi, f.r)
 
         intercept = c(intercept, fit$coefficients[[1]])
 

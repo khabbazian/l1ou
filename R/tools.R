@@ -445,7 +445,7 @@ plot.l1ou <- function (model, palette = NA,
         if (bar.axis) 
             par(mar = c(0, 0, 0, 3))
         for (i in 1:ncol(Y)) {
-            normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
+            normy = (Y[, i] - mean(Y[, i], na.rm=TRUE))/sd(Y[, i], na.rm=TRUE)
             barplot(as.vector(normy), border = FALSE, col = barcol, 
                 horiz = TRUE, names.arg = "", xaxt = "n")
             if (bar.axis) 
