@@ -446,11 +446,13 @@ plot.l1ou <- function (model, palette = NA,
             par(mar = c(0, 0, 0, 3))
         for (i in 1:ncol(Y)) {
             normy = (Y[, i] - mean(Y[, i], na.rm=TRUE))/sd(Y[, i], na.rm=TRUE)
-            barplot(as.vector(normy), border = FALSE, col = barcol, 
+            barplot(as.vector(normy, na.rm=TRUE), border = FALSE, col = barcol, 
                 horiz = TRUE, names.arg = "", xaxt = "n")
-            if (bar.axis) 
-                axis(1, at = range(normy), labels = round(range(normy), 
-                  digits = 2))
+            if (bar.axis){
+                axis(1, at = range(normy, na.rm=TRUE), 
+                     labels = round(range(normy, na.rm=TRUE), 
+                                    digits = 2))
+            }
             if (!is.null(colnames(Y)) && length(colnames(Y)) > 
                 (i - 1)) 
                 mtext(colnames(Y)[[i]], cex = 1, line = +1, side = 1)
