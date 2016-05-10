@@ -93,10 +93,9 @@ cmp.AICc.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
 cmp.pBIC.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
-    nShifts <- length(shift.configuration)
-
-    nEdges  <- length(tr$edge[,1])
-    nTips   <- length(tr$tip.label)
+    nShifts = length(shift.configuration)
+    nEdges  = Nedge(tr)
+    nTips   = length(tr$tip.label)
 
     df.1   <- 0
     df.1    <- (nShifts)*log(nEdges-1)
@@ -124,9 +123,9 @@ cmp.pBIC.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
 generate_relation  <- function(tr, shift.configuration){
 
-    s.p     <- shift.configuration
-    n.s.p   <- length(s.p)
-    nEdges  <- length(tr$edge.length)
+    s.p     = shift.configuration
+    n.s.p   = length(s.p)
+    nEdges  = Nedge(tr)
 
     M  <- numeric()
     tmp.s.p <- s.p
