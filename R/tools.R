@@ -117,7 +117,6 @@ gen_tree_array <- function(tree, Y){
             stopifnot(length(e.idx)==1)
             old.order[[i]] <- e.idx
         }
-
         tr$old.order <- old.order
         tree.list[[trait.idx]]  <-  tr
     }
