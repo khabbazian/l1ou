@@ -64,7 +64,6 @@ my.phylolm.interface.new  <-  function(tr, Y, shift.configuration, conv.regimes 
 }
 
 
-
 cmp.AICc.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
     stopifnot( length(alpha) == ncol(Y) )
