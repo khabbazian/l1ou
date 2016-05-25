@@ -106,7 +106,7 @@ estimate_shift_configuration <- function(tree, Y,
             ## all the tips have at least one value.
             warning("some of the entries of the trait vector/matrix (Y) are
                     missing.\n", immediate.=TRUE)
-            if( length( which(rowSums(!is.na(mat))==0) ) != 0 ){
+            if( length( which(rowSums(!is.na(Y))==0) ) != 0 ){
                 stop("the trait matrix has a row with all missing values. you
                      may use drop.tip to drop corresponding tips from the tree.\n")
             }
@@ -804,7 +804,7 @@ cmp_BIC <- function(tree, Y, shift.configuration, opt){
     score <- df.1
     alpha <- sigma2 <- logLik <- rep(0, nVariables)
 
-    for( i in 1:nVariables(Y) ){
+    for( i in 1:nVariables ){
 
         if(!is.null(opt$tree.list)){
             tr    <- opt$tree.list[[i]]
@@ -885,6 +885,56 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
     return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
+cmp_mBIC <- function(tree, Y, shift.configuration, opt){
+
+    nEdges     <- Nedge(tree)
+    nTips      <- length(tree$tip.label)
+    nShifts    <- length(shift.configuration)
+    nVariables <- ncol(Y)
+
+    res =  cmp_mBIC_df(tree, shift.configuration, opt)  
+    df.1 = res$df.1
+    df.2 = res$df.2
+
+    score <- df.1
+
+    alpha <- sigma2 <- logLik <- rep(0, nVariables)
+    for( i in 1:nVariables ){
+
+        if(!is.null(opt$tree.list)){
+            tr    <- opt$tree.list[[i]]
+            y.ava <- !is.na(Y[,i])
+            y     <- as.matrix(Y[y.ava, i])
+            s.c   <- c()
+            for(s in shift.configuration){
+                n.s <- tr$old.order[[s]]
+                if(!is.na(n.s)){
+                    s.c <- c(s.c, n.s)
+                }
+            }
+            stopifnot(length(tr$tip.label)==nrow(y))
+        } else{
+            tr  <- tree
+            y   <- as.matrix(Y[,i])
+            s.c <- shift.configuration
+        }
+
+        if( nVariables > 1){
+            res  = cmp_mBIC_df(tr, s.c, opt)  
+            df.2 = res$df.2
+        }
+
+        fit <- my_phylolm_interface(tr, y, s.c, opt)
+        if ( all(is.na(fit)) ){ return(Inf) } 
+
+        score <- score  -2*fit$logLik + df.2
+
+        alpha [[i]] <- fit$optpar
+        sigma2[[i]] <- fit$sigma2
+        logLik[[i]] <- fit$logLik
+    }
+    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
+}
 
 cmp_mBIC_df <- function(tree, shift.configuration, opt){
 
@@ -1002,7 +1052,7 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
         if( all(is.na(fit)) ){
            return(NA)
         } 
-        varY  = var(y)
+        varY  = c(var(y))
         ld    = as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
         df.2  = 2*log(nrow(y)) - ld
         score = score  -2*fit$logLik + df.2 
@@ -1143,4 +1193,5 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
     }
     return(sol);
 }
+
 
