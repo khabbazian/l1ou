@@ -46,7 +46,7 @@ plots the tree annotated to show the edges with a shift, and the associated trai
 data(lizard.traits, lizard.tree)
 Y <- lizard.traits[,1]
 eModel <- estimate_shift_configuration(lizard.tree, Y)
-nEdges <- length(lizard.tree$edge[,1])
+nEdges <- Nedge(lizard.tree)
 ew <- rep(1,nEdges)
 ew[eModel$shift.configuration] <- 3
 plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)

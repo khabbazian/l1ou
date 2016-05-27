@@ -50,6 +50,26 @@ eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 eModel2 = fit_OU(eModel$tree, eModel$Y, eModel$profile$configurations[[2]],
                           l1ou.options=eModel$l1ou.options)
 plot(eModel2)
+
+### hypothesis testing
+
+data("lizard.traits", "lizard.tree")
+Y <- lizard.traits[,1:1]
+tr  <- lizard.tree
+
+tr <- multi2di(tr)
+tr <- reorder(tr, "postorder")
+
+### visualizing the tree with the edge indeces
+plot(tr)
+edgelabels()
+
+## place the shift position based on the hypothesis
+shift.config <- c(116, 77)
+
+hModel <- fit_OU(tr, Y, shift.config, criterion="AICc")
+plot(hModel)
+print(hModel)
 }
 \references{
 Cécile Ané, 2008. "Analysis of comparative data with hierarchical autocorrelation". Annals of Applied Statistics 2(3):1078-1102.

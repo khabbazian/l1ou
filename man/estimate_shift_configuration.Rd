@@ -6,8 +6,8 @@
 \usage{
 estimate_shift_configuration(tree, Y,
   max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUrandomRoot",
-  "OUfixedRoot"), candid.edges = NA, quietly = TRUE,
+  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUfixedRoot",
+  "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
   alpha.lower = NA, rescale = TRUE,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
@@ -83,9 +83,9 @@ lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 eModel
 
-nEdges <- length(lizard.tree$edge[,1:2]) # total number of edges
-ew <- rep(1,nEdges)                    # to set default edge width of 1
-ew[eModel$shift.configuration] <- 3    # to widen edges with a shift
+nEdges <- Nedge(lizard.tree) # total number of edges
+ew <- rep(1,nEdges)  # to set default edge width of 1
+ew[eModel$shift.configuration] <- 3   # to widen edges with a shift
 plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
 
 # example to constrain the set of candidate branches with a shift
