@@ -793,12 +793,12 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     return(score)
 }
 
-get_data <- function(tree, Y, shift.configuration, opt){
+get_data <- function(tree, Y, shift.configuration, opt, idx){
 
     if(!is.null(opt$tree.list)){
-        tr    <- opt$tree.list[[i]]
-        y.ava <- !is.na(Y[,i])
-        y     <- as.matrix(Y[y.ava, i])
+        tr    <- opt$tree.list[[idx]]
+        y.ava <- !is.na(Y[,idx])
+        y     <- as.matrix(Y[y.ava, idx])
         s.c   <- c()
         for(s in shift.configuration){
             n.s <- tr$old.order[[s]]
@@ -809,7 +809,7 @@ get_data <- function(tree, Y, shift.configuration, opt){
         stopifnot(length(tr$tip.label)==nrow(y))
     }else{
         tr  <- tree
-        y   <- as.matrix(Y[,i])
+        y   <- as.matrix(Y[, idx])
         s.c <- shift.configuration
     }
     result     <- list()
@@ -832,7 +832,7 @@ cmp_BIC <- function(tree, Y, shift.configuration, opt){
 
     for( i in 1:nVariables ){
 
-        r   <- get_data(tree, Y, shift.configuration, opt)
+        r   <- get_data(tree, Y, shift.configuration, opt, i)
         tr  <- r$tr
         y   <- r$y
         s.c <- r$s.c
@@ -868,7 +868,7 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
 
     for( i in 1:nVariables ){
 
-        r   <- get_data(tree, Y, shift.configuration, opt)
+        r   <- get_data(tree, Y, shift.configuration, opt, i)
         tr  <- r$tr
         y   <- r$y
         s.c <- r$s.c
@@ -901,7 +901,7 @@ cmp_mBIC <- function(tree, Y, shift.configuration, opt){
     alpha <- sigma2 <- logLik <- rep(0, nVariables)
     for( i in 1:nVariables ){
 
-        r   <- get_data(tree, Y, shift.configuration, opt)
+        r   <- get_data(tree, Y, shift.configuration, opt, i)
         tr  <- r$tr
         y   <- r$y
         s.c <- r$s.c
@@ -969,7 +969,7 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
     for(i in 1:ncol(Y)){
 
-        r   <- get_data(tree, Y, shift.configuration, opt)
+        r   <- get_data(tree, Y, shift.configuration, opt, i)
         tr  <- r$tr
         y   <- r$y
         s.c <- r$s.c
@@ -1004,7 +1004,7 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
     for(i in 1:ncol(Y)){
 
-        r   <- get_data(tree, Y, shift.configuration, opt)
+        r   <- get_data(tree, Y, shift.configuration, opt, i)
         tr  <- r$tr
         y   <- r$y
         s.c <- r$s.c
