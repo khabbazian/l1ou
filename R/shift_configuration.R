@@ -793,51 +793,6 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     return(score)
 }
 
-cmp_BIC <- function(tree, Y, shift.configuration, opt){
-
-    nEdges     <- Nedge(tree)
-    nTips      <- length(tree$tip.label)
-    nShifts    <- length(shift.configuration)
-    nVariables <- ncol(Y)
-
-    df.1  <- log(nTips)*(nShifts)
-    score <- df.1
-    alpha <- sigma2 <- logLik <- rep(0, nVariables)
-
-    for( i in 1:nVariables ){
-
-        if(!is.null(opt$tree.list)){
-            tr    <- opt$tree.list[[i]]
-            y.ava <- !is.na(Y[,i])
-            y     <- as.matrix(Y[y.ava, i])
-            s.c   <- c()
-            for(s in shift.configuration){
-                n.s <- tr$old.order[[s]]
-                if(!is.na(n.s)){
-                    s.c <- c(s.c, n.s)
-                }
-            }
-            stopifnot(length(tr$tip.label)==nrow(y))
-        } else{
-            tr  <- tree
-            y   <- as.matrix(Y[,i])
-            s.c <- shift.configuration
-        }
-
-        df.2 <- log(nrow(y))*(length(s.c)+ 3)
-
-        fit <- my_phylolm_interface(tr, y, s.c, opt)
-        if ( all(is.na(fit)) ){ return(Inf) } 
-
-        score <- score  -2*fit$logLik + df.2
-
-        alpha [[i]] <- fit$optpar
-        sigma2[[i]] <- fit$sigma2
-        logLik[[i]] <- fit$logLik
-    }
-    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
-}
-
 get_data <- function(tree, Y, shift.configuration, opt){
 
     if(!is.null(opt$tree.list)){
@@ -863,6 +818,38 @@ get_data <- function(tree, Y, shift.configuration, opt){
     result$s.c <- s.c
     return(result)
 }
+
+cmp_BIC <- function(tree, Y, shift.configuration, opt){
+
+    nEdges     <- Nedge(tree)
+    nTips      <- length(tree$tip.label)
+    nShifts    <- length(shift.configuration)
+    nVariables <- ncol(Y)
+
+    df.1  <- log(nTips)*(nShifts)
+    score <- df.1
+    alpha <- sigma2 <- logLik <- rep(0, nVariables)
+
+    for( i in 1:nVariables ){
+
+        r   <- get_data(tree, Y, shift.configuration, opt)
+        tr  <- r$tr
+        y   <- r$y
+        s.c <- r$s.c
+
+        df.2 <- log(nrow(y))*(length(s.c)+ 3)
+        fit  <- my_phylolm_interface(tr, y, s.c, opt)
+        if ( all(is.na(fit)) ){ return(Inf) } 
+
+        score <- score  -2*fit$logLik + df.2
+
+        alpha [[i]] <- fit$optpar
+        sigma2[[i]] <- fit$sigma2
+        logLik[[i]] <- fit$logLik
+    }
+    return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
+}
+
 
 cmp_AICc <- function(tree, Y, shift.configuration, opt){
 
