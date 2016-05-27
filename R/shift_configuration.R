@@ -838,6 +838,32 @@ cmp_BIC <- function(tree, Y, shift.configuration, opt){
     return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
+get_data <- function(tree, Y, shift.configuration, opt){
+
+    if(!is.null(opt$tree.list)){
+        tr    <- opt$tree.list[[i]]
+        y.ava <- !is.na(Y[,i])
+        y     <- as.matrix(Y[y.ava, i])
+        s.c   <- c()
+        for(s in shift.configuration){
+            n.s <- tr$old.order[[s]]
+            if(!is.na(n.s)){
+                s.c <- c(s.c, n.s)
+            }
+        }
+        stopifnot(length(tr$tip.label)==nrow(y))
+    }else{
+        tr  <- tree
+        y   <- as.matrix(Y[,i])
+        s.c <- shift.configuration
+    }
+    result     <- list()
+    result$tr  <- tr
+    result$y   <- y
+    result$s.c <- s.c
+    return(result)
+}
+
 cmp_AICc <- function(tree, Y, shift.configuration, opt){
 
     nTips      <- length(tree$tip.label)
@@ -855,23 +881,10 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
 
     for( i in 1:nVariables ){
 
-        if(!is.null(opt$tree.list)){
-            tr    <- opt$tree.list[[i]]
-            y.ava <- !is.na(Y[,i])
-            y     <- as.matrix(Y[y.ava, i])
-            s.c   <- c()
-            for(s in shift.configuration){
-                n.s <- tr$old.order[[s]]
-                if(!is.na(n.s)){
-                    s.c <- c(s.c, n.s)
-                }
-            }
-            stopifnot(length(tr$tip.label)==nrow(y))
-        }else{
-            tr  <- tree
-            y   <- as.matrix(Y[,i])
-            s.c <- shift.configuration
-        }
+        r   <- get_data(tree, Y, shift.configuration, opt)
+        tr  <- r$tr
+        y   <- r$y
+        s.c <- r$s.c
 
         fit <- my_phylolm_interface(tr, y, s.c, opt)
         if ( all(is.na(fit)) ){ return(Inf) } 
@@ -901,23 +914,10 @@ cmp_mBIC <- function(tree, Y, shift.configuration, opt){
     alpha <- sigma2 <- logLik <- rep(0, nVariables)
     for( i in 1:nVariables ){
 
-        if(!is.null(opt$tree.list)){
-            tr    <- opt$tree.list[[i]]
-            y.ava <- !is.na(Y[,i])
-            y     <- as.matrix(Y[y.ava, i])
-            s.c   <- c()
-            for(s in shift.configuration){
-                n.s <- tr$old.order[[s]]
-                if(!is.na(n.s)){
-                    s.c <- c(s.c, n.s)
-                }
-            }
-            stopifnot(length(tr$tip.label)==nrow(y))
-        } else{
-            tr  <- tree
-            y   <- as.matrix(Y[,i])
-            s.c <- shift.configuration
-        }
+        r   <- get_data(tree, Y, shift.configuration, opt)
+        tr  <- r$tr
+        y   <- r$y
+        s.c <- r$s.c
 
         if( nVariables > 1){
             res  = cmp_mBIC_df(tr, s.c, opt)  
@@ -982,23 +982,10 @@ cmp_pBICess <- function(tree, Y, shift.configuration, opt){
 
     for(i in 1:ncol(Y)){
 
-        if(!is.null(opt$tree.list)){
-            tr    = opt$tree.list[[i]]
-            y.ava = !is.na(Y[,i])
-            y     = as.matrix(Y[y.ava, i])
-            s.c   = c()
-            for(s in shift.configuration){
-                n.s = tr$old.order[[s]]
-                if(!is.na(n.s)){
-                    s.c = c(s.c, n.s)
-                }
-            }
-            stopifnot(length(tr$tip.label)==nrow(y))
-        }else{
-            tr   = tree
-            y    = as.matrix(Y[,i])
-            s.c  = shift.configuration
-        }
+        r   <- get_data(tree, Y, shift.configuration, opt)
+        tr  <- r$tr
+        y   <- r$y
+        s.c <- r$s.c
 
         fit  = my_phylolm_interface(tr, y, s.c, opt)
         if( all(is.na(fit)) ){
@@ -1030,23 +1017,10 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
 
     for(i in 1:ncol(Y)){
 
-        if(!is.null(opt$tree.list)){
-            tr    = opt$tree.list[[i]]
-            y.ava = !is.na(Y[,i])
-            y     = as.matrix(Y[y.ava, i])
-            s.c   = c()
-            for(s in shift.configuration){
-                n.s = tr$old.order[[s]]
-                if(!is.na(n.s)){
-                    s.c = c(s.c, n.s)
-                }
-            }
-            stopifnot(length(tr$tip.label)==nrow(y))
-        }else{
-            tr   = tree
-            y    = as.matrix(Y[,i])
-            s.c  = shift.configuration
-        }
+        r   <- get_data(tree, Y, shift.configuration, opt)
+        tr  <- r$tr
+        y   <- r$y
+        s.c <- r$s.c
 
         fit   = my_phylolm_interface(tr, y, s.c, opt)
         if( all(is.na(fit)) ){
