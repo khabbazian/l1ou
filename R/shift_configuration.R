@@ -776,7 +776,7 @@ cmp_model_score <-function(tree, Y, shift.configuration, opt){
     } else if( ic == "AICc"){
         res <- cmp_AICc(tree, Y, shift.configuration, opt)
     } else if( ic == "mBIC"){
-        stop("undifined")
+        res <- cmp_mBIC(tree, Y, shift.configuration, opt) 
     } else if( ic == "pBICess"){
         res <- cmp_pBICess(tree, Y, shift.configuration, opt) 
     } else if(ic == "pBIC"){
