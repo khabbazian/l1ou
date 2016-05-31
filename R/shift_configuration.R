@@ -859,7 +859,7 @@ cmp_BIC <- function(tree, Y, shift.configuration, opt){
 
         df.2 <- log(nrow(y))*(length(s.c)+ 3)
         fit  <- my_phylolm_interface(tr, y, s.c, opt)
-        if ( all(is.na(fit)) ){ return(Inf) } 
+        if ( all(is.na(fit)) ){ return(NA) } 
 
         score <- score  -2*fit$logLik + df.2
 
@@ -881,7 +881,7 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
     N   <- nTips*nVariables
     d.f <- 2*p + (2*p*(p+1))/(N-p-1) 
     if( p > N-2 )
-        return(Inf)
+        return(NA)
 
     score <- d.f
     alpha <- sigma2 <- logLik <- rep(0, nVariables)
@@ -894,7 +894,7 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
         s.c <- r$s.c
 
         fit <- my_phylolm_interface(tr, y, s.c, opt)
-        if ( all(is.na(fit)) ){ return(Inf) } 
+        if ( all(is.na(fit)) ){ return(NA) } 
         score <- score  -2*fit$logLik 
 
         alpha [[i]] <- fit$optpar
@@ -932,7 +932,7 @@ cmp_mBIC <- function(tree, Y, shift.configuration, opt){
         }
 
         fit <- my_phylolm_interface(tr, y, s.c, opt)
-        if ( all(is.na(fit)) ){ return(Inf) } 
+        if ( all(is.na(fit)) ){ return(NA) } 
 
         score <- score  -2*fit$logLik + df.2
 
