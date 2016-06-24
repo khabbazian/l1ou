@@ -5,7 +5,7 @@ The l1ou package provides functions to study trait evolution from comparative da
 Shifts can be detected from multiple traits, assuming that all traits shifted along the same lineages. Estimation is very fast thanks to lasso techniques, and the user can choose from multiple information criteria for model selection, including a phylognetic BIC. 
 Citation: 
 
-- M. Khabbazian, R. Kriebel, K. Rohe, and C&eacute;cile An&eacute;. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
+- M. Khabbazian, R. Kriebel, K. Rohe, and C&eacute;cile An&eacute;. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534  
 
 
 ### Install using the devtools package.

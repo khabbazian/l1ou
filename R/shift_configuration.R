@@ -1053,6 +1053,7 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
 
     Z <- generate_design_matrix(tree, type="simpX")
     preds = cbind(1, Z[ ,shift.configuration])
+    prev.val <-options()$warn 
     options(warn = -1)
     if( is.na(opt$alpha.lower.bound) & is.na(opt$alpha.starting.value) ){
         fit    <-  try( phylolm(Y~preds-1, phy=tree, model=opt$root.model,
@@ -1068,7 +1069,7 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
                                 lower.bound    = l, 
                                 upper.bound    = u), silent = opt$quietly)
     }
-    options(warn = 0)
+    options(warn = prev.val )
 
     if(class(fit) == "try-error"){ 
         if(!opt$quietly){

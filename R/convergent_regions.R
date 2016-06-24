@@ -1,5 +1,4 @@
 
-
 generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alpha, designMatrix=F){
 
     nTips   <-  length(tr$tip.label)
@@ -54,12 +53,13 @@ generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alp
 my.phylolm.interface.new  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA){
 
     preds <- generate_prediction_vec(tr, shift.configuration, conv.regimes, alpha)
+    prev.val <- options()$warn
     options(warn = -1)
-    fit     <-    phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
-                        starting.value = alpha,
-                        lower.bound = alpha, 
-                        upper.bound = alpha)
-    options(warn = 0)
+    fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
+                      starting.value = alpha,
+                      lower.bound = alpha, 
+                      upper.bound = alpha)
+    options(warn = prev.val)
     return(fit)
 }
 

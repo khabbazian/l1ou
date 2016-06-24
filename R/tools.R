@@ -136,8 +136,10 @@ add_configuration_score_to_list  <- function(shift.configuration, score, moreInf
 }
 
 get_configuration_score_from_list <- function(shift.configuration){
-    shift.configuration = sort(shift.configuration)
-    res = get_score_of_configuration(paste0(shift.configuration, collapse=" "))
+    if(length(shift.configuration) > 0){
+        shift.configuration <- sort(shift.configuration)
+    }
+    res <- get_score_of_configuration(paste0(shift.configuration, collapse=" "))
     if( res$valid == FALSE){
         return(NA)
     }
@@ -311,6 +313,7 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
     g       = graph.edgelist(tree$edge, directed = TRUE)
     o.vec = rep(0, nEdges)
 
+    prev.val <-options()$warn 
     options(warn = -1)
     if( length(shift.configuration) > 0)
         for(itr in 1:length(shift.configuration) ){
@@ -326,7 +329,7 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
             }
             o.vec = o.vec + o.vec.tmp 
         }
-    options(warn = 0)
+    options(warn = prev.val)
     return( o.vec )
 }
 
@@ -683,14 +686,17 @@ print.l1ou <- function(model, ...){
     cat("\n")
 
     cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
-    tmp.mat = t(as.matrix(model$shift.values))
-    if(length(model$shift.configuration)>0)
-        colnames(tmp.mat) = model$shift.configuration
-    if(!all(is.null(colnames(model$Y)))){
-        rownames(tmp.mat) = colnames(model$Y)
+
+    if( length(model$shift.configuration) > 0){
+        tmp.mat = t(as.matrix(model$shift.values))
+        if(length(model$shift.configuration)>0)
+            colnames(tmp.mat) = model$shift.configuration
+        if(!all(is.null(colnames(model$Y)))){
+            rownames(tmp.mat) = colnames(model$Y)
+        }
+        print(tmp.mat)
+        cat("\n")
     }
-    print(tmp.mat)
-    cat("\n")
 
 
     sc <- model$shift.configuration
@@ -702,30 +708,20 @@ print.l1ou <- function(model, ...){
     }
 
 
-    tmp.mat = rbind(model$alpha, 
+    tmp.mat <- rbind(model$alpha, 
                     model$sigma2, 
                     model$sigma2/(2 * model$alpha),
                     model$logLik
                     )
-    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+    rownames(tmp.mat) <- c("adaptation rate (alpha)", 
                           "variance (sigma2)", 
                           "stationary variance (gamma)",
                           "logLik"
                           )
     if(!all(is.null(colnames(model$Y)))){
-        colnames(tmp.mat) = colnames(model$Y)
+        colnames(tmp.mat) <- colnames(model$Y)
     }
     print(tmp.mat)
     cat("\n")
-
-    #top.scores = min(nTop.scores, length(model$profile$scores))
-    #cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
-    #cat("scores\t\tshift.configurations\n")
-    #for (i in 1:top.scores){
-    #    cat(model$profile$scores[[i]])
-    #    cat("\t")
-    #    cat(model$profile$configurations[[i]])
-    #    cat("\n")
-    #}
 }
 
