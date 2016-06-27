@@ -5,7 +5,7 @@
 \title{Fits an OU model based on a given configuration}
 \usage{
 fit_OU(tree, Y, shift.configuration, criterion = c("pBIC", "pBICess", "mBIC",
-  "BIC", "AICc"), root.model = c("OUrandomRoot", "OUfixedRoot"),
+  "BIC", "AICc"), root.model = c("OUfixedRoot", "OUrandomRoot"),
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
   alpha.lower = NA, l1ou.options = NA)
 }

@@ -284,11 +284,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         stopifnot(ncol(Y) == length(alpha))
     }
 
+    Ymv <- Y
     if(opt$rescale==TRUE){
-        Y  = rescale_matrix(Y)
+        Ymv  = rescale_matrix(Ymv)
     }
 
-    nVariables    = ncol(Y)
+    nVariables    = ncol(Ymv)
     nEdges        = Nedge(tree)
     ##X             = generate_design_matrix(tree, "apprX")
     ##X             = cbind(X,1)
@@ -301,12 +302,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         to.be.removed = c(nEdges, which(tree$edge.length < opt$edge.length.threshold))
     }
 
-    offset        = rep(nEdges*(0:(ncol(Y)-1)), each=length(to.be.removed))
-    to.be.removed = rep(to.be.removed, ncol(Y)) + offset
+    offset        = rep(nEdges*(0:(ncol(Ymv)-1)), each=length(to.be.removed))
+    to.be.removed = rep(to.be.removed, ncol(Ymv)) + offset
 
-    YY  = Y
+    YY  = Ymv
     grpX = matrix(0,0,0) #empty matrix
-    for( i in 1:ncol(Y)){
+    for( i in 1:ncol(Ymv)){
         X     = matrix(0,0,0)
 
         if ( est.alpha == TRUE ){
@@ -321,8 +322,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
 
-        y.ava        = !is.na(Y[,i])
-        YY[y.ava, i] = Cinvh[y.ava, y.ava] %*% Y[y.ava, i]
+        y.ava        = !is.na(Ymv[,i])
+        YY[y.ava, i] = Cinvh[y.ava, y.ava] %*% Ymv[y.ava, i]
 
         ##X     = cbin(Cinvh%*%X,1)
         ##grpX  = adiag(grpX, X)  
@@ -332,8 +333,8 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     np     = ncol(grpX)
     grpY   = c(YY)
     grpX   = as.matrix(grpX[,-to.be.removed])
-    grpIdx = rep(1:ncol(X), ncol(Y))[-to.be.removed]
-    ##grpIdx = rep(c(1:(ncol(X)-1),NA), ncol(Y))[-to.be.removed]
+    grpIdx = rep(1:ncol(X), ncol(Ymv))[-to.be.removed]
+    ##grpIdx = rep(c(1:(ncol(X)-1),NA), ncol(Ymv))[-to.be.removed]
 
 
     ###NOTE: handling NAs in grpY
@@ -360,6 +361,7 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
     ##removing the intercept results
     #sol$coefficients     = sol$coefficients[-ncol(grpX), ]
 
+    ### use the original Y
     result  = select_best_solution(tree, Y, sol, opt=opt)
     eModel  = fit_OU_model(tree, Y, result$shift.configuration, opt=opt)
 
@@ -636,7 +638,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
 #'@export
 fit_OU <- function(tree, Y, shift.configuration, 
                      criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
-                     root.model   = c("OUrandomRoot", "OUfixedRoot"),
+                     root.model   = c("OUfixedRoot", "OUrandomRoot"),
                      alpha.starting.value = NA,
                      alpha.upper  = alpha_upper_bound(tree), 
                      alpha.lower  = NA,
@@ -756,7 +758,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     ## and do not recompute the score. So it doesn't have any overhead.
     score = cmp_model_score (tree, Y, shift.configuration, opt) 
 
-    model = list(Y                   = Y, 
+    model = list(
+                 Y                   = Y, 
                  tree                = tree,
                  shift.configuration = shift.configuration, 
                  shift.values        = shift.values,
@@ -945,7 +948,9 @@ cmp_mBIC <- function(tree, Y, shift.configuration, opt){
 
 cmp_mBIC_df <- function(tree, shift.configuration, opt){
 
-    shift.configuration <- sort(shift.configuration)
+    if(length(shift.configuration)>0){
+        shift.configuration <- sort(shift.configuration)
+    }
     nTips               <- length(tree$tip.label)
     nShifts             <- length(shift.configuration)
 
