@@ -1,24 +1,37 @@
+generate_prediction_vec  <-  function(tr, 
+                                      shift.configuration, 
+                                      conv.regimes, 
+                                      alpha, 
+                                      ageMatrix=NULL, 
+                                      designMatrix=F){
 
-generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alpha, designMatrix=F){
+    if(is.null(ageMatrix)){
+        if ( is.na(alpha) ){
+            X   <-  generate_design_matrix(tr, "apprX")
+        }else{
+            X   <-  generate_design_matrix(tr, "orgX",  alpha = alpha)
+        }
 
-    nTips   <-  length(tr$tip.label)
-    if ( is.na(alpha) ){
-        X   <-  generate_design_matrix(tr, "apprX")
+        if(designMatrix){
+            Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot")$sqrtInvSigma )
+            X     <- Cinvh%*%X
+        }
+        preds <- cbind(1, X[,shift.configuration])
+        colnames(preds) <- c(0, shift.configuration)
+        Z           <- generate_design_matrix(tr, "simpX")
+        template.Z  <- cbind(1, Z[,shift.configuration])
+        colnames(template.Z) <- c(0, shift.configuration) 
     }else{
-        X   <-  generate_design_matrix(tr, "orgX",  alpha <- alpha)
+        stopifnot(ncol(ageMatrix)==length(shift.configuration))
+        stopifnot(alpha>0)
+
+        preds <- cbind(1, 1-exp(-alpha*ageMatrix))
+        colnames(preds) <- c(0, shift.configuration)
+
+        template.Z  <- cbind(1, ageMatrix)
+        colnames(template.Z) <- c(0, shift.configuration) 
     }
 
-    if(designMatrix){
-        Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot")$sqrtInvSigma )
-        X     <- Cinvh%*%X
-    }
-
-    Z           <- generate_design_matrix(tr, "simpX")
-    preds       <- cbind(1, X[,shift.configuration])
-    template.Z  <- cbind(1, Z[,shift.configuration])
-
-    colnames(preds)      <- c(0, shift.configuration)
-    colnames(template.Z) <- c(0, shift.configuration) 
 
     for( i in 1:ncol(preds) ){
         for( j in 1:ncol(preds) ){
@@ -40,7 +53,7 @@ generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alp
             if ( length(set1) > 1){
                 preds.2 <- cbind( preds.2, rowSums( preds[, paste(set1)] ) ) 
             } else{
-                preds.2 <- cbind( preds.2,  preds[, paste(set1) ] ) 
+                preds.2 <- cbind( preds.2,  preds[, paste(set1)] ) 
             }
             colnames(preds.2)[length(preds.2[1,])] <- i
         }
@@ -60,7 +73,13 @@ phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = li
     #                  lower.bound = alpha, 
     #                  upper.bound = alpha)
 
-    fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot")
+    fit <-  phylolm_CR(Y~preds-1, 
+                       phy  = tr, 
+                       model = "OUfixedRoot",
+                       sc=shift.configuration,
+                       cr=conv.regimes,
+                       starting.value=alpha
+                       )
     options(warn = prev.val)
     return(fit)
 }
