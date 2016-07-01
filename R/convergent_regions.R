@@ -78,7 +78,8 @@ phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = li
                        model = "OUfixedRoot",
                        sc=shift.configuration,
                        cr=conv.regimes,
-                       starting.value=alpha
+                       starting.value=alpha,
+                       lower.bound=alpha/100
                        )
     options(warn = prev.val)
     return(fit)
