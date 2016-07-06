@@ -12,7 +12,7 @@ estimate_convergent_regimes(model, criterion = c("AICc", "pBIC"),
 
 \item{criterion}{information criterion for model selection (see Details in \code{\link{configuration_ic}}).}
 
-\item{method}{method for finding convergent regimes. ``rr'' is based on genlasso, a regularized regression. ``backward'' is a heuristic method similar to \code{surface_backward} function.}
+\item{method}{method for finding convergent regimes. ``rr'' is based on genlasso, a regularized linear regression estimation. ``backward'' is a heuristic method similar to \code{surface_backward} function.}
 }
 \description{
 Given estimated evolutionary shift positions this function finds convergent regimes.
