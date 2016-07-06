@@ -104,12 +104,34 @@ cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     score <- df.1
     for( i in 1:ncol(Y)){
         fit   <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
-        if ( all( is.na( fit) ) ){
-            return(Inf)
-        } 
+        if ( all( is.na( fit) ) ){ return(Inf) } 
         score <- score  -2*fit$logLik + df.2
     }
     return(score)
+}
+
+cmp_BIC_CR <- function(tree, Y, shift.configuration, conv.regimes, alpha){
+
+    stopifnot( length(alpha) == ncol(Y) )
+
+    nEdges     <- Nedge(tree)
+    nTips      <- length(tree$tip.label)
+    nShifts    <- length(shift.configuration)
+    nShiftVals <- length( conv.regimes ) - 1 
+    nVariables <- ncol(Y)
+
+    df.1  <- log(nTips)*(nShiftVals)
+    score <- df.1
+    #alpha <- sigma2 <- logLik <- rep(0, nVariables)
+
+    for( i in 1:nVariables ){
+
+        df.2 <- log(nTips)*(nShifts + 3)
+        fit  <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
+        if ( all(is.na(fit)) ){ return(Inf) } 
+        score <- score  -2*fit$logLik + df.2
+    }
+    return( score )
 }
 
 
@@ -140,6 +162,35 @@ cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
         score <- score  -2*fit$logLik + df.2
     }
     return( score )
+}
+
+cmp_model_score_CR <- function(tree, Y, shift.configuration, regimes=NULL, criterion, alpha=NA){
+
+    if(is.null(regimes)){
+        if(is.null(names(shift.configuration))){
+            stop("the convergent regimes must be indicated through the names of the shift.configuration vector.")
+        }
+        cr.names <- names(shift.configuration)
+        regimes <- list()
+        idx <- 1
+        for( cr in cr.names){
+           regimes[[idx]] <- sort( shift.configuration[which(cr.names==cr)] )
+           idx <- idx + 1
+        }
+    }
+
+    if( criterion == "AICc"){
+        score <- cmp_AICc_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
+    } 
+    if( criterion == "pBIC"){
+        score <- cmp_pBIC_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
+    } 
+    if( criterion == "BIC"){
+        score <- cmp_BIC_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
+    }
+    stop("undefined criterion for convergent evolution.")
+
+    return(score)
 }
 
 
@@ -214,17 +265,8 @@ find_convergent_regimes  <-  function(tr, Y, alpha, criterion, regimes){
 }
 
 
-cmp_model_score_CR  <-  function(tr, Y, sc, regimes, criterion, alpha){
-     if( criterion == "AICc"){
-         score <- cmp_AICc_CR(tr, Y, sc, conv.regimes = regimes, alpha=alpha)
-     } else { #if( criterion == "pBIC")
-         score <- cmp_pBIC_CR(tr, Y, sc, conv.regimes = regimes, alpha=alpha)
-     }
-     return(score)
-}
-
 estimate_convergent_regimes_surface  <-  function(model, 
-                                        criterion = c("AICc", "pBIC")
+                                        criterion = c("pBIC", "BIC", "AICc")
                                         ){
     criterion <- match.arg(criterion)
     Y         <- as.matrix(model$Y)
