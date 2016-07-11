@@ -4,7 +4,7 @@
 \alias{estimate_convergent_regimes}
 \title{Detects convergent regimes under an OU model}
 \usage{
-estimate_convergent_regimes(model, criterion = c("AICc", "pBIC"),
+estimate_convergent_regimes(model, criterion = c("AICc", "pBIC", "BIC"),
   method = c("backward", "rr"))
 }
 \arguments{
