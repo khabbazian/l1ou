@@ -181,14 +181,12 @@ cmp_model_score_CR <- function(tree, Y, shift.configuration, regimes=NULL, crite
 
     if( criterion == "AICc"){
         score <- cmp_AICc_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
-    } 
-    if( criterion == "pBIC"){
+    } else if( criterion == "pBIC"){
         score <- cmp_pBIC_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
-    } 
-    if( criterion == "BIC"){
+    } else if( criterion == "BIC"){
         score <- cmp_BIC_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
-    }
-    stop("undefined criterion for convergent evolution.")
+    } else
+        stop("undefined criterion for convergent evolution!")
 
     return(score)
 }
@@ -403,15 +401,15 @@ estimate_convergent_regimes_surface  <-  function(model,
 #'
 #'@export
 estimate_convergent_regimes  <-  function(model, 
-                                        criterion=c("AICc", "pBIC"),
+                                        criterion=c("AICc", "pBIC", "BIC"),
                                         method=c("backward", "rr")
                                      ){
     method  <-   match.arg(method)
+    criterion   <-   match.arg(criterion)
     if(method == "backward"){
         return(estimate_convergent_regimes_surface(model, criterion))
     }
 
-    criterion   <-   match.arg(criterion)
     Y   <-  32*model$Y/norm(model$Y)
     Y   <-  as.matrix(Y)
     tr  <-  model$tree
