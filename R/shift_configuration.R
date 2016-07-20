@@ -16,6 +16,7 @@
 #'@param alpha.starting.value optional starting value for the optimization of the phylogenetic adaptation rate. 
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
+#'@param lars.alg model selection algorithm for LARS in univariate case. 
 #'@param rescale logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.
 #'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.
 #'@param grp.delta internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
@@ -80,6 +81,7 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.starting.value   = NA, 
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
+           lars.alg               = c("lasso", "stepwise"),
            rescale                = TRUE,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
@@ -177,6 +179,7 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$use.saved.scores  <- TRUE
         l1ou.options$max.nShifts       <- max.nShifts
         l1ou.options$criterion         <- match.arg(criterion)
+        l1ou.options$lars.alg          <- match.arg(lars.alg)
         l1ou.options$root.model        <- match.arg(root.model)
         l1ou.options$quietly           <- quietly
 
@@ -257,7 +260,7 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     XX  = as.matrix(XX[,-to.be.removed])
 
     capture.output(
-            sol.path  <- lars(XX, YY, type="lasso", normalize=FALSE,
+            sol.path  <- lars(XX, YY, type=opt$lars.alg, normalize=FALSE,
                               intercept=TRUE, max.steps=opt$max.nShifts)
         )
 

@@ -9,7 +9,7 @@ estimate_shift_configuration(tree, Y,
   "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = NA, rescale = TRUE,
+  alpha.lower = NA, lars.alg = c("lasso", "stepwise"), rescale = TRUE,
   edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
   grp.seq.ub = 5, l1ou.options = NA)
 }
@@ -33,6 +33,8 @@ estimate_shift_configuration(tree, Y,
 \item{alpha.upper}{optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips.}
 
 \item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
+
+\item{lars.alg}{model selection algorithm for LARS in univariate case.}
 
 \item{rescale}{logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.}
 
