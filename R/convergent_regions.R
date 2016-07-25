@@ -1,3 +1,4 @@
+## generate the W matrix, feature vectors, as described in the doc.
 generate_prediction_vec  <-  function(tr, 
                                       shift.configuration, 
                                       conv.regimes, 
@@ -5,6 +6,7 @@ generate_prediction_vec  <-  function(tr,
                                       ageMatrix=NULL, 
                                       designMatrix=F){
 
+    ## In fact ageMatrix is the approximate design matrix.
     if(is.null(ageMatrix)){
         if ( is.na(alpha) ){
             X   <-  generate_design_matrix(tr, "apprX")
@@ -32,6 +34,8 @@ generate_prediction_vec  <-  function(tr,
         colnames(template.Z) <- c(0, shift.configuration) 
     }
 
+    ## now the coefficients in the linear regression represent the optimum values.
+    ## rather than the shift values.
 
     for( i in 1:ncol(preds) ){
         for( j in 1:ncol(preds) ){
@@ -39,28 +43,30 @@ generate_prediction_vec  <-  function(tr,
                 next
             set1 <- which( template.Z[,i] > 0)
             set2 <- which( template.Z[,j] > 0)
+            ## if edge j is an ancestor of i
             if ( all(set1 %in% set2) ) 
                 preds[ ,j] <- preds[ ,j] - preds[ ,i]
         }
     } 
 
-    preds.2 <- numeric()
+    W <- numeric()
     if ( length( conv.regimes ) > 0 ){
         for( i in 1:length(conv.regimes) ){
             set1 <- paste(conv.regimes[[i]])
             stopifnot( length(set1) > 0 )
 
+            ## The equality constrain of two optimum values translates 
+            ## to combining the corresponding predictors.
             if ( length(set1) > 1){
-                preds.2 <- cbind( preds.2, rowSums( preds[, paste(set1)] ) ) 
+                W <- cbind( W, rowSums( preds[, paste(set1)] ) ) 
             } else{
-                preds.2 <- cbind( preds.2,  preds[, paste(set1)] ) 
+                W <- cbind( W,  preds[, paste(set1)] ) 
             }
-            colnames(preds.2)[length(preds.2[1,])] <- i
+            colnames(W)[length(W[1,])] <- i
         }
     }
 
-    preds <- preds.2
-    return(preds)
+    return(W)
 }
 
 phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA){
@@ -85,7 +91,7 @@ phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = li
     return(fit)
 }
 
-
+## compute the AICc score
 cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
     stopifnot( length(alpha) == ncol(Y) )
@@ -110,6 +116,7 @@ cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     return(score)
 }
 
+## compute the BIC score
 cmp_BIC_CR <- function(tree, Y, shift.configuration, conv.regimes, alpha){
 
     stopifnot( length(alpha) == ncol(Y) )
@@ -135,6 +142,7 @@ cmp_BIC_CR <- function(tree, Y, shift.configuration, conv.regimes, alpha){
 }
 
 
+## compute the pBIC score
 cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
     nShifts = length(shift.configuration)
@@ -163,6 +171,7 @@ cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     }
     return( score )
 }
+
 
 cmp_model_score_CR <- function(tree, Y, shift.configuration, regimes=NULL, criterion, alpha=NA){
 
@@ -262,7 +271,10 @@ find_convergent_regimes  <-  function(tr, Y, alpha, criterion, regimes){
     return(out)
 }
 
-
+## This method finds the convergent evolution model that maximizes the 
+## criterion such as AICc. To find the optimum, it combines shifts into a 
+## convergent regime or splits a regime if that decreases the criterion until 
+## no progress.  NOTE: CR is a short for convergent regime.
 estimate_convergent_regimes_surface  <-  function(model, 
                                         criterion = c("pBIC", "BIC", "AICc")
                                         ){
@@ -327,7 +339,7 @@ estimate_convergent_regimes_surface  <-  function(model,
         current.num.cc <- length(min.regimes) 
         elist.ref      <- elist.min
 
-        ## break a cr if it reduces the score
+        ## break a CR if it increases the score
         ##FIXME: we don't need to check the very last edge we added
         if( has.progress){
             for( e.idx in 1:length(elist.ref[,1]) ){
@@ -410,7 +422,9 @@ estimate_convergent_regimes  <-  function(model,
         return(estimate_convergent_regimes_surface(model, criterion))
     }
 
-    Y   <-  32*model$Y/norm(model$Y)
+
+    ## doing this for genlasso. FIXME: change the solver as it seems unstable.
+    Y   <-  32*model$Y/lnorm(model$Y,l=2)
     Y   <-  as.matrix(Y)
     tr  <-  model$tree
 
@@ -421,6 +435,8 @@ estimate_convergent_regimes  <-  function(model,
     prev.min.score <- min.score <- Inf
     ar.counter <- 1
     
+    ## similar to "backward" method. But here we may combine several shifts into convergent regimes
+    ## at the same time therefore it is faster.
     for(iter in 1:length(model$shift.configuration) ){
         out  <-  find_convergent_regimes(tr, Y, model$alpha, criterion, regimes = c.regimes )
         for(num.digits in c(12,13,15,16)){

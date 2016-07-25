@@ -89,6 +89,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
 lnorm <- function(v,l=1)   { return( (sum(abs(v)^l, na.rm=TRUE))^(1/l) ) }
 
+## When we have missing values for each trait we require an accordingly pruned tree.  
 gen_tree_array <- function(tree, Y){ 
     ## here I assume the tree tip labels match the Y matrix rows 
     ## in the same order.
