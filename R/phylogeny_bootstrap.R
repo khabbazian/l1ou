@@ -65,7 +65,7 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
 
     RE    = sqrt_OU_covariance(tree, alpha=model$alpha, 
                                root.model = model$l1ou.options$root.model,
-                               check.order=F, check.ultramteric=F)
+                               check.order=F, check.ultrametric=F)
 
     C.IH  = t(RE$sqrtInvSigma)
     C.H   = RE$sqrtSigma
@@ -148,7 +148,7 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
     for( idx in 1:ncol(Y) ){
         RE    = sqrt_OU_covariance(tree, alpha = model$alpha[[idx]], 
                                    root.model = model$l1ou.options$root.model,
-                                   check.order=F, check.ultramteric=F ) 
+                                   check.order=F, check.ultrametric=F ) 
         C.IH  = t(RE$sqrtInvSigma) 
         C.Hlist[[idx]] = RE$sqrtSigma
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx])

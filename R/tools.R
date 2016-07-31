@@ -89,9 +89,10 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
 
 lnorm <- function(v,l=1)   { return( (sum(abs(v)^l, na.rm=TRUE))^(1/l) ) }
 
-## When we have missing values for each trait we require an accordingly pruned tree.  
+## This function is useful for handling missing values in multivariate regression. 
+## It generates a list of design matrices and trees considering according to the missing values.
 gen_tree_array <- function(tree, Y){ 
-    ## here I assume the tree tip labels match the Y matrix rows 
+    ## here I assume that the tree tip labels match the Y matrix rows 
     ## in the same order.
     tree.list <- list()
     for(trait.idx in 1:ncol(Y)){
@@ -100,11 +101,13 @@ gen_tree_array <- function(tree, Y){
         tr <- drop.tip(tree, setdiff(tree$tip.label, availables))
         tr <- reorder(tr, "postorder")
 
-        X.1 <- l1ou:::generate_design_matrix(tree, type="simpX")
+        X.1 <- generate_design_matrix(tree, type="simpX")
         rownames(X.1) <- tree$tip.label
-        X.2 <- l1ou:::generate_design_matrix(tr, type="simpX")
+        X.2 <- generate_design_matrix(tr, type="simpX")
         rownames(X.2) <- tr$tip.label
 
+        ## when we drop some tips of a tree edges order changes so we need 
+        ## to have a universal mapping for shift configurations.
         old.order <- rep(NA, Nedge(tree))
         for(i in 1:Nedge(tree)){
             tip.set  <- rownames(X.1)[which(X.1[,i]>0)]
@@ -125,6 +128,7 @@ gen_tree_array <- function(tree, Y){
             old.order[[i]] <- e.idx
         }
         tr$old.order <- old.order
+        tr$Z <- X.2
         tree.list[[trait.idx]]  <-  tr
     }
     return(tree.list)
@@ -684,6 +688,11 @@ print.l1ou <- function(model, ...){
 
     cat(paste0(model$l1ou.options$criterion, " score: "))
     cat(model$score)
+    if(!is.null(model$cr.score)){
+        cat("\n")
+        cat(paste0(model$l1ou.options$criterion, " CR score: "))
+        cat(model$cr.score)
+    }
     cat("\n")
 
     cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")

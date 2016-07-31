@@ -6,8 +6,9 @@
 \usage{
 fit_OU(tree, Y, shift.configuration, criterion = c("pBIC", "pBICess", "mBIC",
   "BIC", "AICc"), root.model = c("OUfixedRoot", "OUrandomRoot"),
-  alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = NA, l1ou.options = NA)
+  cr.regimes = NULL, alpha.starting.value = NA,
+  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
+  l1ou.options = NA)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo, with branch lengths, and edges in postorder.}

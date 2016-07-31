@@ -92,26 +92,28 @@ estimate_shift_configuration <- function(tree, Y,
     if (!inherits(tree, "phylo"))  stop("object \"tree\" is not of class \"phylo\".")
     if (is.null(tree$edge.length)) stop("the tree has no branch lengths.")
     if (is.null(tree$tip.label))   stop("the tree has no tip labels.")	
-    if(!is.ultrametric(tree))      stop("the input tree is not ultrametric")
+    if(!is.ultrametric(tree))      stop("the input tree is not ultrametric.")
 
     if( !identical(tree$edge, reorder(tree, "postorder")$edge))
         stop("the tree is not in postorder, use adjust_data function to reorder the tree!")
 
     Y <- as.matrix(Y)
 
+    multivariate.missing <- FALSE
     if( any(is.na(Y)) ){
         if( ncol(Y) == 1){
-            stop("some of the entries of the trait vector/matrix (Y) are missing.
+            stop("some of the entries of the trait vector (Y) are missing.
                  you may use drop.tip to drop corresponding tips from the tree.\n")
         }else{
             ## the trait matrix can have some missing values as long as
             ## all the tips have at least one value.
-            warning("some of the entries of the trait vector/matrix (Y) are
+            warning("some of the entries of the trait matrix (Y) are
                     missing.\n", immediate.=TRUE)
             if( length( which(rowSums(!is.na(Y))==0) ) != 0 ){
                 stop("the trait matrix has a row with all missing values. you
                      may use drop.tip to drop corresponding tips from the tree.\n")
             }
+            multivariate.missing <- TRUE
         }
     }
 
@@ -149,7 +151,7 @@ estimate_shift_configuration <- function(tree, Y,
         }
 
         stop("the order of entries/rows of the trait vector/matrix (Y) does not matche 
-             the order of the tip labels. Use adjust_data function to fix that\n")
+             the order of the tip labels. Use adjust_data function to fix that.\n")
     }
 
     stopifnot(all(rownames(Y) == tree$tip.label))
@@ -163,6 +165,12 @@ estimate_shift_configuration <- function(tree, Y,
         warning("max.nShifts should be a positive number less than number of tips. I set it to 0.\n")
         max.nShifts  <- 1 
     }
+
+    if(!is.na(alpha.upper))
+        if( alpha.upper <= 0 ){
+            stop("alpha.upper must be strictly positive.\n")
+        }
+
     if(!is.na(alpha.lower))
         if( alpha.lower < 0 ){
             warning("alpha.lower must be greater than zero. I set it to zero.\n")
@@ -195,7 +203,11 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$Z            <- generate_design_matrix(tree, "simpX")
         ## each tree in tree.list represents a trait where the tips corresponding
         ## to NA values in the trail have been dropped.
-        l1ou.options$tree.list    <- gen_tree_array(tree, Y)
+        l1ou.options$multivariate.missing <- multivariate.missing
+        if(multivariate.missing)
+            l1ou.options$tree.list <- gen_tree_array(tree, Y)
+        else
+            l1ou.options$tree.list <- NULL
     }
 
     if(length(l1ou.options$candid.edges)==0 || l1ou.options$max.nShifts == 0){
@@ -240,11 +252,11 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, root.model = "OUfixedRoot", 
-                                        check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
+                                        check.order=F, check.ultrametric=F)$sqrtInvSigma ) 
     } else{           ## OU model
         X   = generate_design_matrix(tree, "orgX", alpha=alpha )
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, root.model = opt$root.model, 
-                                        check.order=F, check.ultramteric=F)$sqrtInvSigma ) 
+                                        check.order=F, check.ultrametric=F)$sqrtInvSigma ) 
     }
 
     if(!all(is.na(opt$candid.edges))){
@@ -316,12 +328,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
             RE  = sqrt_OU_covariance(tree, root.model = "OUfixedRoot",
-                                     alpha = 0, check.order=F, check.ultramteric=F )
+                                     alpha = 0, check.order=F, check.ultrametric=F )
         } else {
             X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]])
             RE  = sqrt_OU_covariance(tree,  root.model = opt$root.model,   
                                      alpha = alpha[[i]], 
-                                     check.order=F, check.ultramteric=F )
+                                     check.order=F, check.ultrametric=F )
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
 
@@ -530,7 +542,7 @@ do_backward_correction <- function(tree, Y, shift.configuration, opt){
 #'@export
 configuration_ic <- function(tree, Y, shift.configuration, 
                      criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
-                     root.model   = c("OUrandomRoot", "OUfixedRoot"),
+                     root.model   = c("OUfixedRoot", "OUrandomRoot"),
                      alpha.starting.value = NA,
                      alpha.upper  = alpha_upper_bound(tree), 
                      alpha.lower  = NA,
@@ -642,6 +654,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
 fit_OU <- function(tree, Y, shift.configuration, 
                      criterion    = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"), 
                      root.model   = c("OUfixedRoot", "OUrandomRoot"),
+                     cr.regimes   = NULL,
                      alpha.starting.value = NA,
                      alpha.upper  = alpha_upper_bound(tree), 
                      alpha.lower  = NA,
@@ -674,6 +687,25 @@ fit_OU <- function(tree, Y, shift.configuration,
                     For instance,\n", s.c, "\n is an alternative configuration with fewer shifts."))
 
      eModel = fit_OU_model(tree, Y, shift.configuration, opt)
+     if(!is.null(cr.regimes) ){
+
+        if( !( 0 %in% unlist(cr.regimes) ) ){
+            stop("background/intercept is not included in the regimes! Represent the background by \"0\".")
+        }
+        if( !(identical(sort(c(0,shift.configuration)), sort(unlist(cr.regimes)) ) ) ){
+            stop("convergent regimes do not match with the shift positions.")
+        }
+        cr.score <- cmp_model_score_CR(tree, Y, shift.configuration, regimes=cr.regimes, 
+                           criterion=opt$criterion, alpha=eModel$alpha)
+        eModel$cr.score <- cr.score
+        for(idx in 1:length(cr.regimes)){
+            if( 0 %in% cr.regimes[[idx]] ){
+                names(eModel$shift.configuration)[which(eModel$shift.configuration %in% cr.regimes[[idx]])] <- 0
+            }else{
+                names(eModel$shift.configuration)[which(eModel$shift.configuration %in% cr.regimes[[idx]])] <- idx
+            }
+        }
+     }
      return(eModel)
 }
 
@@ -687,6 +719,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     shift.values = optima = edge.optima = numeric()
     intercept    = optima.tmp = edge.optima.tmp = numeric()
     logLik = numeric(ncol(Y))
+    failed.refit <- FALSE
 
     for(i in 1:ncol(Y)){
 
@@ -708,54 +741,72 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
             s.c <- shift.configuration
             augmented.s.c <- shift.configuration
         }
-        nShifts = length(s.c)
-        fit     = my_phylolm_interface(tr, y, s.c, opt)
 
+        nShifts = length(s.c)
+
+        fit <- my_phylolm_interface(tr, y, s.c, opt)
         if ( all(is.na(fit)) ){
             stop("model score is NA in fit_OU_model function! This should not happen.")
         }
 
-        alpha   = c(alpha,  fit$optpar)
-        sigma2  = c(sigma2, fit$sigma2)
+        alpha     <- c(alpha,  fit$optpar)
+        sigma2    <- c(sigma2, fit$sigma2)
         logLik[i] <- fit$logLik
 
-        ## E[Y]
-        f.v  = as.matrix(Y[,i])
-        f.v[!is.na(Y[,i])] = fit$fitted.values
-        mu   = cbind(mu, f.v)
-        f.r  = as.matrix(Y[,i])
-        f.r[!is.na(Y[,i])] = fit$residuals 
-        resi = cbind(resi, f.r)
-
-        intercept = c(intercept, fit$coefficients[[1]])
-
-        if( length(shift.configuration) > 0 ){
-            s.v = rep(NA, length(shift.configuration))
-            s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
-            shift.values = cbind(shift.values, s.v)
+        ## Now we have the alpha hat and we can form the true design matrix. 
+        refit    <- my_phylolm_interface(tr, y, s.c, opt, recmp.preds=TRUE, alpha=fit$optpar)
+        if ( all(is.na(refit)) ){
+            warning("computation of EY (mu) and residuals with the estimated alpha failed!
+                    To compute those, try to use fit_OU with different value of alpha.lower/alpha.upper.")
+            failed.refit <- TRUE
+        }else{
+            fit <- refit
+            failed.refit <- FALSE
         }
 
-        #optima.tmp = rep(fit$coefficients[[1]], nEdges)
-        #if( length(shift.configuration) > 0 )
-        #    optima.tmp = convert_shifts2regions(tree, shift.configuration, 
-        #                 fit$coefficients[2:(nShifts+1)]) + fit$coefficients[[1]] 
-        
-        optima.tmp = rep(fit$coefficients[[1]], nTips)
-        if( length(shift.configuration) > 0 )
-            for(i in 1:length(shift.configuration) ){
-                s  = shift.configuration[[i]]
-                if(is.na(augmented.s.c[[i]]))
-                    next;
-                s.v = fit$coefficients[which(s.c==augmented.s.c[[i]])+1]
-                optima.tmp = optima.tmp + opt$Z[,s] * s.v
+        if(!failed.refit){
+            ## E[Y]
+            f.v  = as.matrix(Y[,i])
+            f.v[!is.na(Y[,i])] = fit$fitted.values
+            mu   = cbind(mu, f.v)
+            f.r  = as.matrix(Y[,i])
+            f.r[!is.na(Y[,i])] = fit$residuals 
+            resi = cbind(resi, f.r)
+
+            intercept = c(intercept, fit$coefficients[[1]])
+
+            if( length(shift.configuration) > 0 ){
+                s.v = rep(NA, length(shift.configuration))
+                s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
+                shift.values = cbind(shift.values, s.v)
             }
 
-        optima = cbind(optima, optima.tmp)
-        edge.optima = cbind(edge.optima, edge.optima.tmp);
+            optima.tmp = rep(fit$coefficients[[1]], nTips)
+            if( length(shift.configuration) > 0 )
+                for(i in 1:length(shift.configuration) ){
+                    s <- shift.configuration[[i]]
+                    if(is.na(augmented.s.c[[i]]))
+                        next;
+                    s.v <- fit$coefficients[which(s.c==augmented.s.c[[i]])+1]
+                    optima.tmp = optima.tmp + opt$Z[,s] * s.v
+                }
+
+            optima <- cbind(optima, optima.tmp)
+            #edge.optima <- cbind(edge.optima, edge.optima.tmp)
+        }else{
+           shift.values  <- cbind(shift.values, rep(NA, length(shift.configuration) ) )
+           optima <- cbind(optima, rep(NA, nTips))
+           intercept <- c(intercept, NA)
+           mu <- cbind(mu, rep(NA, length(Y[,i]) ))
+           resi <- cbind(resi, rep(NA, length(Y[,i])))
+        }
     }
-    optima = as.matrix(optima)
-    rownames(optima) = tree$tip.label
-    edge.optima = as.matrix(edge.optima)
+
+    if(!failed.refit){
+        optima <- as.matrix(optima)
+        rownames(optima) <- tree$tip.label
+        #edge.optima <- as.matrix(edge.optima)
+    }
 
     ##NOTE: it reads the score from the database 
     ## and do not recompute the score. So it doesn't have any overhead.
@@ -1053,13 +1104,21 @@ cmp_pBIC <- function(tree, Y, shift.configuration, opt){
     return( list(score=score, alpha=alpha, sigma2=sigma2, logLik=logLik) )
 }
 
-my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
+my_phylolm_interface <- function(tree, Y, shift.configuration, opt, recmp.preds=FALSE, alpha=0){
 
-    ##FIXME: it is not efficient to re-compute Z each time we call this function.
-    ##Note that calling this function many times is our computational bottleneck.  
-    #preds = cbind(1, opt$Z[ ,shift.configuration])
+    if(recmp.preds){
+        Z <- generate_design_matrix(tree, type="orgX", alpha=alpha)
+    }else{
+        if(opt$multivariate.missing){
+            if(is.null(tree$Z))
+                stop("internal error: in multivariate.missing mode but tree$Z is null.")
+            Z <- tree$Z
+        }else{
+            Z <- opt$Z 
+        }
+    }
 
-    Z <- generate_design_matrix(tree, type="simpX")
+
     preds = cbind(1, Z[ ,shift.configuration])
     prev.val <-options()$warn 
     options(warn = -1)
@@ -1083,8 +1142,7 @@ my_phylolm_interface <- function(tree, Y, shift.configuration, opt){
         if(!opt$quietly){
             warning( paste0( "phylolm returned error with a shift configuration
                             of size ", length(shift.configuration), ". You may
-                            want to reduce alpha.upper or change
-                            alpha.starting.value!") )
+                            want to change alpha.upper/alpha.lower!") )
         }
         return(NA)
     }

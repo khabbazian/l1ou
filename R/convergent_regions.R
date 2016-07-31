@@ -86,7 +86,7 @@ phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = li
                        cr=conv.regimes,
                        starting.value=alpha,
                        lower.bound=alpha/100
-                       )
+                     )
     options(warn = prev.val)
     return(fit)
 }
@@ -101,7 +101,7 @@ cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     nShiftVals <- length( conv.regimes ) - 1 
     nTips      <- length( tr$tip.label )
 
-    p <- nShifts + (nShiftVals + 3)*ncol(Y)
+    p <- nShifts + (nShiftVals + 2)*ncol(Y)
     N <- nTips*ncol(Y)
     df.1 <- 2*p + (2*p*(p+1))/(N-p-1) 
     if( p > N-2)  ##  for this criterion we should have p < N.
@@ -142,6 +142,7 @@ cmp_BIC_CR <- function(tree, Y, shift.configuration, conv.regimes, alpha){
 }
 
 
+
 ## compute the pBIC score
 cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
@@ -150,11 +151,12 @@ cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     nTips   = length(tr$tip.label)
 
     df.1   <- 0
-    df.1    <- (nShifts)*log(nEdges-1)
+    df.1   <- (nShifts)*log(nEdges-1)
     for( i in 1:nShifts){
         df.1 <- df.1 + log(nEdges-1-i)
         df.1 <- df.1 - log(i)
     }
+
     df.1 <- df.1 - sum( log( factorial(unlist(lapply(conv.regimes, length))) ) )
     df.1 <- 2*df.1
 
@@ -164,7 +166,7 @@ cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
         if( all( is.na(fit) ) ){
            return(Inf)
         } 
-        varY <- var(Y[,i])
+        varY  <- var(Y[,i])
         ld    <- as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
         df.2  <- 3*log(nTips) - ld
         score <- score  -2*fit$logLik + df.2
@@ -323,7 +325,7 @@ estimate_convergent_regimes_surface  <-  function(model,
                 if(identical(names(sc.tmp), names(sc.prev))){ next }
                 sc.prev <- sc.tmp
 
-                ## this part has the computational overhead.
+                ## this part has the main computational overhead.
                 score   <-  cmp_model_score_CR(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
 
                 if( min.score > score ){

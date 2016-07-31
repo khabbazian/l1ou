@@ -5,7 +5,7 @@
 \title{(inverse) square root of the phylogenetic covariance}
 \usage{
 sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
-  "OUrandomRoot"), check.order = TRUE, check.ultramteric = TRUE)
+  "OUrandomRoot"), check.order = TRUE, check.ultrametric = TRUE)
 }
 \arguments{
 \item{tree}{tree of class phylo with branch lengths. If alpha>0, i.e. under the OU model, the tree has to be ultrametric.}
@@ -16,7 +16,7 @@ sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
 
 \item{check.order}{logical. If TRUE, the order will be checked to be in postorder traversal.}
 
-\item{check.ultramteric}{logical. If TRUE, the tree will be checked to ultrametric.}
+\item{check.ultrametric}{logical. If TRUE, the tree will be checked to ultrametric.}
 }
 \value{
 \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
