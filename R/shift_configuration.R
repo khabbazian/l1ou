@@ -568,6 +568,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
         opt$alpha.upper.bound    <- alpha.upper
         opt$alpha.lower.bound    <- alpha.lower
         opt$Z                    <- generate_design_matrix(tree, "simpX")
+        opt$multivariate.missing <- FALSE
         opt$use.saved.scores     <- FALSE
     }
 
@@ -678,6 +679,7 @@ fit_OU <- function(tree, Y, shift.configuration,
         opt$alpha.upper.bound    <- alpha.upper
         opt$alpha.lower.bound    <- alpha.lower
         opt$Z                    <- generate_design_matrix(tree, "simpX")
+        opt$multivariate.missing <- FALSE
         opt$use.saved.scores     <- FALSE
     }
 
