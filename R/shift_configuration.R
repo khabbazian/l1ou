@@ -17,6 +17,7 @@
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
 #'@param lars.alg model selection algorithm for LARS in univariate case. 
+#'@param nCores number of processes to be created for parallel computing. If nCores=1 then it will run sequentially. Otherwise, it creates nCores processes by using mclapply function. For parallel computing it, requires parallel package.
 #'@param rescale logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.
 #'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.
 #'@param grp.delta internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
@@ -82,6 +83,7 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
            lars.alg               = c("lasso", "stepwise"),
+           nCores                 = 1,
            rescale                = TRUE,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
@@ -182,9 +184,28 @@ estimate_shift_configuration <- function(tree, Y,
             alpha.upper  <- alpha.lower
         }
 
+    stopifnot( nCores > 0 )
+    parallel.computing <- FALSE
+    if(nCores>1){
+        if(!require(parallel)){
+            warning("parallel package is not available. The process will run sequentially.", immediate=TRUE)
+            nCores <- 1
+        }else{
+            parallel.computing <- TRUE
+        }
+    }
+
     if (all(is.na(l1ou.options))){
         l1ou.options                   <- list()
-        l1ou.options$use.saved.scores  <- TRUE
+        l1ou.options$nCores             <- nCores
+        l1ou.options$parallel.computing <- parallel.computing
+        ##NOTE: The saving_score functions are unprotected. To avoid race,
+        ## I simply disable them until later that I figure out how to fix it.
+        if(parallel.computing)
+            l1ou.options$use.saved.scores  <- FALSE
+        else
+            l1ou.options$use.saved.scores  <- TRUE
+
         l1ou.options$max.nShifts       <- max.nShifts
         l1ou.options$criterion         <- match.arg(criterion)
         l1ou.options$lars.alg          <- match.arg(lars.alg)
@@ -438,7 +459,9 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     prev.shift.configuration = NA
     min.score = Inf   
 
-    for(idx in 1:nSols) {
+    candid.idx <- 1
+    shift.configuration.list <- list()
+    for (idx in 1:nSols) {
 
         shift.configuration = get_configuration_in_sol_path(sol.path, idx, Y)
         shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
@@ -457,14 +480,34 @@ select_best_solution <- function(tree, Y, sol.path, opt){
         }
         names(shift.configuration)  <- freq.shifts
         shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
+        shift.configuration.list[[candid.idx]] <- shift.configuration
+        candid.idx <- candid.idx + 1
+    }
 
-        res = do_backward_correction(tree, Y, shift.configuration, opt)
+    search_ith_config <- function(sc){
+        res <- do_backward_correction(tree, Y, sc, opt)
+        return(res)
+    }
 
-        if (min.score > res$score){
-            min.score = res$score
-            best.shift.configuration = res$shift.configuration
+    if(opt$parallel.computing){
+        all.res <- mclapply(shift.configuration.list, FUN=search_ith_config, mc.cores=opt$nCores)
+        for (i in 1:length(all.res) ){
+            res <- all.res[[i]] 
+            if (min.score > res$score){
+                min.score = res$score
+                best.shift.configuration = res$shift.configuration
+            }
+        }
+    }else{
+        for (i in 1:length(shift.configuration.list) ){
+            res <- search_ith_config( shift.configuration.list[[i]] )
+            if (min.score > res$score){
+                min.score = res$score
+                best.shift.configuration = res$shift.configuration
+            }
         }
     }
+
     return ( list(score=min.score, shift.configuration=best.shift.configuration) )
 }
 
