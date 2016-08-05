@@ -490,8 +490,10 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     }
 
     if(opt$parallel.computing){
-        all.res <- mclapply(shift.configuration.list, FUN=search_ith_config, mc.cores=opt$nCores)
-        for (i in 1:length(all.res) ){
+        all.res <- mclapply(rev(shift.configuration.list), 
+                            FUN=search_ith_config, 
+                            mc.cores=opt$nCores)
+        for (i in length(all.res):1 ){
             res <- all.res[[i]] 
             if (min.score > res$score){
                 min.score = res$score
@@ -798,11 +800,19 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         sigma2    <- c(sigma2, fit$sigma2)
         logLik[i] <- fit$logLik
 
+        ## E[Y]
+        f.v <- as.matrix(Y[,i])
+        f.v[!is.na(Y[,i])] <- fit$fitted.values
+        mu  <- cbind(mu, f.v)
+        f.r <- as.matrix(Y[,i])
+        f.r[!is.na(Y[,i])] <- fit$residuals 
+        resi <- cbind(resi, f.r)
+
         ## Now we have the alpha hat and we can form the true design matrix. 
         refit    <- my_phylolm_interface(tr, y, s.c, opt, recmp.preds=TRUE, alpha=fit$optpar)
         if ( all(is.na(refit)) ){
-            warning("computation of EY (mu) and residuals with the estimated alpha failed!
-                    To compute those, try to use fit_OU with different value of alpha.lower/alpha.upper.")
+            warning("computation of shift values and optimum values!\n
+                    To compute those, try to use fit_OU with different values for alpha.lower/alpha.upper.")
             failed.refit <- TRUE
         }else{
             fit <- refit
@@ -810,13 +820,6 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         }
 
         if(!failed.refit){
-            ## E[Y]
-            f.v  = as.matrix(Y[,i])
-            f.v[!is.na(Y[,i])] = fit$fitted.values
-            mu   = cbind(mu, f.v)
-            f.r  = as.matrix(Y[,i])
-            f.r[!is.na(Y[,i])] = fit$residuals 
-            resi = cbind(resi, f.r)
 
             intercept = c(intercept, fit$coefficients[[1]])
 
@@ -842,8 +845,6 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
            shift.values  <- cbind(shift.values, rep(NA, length(shift.configuration) ) )
            optima <- cbind(optima, rep(NA, nTips))
            intercept <- c(intercept, NA)
-           mu <- cbind(mu, rep(NA, length(Y[,i]) ))
-           resi <- cbind(resi, rep(NA, length(Y[,i])))
         }
     }
 
