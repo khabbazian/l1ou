@@ -5,16 +5,37 @@ The l1ou package provides functions to study trait evolution from comparative da
 Shifts can be detected from multiple traits, assuming that all traits shifted along the same lineages. Estimation is very fast thanks to lasso techniques, and the user can choose from multiple information criteria for model selection, including a phylognetic BIC. 
 Citation: 
 
-- M. Khabbazian, R. Kriebel, K. Rohe, and C&eacute;cile An&eacute;. Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models
+- M. Khabbazian, R. Kriebel, K. Rohe, and C&eacute;cile An&eacute;. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534  
+
+#### [l1ou Reference manual](http://homepages.cae.wisc.edu/~khabbazian/pdfs/l1ou.pdf)
+
+### Version notes 
+  Starting with version v1.22, the scores returned by "estimate\_shift\_configuration” function 
+  are for the non-normalized, original data.  
 
 
 ### Install using the devtools package.
 ```
-install.packages("devtools")
-require(devtools)
-install_github("khabbazian/l1ou")
-require(l1ou)
+R> install.packages("devtools")
+R> install_github("khabbazian/l1ou")
 ```
 Windows users will first need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
 
-#### [l1ou Reference manual](http://homepages.cae.wisc.edu/~khabbazian/pdfs/l1ou.pdf)
+### Install without the devtools package.
+To resolve the dependencies, first install the following packages from CRAN
+```
+R> install.packages(c("igraph", "phylolm", "lars", "grplasso", "magic", "genlasso", "Rcpp"))
+```
+Install the knitr package
+```
+R> install.packages("knitr")
+```
+Now in bash
+```
+$> git clone https://github.com/khabbazian/l1ou.git 
+$> R CMD build l1ou 
+$> R -e 'install.packages("l1ou_*.**.tar.gz")'
+```
+Replace the asterisks with the correct version number.
+
+

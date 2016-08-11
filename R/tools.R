@@ -87,7 +87,52 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
     return(list(tree=tree, Y=Y))
 }
 
-lnorm      <- function(v,l=1)   { return( (sum(abs(v)^l))^(1/l) ) }
+lnorm <- function(v,l=1)   { return( (sum(abs(v)^l, na.rm=TRUE))^(1/l) ) }
+
+## This function is useful for handling missing values in multivariate regression. 
+## It generates a list of design matrices and trees considering according to the missing values.
+gen_tree_array <- function(tree, Y){ 
+    ## here I assume that the tree tip labels match the Y matrix rows 
+    ## in the same order.
+    tree.list <- list()
+    for(trait.idx in 1:ncol(Y)){
+        availables <- rownames(Y)[!is.na(Y[,trait.idx])]
+
+        tr <- drop.tip(tree, setdiff(tree$tip.label, availables))
+        tr <- reorder(tr, "postorder")
+
+        X.1 <- generate_design_matrix(tree, type="simpX")
+        rownames(X.1) <- tree$tip.label
+        X.2 <- generate_design_matrix(tr, type="simpX")
+        rownames(X.2) <- tr$tip.label
+
+        ## when we drop some tips of a tree edges order changes so we need 
+        ## to have a universal mapping for shift configurations.
+        old.order <- rep(NA, Nedge(tree))
+        for(i in 1:Nedge(tree)){
+            tip.set  <- rownames(X.1)[which(X.1[,i]>0)]
+            tip.set  <- intersect(tip.set, rownames(X.2)) 
+            if(length(tip.set)==0)
+                next
+            if(length(tip.set)==1)
+                edge.set <- which(X.2[tip.set,]==1)
+            else
+                edge.set <- which(colSums(X.2[tip.set,])==length(tip.set))
+
+            if(length(edge.set) > 1)
+                e.idx    <- edge.set[ which(colSums(X.2[,edge.set])==length(tip.set)) ]
+            else
+                e.idx    <- edge.set 
+
+            stopifnot(length(e.idx)==1)
+            old.order[[i]] <- e.idx
+        }
+        tr$old.order <- old.order
+        tr$Z <- X.2
+        tree.list[[trait.idx]]  <-  tr
+    }
+    return(tree.list)
+}
 
 add_configuration_score_to_list  <- function(shift.configuration, score, moreInfo){
     shift.configuration = sort(shift.configuration)
@@ -96,8 +141,10 @@ add_configuration_score_to_list  <- function(shift.configuration, score, moreInf
 }
 
 get_configuration_score_from_list <- function(shift.configuration){
-    shift.configuration = sort(shift.configuration)
-    res = get_score_of_configuration(paste0(shift.configuration, collapse=" "))
+    if(length(shift.configuration) > 0){
+        shift.configuration <- sort(shift.configuration)
+    }
+    res <- get_score_of_configuration(paste0(shift.configuration, collapse=" "))
     if( res$valid == FALSE){
         return(NA)
     }
@@ -267,10 +314,11 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
     stopifnot( length(shift.configuration) == length(shift.values) )
 
     nTips   = length(tree$tip.label)
-    nEdges  = length(tree$edge.length)
+    nEdges  = Nedge(tree)
     g       = graph.edgelist(tree$edge, directed = TRUE)
     o.vec = rep(0, nEdges)
 
+    prev.val <-options()$warn 
     options(warn = -1)
     if( length(shift.configuration) > 0)
         for(itr in 1:length(shift.configuration) ){
@@ -286,7 +334,7 @@ convert_shifts2regions <-function(tree, shift.configuration, shift.values){
             }
             o.vec = o.vec + o.vec.tmp 
         }
-    options(warn = 0)
+    options(warn = prev.val)
     return( o.vec )
 }
 
@@ -344,7 +392,7 @@ normalize_tree <- function(tree, check.ultrametric=TRUE){
 #' data(lizard.traits, lizard.tree)
 #' Y <- lizard.traits[,1]
 #' eModel <- estimate_shift_configuration(lizard.tree, Y)
-#' nEdges <- length(lizard.tree$edge[,1])
+#' nEdges <- Nedge(lizard.tree)
 #' ew <- rep(1,nEdges) 
 #' ew[eModel$shift.configuration] <- 3
 #' plot(eModel, cex=0.5, label.offset=0.02, edge.width=ew)
@@ -363,7 +411,9 @@ plot.l1ou <- function (model, palette = NA,
     s.c = model$shift.configuration
     stopifnot(identical(tree$edge, reorder(tree, "postorder")$edge))
     nShifts = model$nShifts
-    nEdges = length(tree$edge.length)
+    nEdges = Nedge(tree)
+    if (bar.axis) 
+        par(oma = c(3, 0, 0, 3))
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
 
@@ -397,15 +447,16 @@ plot.l1ou <- function (model, palette = NA,
     edgecol = rep(palette[nShifts + 1], nEdges)
     counter = 1
     Z = model$l1ou.options$Z
-    for (shift in sort(s.c, decreasing = T)) {
-        edgecol[[shift]] = palette[[which(s.c == shift)]]
-        tips = which(Z[, shift] > 0)
-        for (tip in tips) {
-            edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == 
-                shift)]]
+    if(length(s.c) > 0)
+        for (shift in sort(s.c, decreasing = T)) {
+            edgecol[[shift]] = palette[[which(s.c == shift)]]
+            tips = which(Z[, shift] > 0)
+            for (tip in tips) {
+                edgecol[which(Z[tip, 1:shift] > 0)] = palette[[which(s.c == 
+                    shift)]]
+            }
+            counter = counter + 1
         }
-        counter = counter + 1
-    }
 
     #NOTE: plotting bar plot .....
     if (plot.bar) {
@@ -417,12 +468,14 @@ plot.l1ou <- function (model, palette = NA,
         if (bar.axis) 
             par(mar = c(0, 0, 0, 3))
         for (i in 1:ncol(Y)) {
-            normy = (Y[, i] - mean(Y[, i]))/sd(Y[, i])
+            normy = (Y[, i] - mean(Y[, i], na.rm=TRUE))/sd(Y[, i], na.rm=TRUE)
             barplot(as.vector(normy[o]), border = FALSE, col = barcol[o], 
-                horiz = TRUE, names.arg = "", xaxt = "n")
-            if (bar.axis) 
-                axis(1, at = range(normy), labels = round(range(normy), 
-                  digits = 2))
+                    horiz = TRUE, names.arg = "", xaxt = "n")
+            if (bar.axis){
+                axis(1, at = range(normy, na.rm=TRUE), 
+                     labels = round(range(normy, na.rm=TRUE), 
+                                    digits = 2))
+            }
             if (!is.null(colnames(Y)) && length(colnames(Y)) > 
                 (i - 1)) 
                 mtext(colnames(Y)[[i]], cex = 1, line = +1, side = 1)
@@ -635,17 +688,25 @@ print.l1ou <- function(model, ...){
 
     cat(paste0(model$l1ou.options$criterion, " score: "))
     cat(model$score)
+    if(!is.null(model$cr.score)){
+        cat("\n")
+        cat(paste0(model$l1ou.options$criterion, " CR score: "))
+        cat(model$cr.score)
+    }
     cat("\n")
 
     cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
-    tmp.mat = t(as.matrix(model$shift.values))
-    if(length(model$shift.configuration)>0)
-        colnames(tmp.mat) = model$shift.configuration
-    if(!all(is.null(colnames(model$Y)))){
-        rownames(tmp.mat) = colnames(model$Y)
+
+    if( length(model$shift.configuration) > 0){
+        tmp.mat = t(as.matrix(model$shift.values))
+        if(length(model$shift.configuration)>0)
+            colnames(tmp.mat) = model$shift.configuration
+        if(!all(is.null(colnames(model$Y)))){
+            rownames(tmp.mat) = colnames(model$Y)
+        }
+        print(tmp.mat)
+        cat("\n")
     }
-    print(tmp.mat)
-    cat("\n")
 
 
     sc <- model$shift.configuration
@@ -657,30 +718,20 @@ print.l1ou <- function(model, ...){
     }
 
 
-    tmp.mat = rbind(model$alpha, 
+    tmp.mat <- rbind(model$alpha, 
                     model$sigma2, 
                     model$sigma2/(2 * model$alpha),
                     model$logLik
                     )
-    rownames(tmp.mat) = c("adaptation rate (alpha)", 
+    rownames(tmp.mat) <- c("adaptation rate (alpha)", 
                           "variance (sigma2)", 
                           "stationary variance (gamma)",
                           "logLik"
                           )
     if(!all(is.null(colnames(model$Y)))){
-        colnames(tmp.mat) = colnames(model$Y)
+        colnames(tmp.mat) <- colnames(model$Y)
     }
     print(tmp.mat)
     cat("\n")
-
-    #top.scores = min(nTop.scores, length(model$profile$scores))
-    #cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
-    #cat("scores\t\tshift.configurations\n")
-    #for (i in 1:top.scores){
-    #    cat(model$profile$scores[[i]])
-    #    cat("\t")
-    #    cat(model$profile$configurations[[i]])
-    #    cat("\n")
-    #}
 }
 

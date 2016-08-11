@@ -1,25 +1,41 @@
+## generate the W matrix, feature vectors, as described in the doc.
+generate_prediction_vec  <-  function(tr, 
+                                      shift.configuration, 
+                                      conv.regimes, 
+                                      alpha, 
+                                      ageMatrix=NULL, 
+                                      designMatrix=F){
 
+    ## In fact ageMatrix is the approximate design matrix.
+    if(is.null(ageMatrix)){
+        if ( is.na(alpha) ){
+            X   <-  generate_design_matrix(tr, "apprX")
+        }else{
+            X   <-  generate_design_matrix(tr, "orgX",  alpha = alpha)
+        }
 
-generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alpha, designMatrix=F){
-
-    nTips   <-  length(tr$tip.label)
-    if ( is.na(alpha) ){
-        X   <-  generate_design_matrix(tr, "apprX")
+        if(designMatrix){
+            Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot")$sqrtInvSigma )
+            X     <- Cinvh%*%X
+        }
+        preds <- cbind(1, X[,shift.configuration])
+        colnames(preds) <- c(0, shift.configuration)
+        Z           <- generate_design_matrix(tr, "simpX")
+        template.Z  <- cbind(1, Z[,shift.configuration])
+        colnames(template.Z) <- c(0, shift.configuration) 
     }else{
-        X   <-  generate_design_matrix(tr, "orgX",  alpha <- alpha)
+        stopifnot(ncol(ageMatrix)==length(shift.configuration))
+        stopifnot(alpha>0)
+
+        preds <- cbind(1, 1-exp(-alpha*ageMatrix))
+        colnames(preds) <- c(0, shift.configuration)
+
+        template.Z  <- cbind(1, ageMatrix)
+        colnames(template.Z) <- c(0, shift.configuration) 
     }
 
-    if(designMatrix){
-        Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot")$sqrtInvSigma )
-        X     <- Cinvh%*%X
-    }
-
-    Z           <- generate_design_matrix(tr, "simpX")
-    preds       <- X[,shift.configuration] 
-    template.Z  <- Z[,shift.configuration] 
-
-    colnames(preds)      <- shift.configuration 
-    colnames(template.Z) <- shift.configuration 
+    ## now the coefficients in the linear regression represent the optimum values.
+    ## rather than the shift values.
 
     for( i in 1:ncol(preds) ){
         for( j in 1:ncol(preds) ){
@@ -27,53 +43,65 @@ generate_prediction_vec  <-  function(tr, shift.configuration, conv.regimes, alp
                 next
             set1 <- which( template.Z[,i] > 0)
             set2 <- which( template.Z[,j] > 0)
+            ## if edge j is an ancestor of i
             if ( all(set1 %in% set2) ) 
                 preds[ ,j] <- preds[ ,j] - preds[ ,i]
         }
     } 
 
-    preds.2 <- numeric()
+    W <- numeric()
     if ( length( conv.regimes ) > 0 ){
         for( i in 1:length(conv.regimes) ){
             set1 <- paste(conv.regimes[[i]])
             stopifnot( length(set1) > 0 )
 
+            ## The equality constrain of two optimum values translates 
+            ## to combining the corresponding predictors.
             if ( length(set1) > 1){
-                preds.2 <- cbind( preds.2, rowSums( preds[, paste(set1)] ) ) 
+                W <- cbind( W, rowSums( preds[, paste(set1)] ) ) 
             } else{
-                preds.2 <- cbind( preds.2,  preds[, paste(set1) ] ) 
+                W <- cbind( W,  preds[, paste(set1)] ) 
             }
-            colnames(preds.2)[length(preds.2[1,])] <- i
+            colnames(W)[length(W[1,])] <- i
         }
     }
 
-    preds <- cbind(1, preds.2)
-    return(preds)
+    return(W)
 }
 
-my.phylolm.interface.new  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA){
+phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA){
 
     preds <- generate_prediction_vec(tr, shift.configuration, conv.regimes, alpha)
+    prev.val <- options()$warn
     options(warn = -1)
-    fit     <-    phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
-                        starting.value = alpha,
-                        lower.bound = alpha, 
-                        upper.bound = alpha)
-    options(warn = 0)
+    #fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
+    #                  starting.value = alpha,
+    #                  lower.bound = alpha, 
+    #                  upper.bound = alpha)
+
+    fit <-  phylolm_CR(Y~preds-1, 
+                       phy  = tr, 
+                       model = "OUfixedRoot",
+                       sc=shift.configuration,
+                       cr=conv.regimes,
+                       starting.value=alpha,
+                       lower.bound=alpha/100
+                     )
+    options(warn = prev.val)
     return(fit)
 }
 
-
-
-cmp.AICc.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
+## compute the AICc score
+cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 
     stopifnot( length(alpha) == ncol(Y) )
 
     nShifts    <- length( shift.configuration )
-    nShiftVals <- length( conv.regimes ) 
+    ## -1, cause "conv.regimes" contains the intercept
+    nShiftVals <- length( conv.regimes ) - 1 
     nTips      <- length( tr$tip.label )
 
-    p <- nShifts + (nShiftVals + 3)*ncol(Y)
+    p <- nShifts + (nShiftVals + 2)*ncol(Y)
     N <- nTips*ncol(Y)
     df.1 <- 2*p + (2*p*(p+1))/(N-p-1) 
     if( p > N-2)  ##  for this criterion we should have p < N.
@@ -81,39 +109,64 @@ cmp.AICc.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     df.2 <- 0
     score <- df.1
     for( i in 1:ncol(Y)){
-        fit   <- my.phylolm.interface.new(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
-        if ( all( is.na( fit) ) ){
-            return(Inf)
-        } 
+        fit   <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
+        if ( all( is.na( fit) ) ){ return(Inf) } 
         score <- score  -2*fit$logLik + df.2
     }
     return(score)
 }
 
+## compute the BIC score
+cmp_BIC_CR <- function(tree, Y, shift.configuration, conv.regimes, alpha){
 
-cmp.pBIC.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
+    stopifnot( length(alpha) == ncol(Y) )
 
-    nShifts <- length(shift.configuration)
+    nEdges     <- Nedge(tree)
+    nTips      <- length(tree$tip.label)
+    nShifts    <- length(shift.configuration)
+    nShiftVals <- length( conv.regimes ) - 1 
+    nVariables <- ncol(Y)
 
-    nEdges  <- length(tr$edge[,1])
-    nTips   <- length(tr$tip.label)
+    df.1  <- log(nTips)*(nShiftVals)
+    score <- df.1
+    #alpha <- sigma2 <- logLik <- rep(0, nVariables)
+
+    for( i in 1:nVariables ){
+
+        df.2 <- log(nTips)*(nShifts + 3)
+        fit  <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
+        if ( all(is.na(fit)) ){ return(Inf) } 
+        score <- score  -2*fit$logLik + df.2
+    }
+    return( score )
+}
+
+
+
+## compute the pBIC score
+cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
+
+    nShifts = length(shift.configuration)
+    nEdges  = Nedge(tr)
+    nTips   = length(tr$tip.label)
 
     df.1   <- 0
-    df.1    <- (nShifts)*log(nEdges-1)
+    df.1   <- (nShifts)*log(nEdges-1)
     for( i in 1:nShifts){
         df.1 <- df.1 + log(nEdges-1-i)
         df.1 <- df.1 - log(i)
     }
+
     df.1 <- df.1 - sum( log( factorial(unlist(lapply(conv.regimes, length))) ) )
     df.1 <- 2*df.1
 
     score   <- df.1
     for(i in 1:ncol(Y)){
-        fit   <- my.phylolm.interface.new(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
+        fit   <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
         if( all( is.na(fit) ) ){
            return(Inf)
         } 
-        varY <- var(Y[,i])
+        varY  <- var(Y[,i])
         ld    <- as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
         df.2  <- 3*log(nTips) - ld
         score <- score  -2*fit$logLik + df.2
@@ -122,11 +175,39 @@ cmp.pBIC.new  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
 }
 
 
+cmp_model_score_CR <- function(tree, Y, shift.configuration, regimes=NULL, criterion, alpha=NA){
+
+    if(is.null(regimes)){
+        if(is.null(names(shift.configuration))){
+            stop("the convergent regimes must be indicated through the names of the shift.configuration vector.")
+        }
+        cr.names <- names(shift.configuration)
+        regimes <- list()
+        idx <- 1
+        for( cr in cr.names){
+           regimes[[idx]] <- sort( shift.configuration[which(cr.names==cr)] )
+           idx <- idx + 1
+        }
+    }
+
+    if( criterion == "AICc"){
+        score <- cmp_AICc_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
+    } else if( criterion == "pBIC"){
+        score <- cmp_pBIC_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
+    } else if( criterion == "BIC"){
+        score <- cmp_BIC_CR(tree, Y, shift.configuration, conv.regimes = regimes, alpha=alpha)
+    } else
+        stop("undefined criterion for convergent evolution!")
+
+    return(score)
+}
+
+
 generate_relation  <- function(tr, shift.configuration){
 
-    s.p     <- shift.configuration
-    n.s.p   <- length(s.p)
-    nEdges  <- length(tr$edge.length)
+    s.p     = shift.configuration
+    n.s.p   = length(s.p)
+    nEdges  = Nedge(tr)
 
     M  <- numeric()
     tmp.s.p <- s.p
@@ -167,7 +248,7 @@ find_convergent_regimes  <-  function(tr, Y, alpha, criterion, regimes){
 
     shift.configuration <- unlist(regimes)
     X   <-  generate_prediction_vec(tr, shift.configuration, alpha=alpha, conv.regimes=regimes, designMatrix=TRUE)
-    X   <-  X[,-1]
+    #X   <-  X[,-1]
     X   <- cbind(X,1)
 
     M   <- generate_relation(tr, 1:length(regimes))
@@ -192,70 +273,79 @@ find_convergent_regimes  <-  function(tr, Y, alpha, criterion, regimes){
     return(out)
 }
 
-
-new.cmp.score  <-  function(tr, Y, sc, regimes, criterion, alpha){
-     if( criterion == "AICc"){
-         score <- cmp.AICc.new(tr, Y, sc, conv.regimes = regimes, alpha=alpha)
-     } else { #if( criterion == "pBIC")
-         score <- cmp.pBIC.new(tr, Y, sc, conv.regimes = regimes, alpha=alpha)
-     }
-     return(score)
-}
-
+## This method finds the convergent evolution model that maximizes the 
+## criterion such as AICc. To find the optimum, it combines shifts into a 
+## convergent regime or splits a regime if that decreases the criterion until 
+## no progress.  NOTE: CR is a short for convergent regime.
 estimate_convergent_regimes_surface  <-  function(model, 
-                                        criterion = c("AICc", "pBIC")
+                                        criterion = c("pBIC", "BIC", "AICc")
                                         ){
-    criterion   <-   match.arg(criterion)
-    Y   <-  as.matrix(model$Y)
-    tr  <-  model$tree
+    criterion <- match.arg(criterion)
+    Y         <- as.matrix(model$Y)
+    tr        <- model$tree
 
-    sc.prev  <-  sc  <-  model$shift.configuration
-    current.num.cc  <-  length(sc)
-    prev.min.score  <-  min.score  <-  Inf
-
+    sc.prev <- sc  <- model$shift.configuration
+    prev.min.score <- min.score <- Inf
+    min.regimes    <- as.list(c(0,sc))
+    ## elist represents the edgelist format of the regimes graph.
+    ## At the beginning each regime forms a vertex with a self-loop. 
     elist.ref  <-  numeric()
-    for(u in sc ){ elist.ref  <-  rbind( elist.ref , as.character(c(u,u)) ) }
+    for(u in c(0,sc)){ elist.ref <- rbind( elist.ref, as.character(c(u,u)) ) }
+    #current.num.cc <- length(sc)
+    current.num.cc <- length(elist.ref)
 
     for( iter in 1:(2*length(sc)) ){
 
-        has.progress  <-  FALSE
-        ##NOTE: merges regimes if the IC decreases 
-        for( u in sc ){ 
-            for( v in sc ){
+        has.progress <- FALSE
+        ##NOTE: merge, add the edge (u,v), regimes if the IC decreases the most.
+        ##NOTE: this part can be parallelized.
+        for( u in c(0, sc) ){ 
+            for( v in c(0, sc) ){
 
-                ##NOTE: test if we should add (u, v)
+                ##NOTE: test if we can add (u, v)
                 if( u == v ){ next }
+                ##FIXME: The convergence of the immediate shifts after the root
+                ##to the background is pointless so don't check them.
 
-                elist  <-  as.matrix( rbind(elist.ref, as.character(c(u,v)) ) )
-                g   <-  graph_from_edgelist(elist, directed = FALSE)
-                cc  <-  decompose.graph(g) 
+                ## add the edge (u,v) to the graph. 
+                elist <- as.matrix( rbind(elist.ref, as.character(c(u,v)) ) )
+                g     <- graph_from_edgelist(elist, directed = FALSE)
+                cc    <- decompose.graph(g) 
+                ## check if it connects two connected components
+                ## of the graph. If not, then it is redundant.
                 if( length(cc) >= current.num.cc ){ next }
-                regimes  <-  sapply(cc, function(x) as.numeric(names(V(x)))  )
+                ## extract the connected components 
+                regimes <-  sapply(cc, function(x) as.numeric(names(V(x)))  )
 
+                ## name each cr as the smallest shift index in it 
                 sc.tmp  <-  sort(sc)
                 for( thelist in lapply(regimes, sort) ){
                     names(sc.tmp)[sc.tmp %in% thelist]  <-  thelist[[1]] 
                 }
                 if(identical(names(sc.tmp), names(sc.prev))){ next }
-                sc.prev  <-  sc.tmp
+                sc.prev <- sc.tmp
 
-                score  <-  new.cmp.score(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
+                ## this part has the main computational overhead.
+                score   <-  cmp_model_score_CR(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
 
                 if( min.score > score ){
-                    min.score     <-  score
-                    min.regimes   <-  regimes
-                    elist.min     <-  elist
-                    has.progress  <-  TRUE
+                    min.score    <- score
+                    min.regimes  <- regimes
+                    elist.min    <- elist
+                    has.progress <- TRUE
                 }
+
             }
         }
 
         current.num.cc <- length(min.regimes) 
         elist.ref      <- elist.min
 
-        ## break regimes if IC decreases 
+        ## break a CR if it increases the score
+        ##FIXME: we don't need to check the very last edge we added
         if( has.progress){
             for( e.idx in 1:length(elist.ref[,1]) ){
+
                 u <- elist.ref[e.idx, 1]
                 v <- elist.ref[e.idx, 2]
                 if(u==v){next}
@@ -267,7 +357,7 @@ estimate_convergent_regimes_surface  <-  function(model,
                 if( length(cc) <= current.num.cc ){ next }
 
                 regimes <- sapply(cc, function(x) as.numeric(names(V(x)))  )
-                score   <- new.cmp.score(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
+                score   <- cmp_model_score_CR(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
 
                 if( min.score > score ){
                     min.score   <- score
@@ -277,8 +367,8 @@ estimate_convergent_regimes_surface  <-  function(model,
             }
         }
 
-        elist.ref  <-  elist.min
-        current.num.cc  <-  length(min.regimes) 
+        elist.ref      <- elist.min
+        current.num.cc <- length(min.regimes) 
 
         #if no progress then terminate
         if( !has.progress ){ break }
@@ -287,11 +377,13 @@ estimate_convergent_regimes_surface  <-  function(model,
     
     sc <- model$shift.configuration
     counter <- 1
-    for( reg in min.regimes ){
-        for( item in sort(reg) ){
-            names(sc)[which(sc==item)] <- counter
+    for (reg in min.regimes) {
+        ## 0 represents the background(intercept) 
+        background <- (0 %in% reg)
+        for (item in sort(reg)) {
+            names(sc)[which(sc == item)] <- ifelse(background, 0, counter)
         }
-        counter <- counter + 1
+        counter <- counter + ifelse(background, 0, 1)
     }
 
     model$shift.configuration <- sc
@@ -307,7 +399,7 @@ estimate_convergent_regimes_surface  <-  function(model,
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
-#'@param method method for finding convergent regimes. ``rr'' is based on genlasso, a regularized regression. ``backward'' is a heuristic method similar to \code{surface_backward} function.
+#'@param method method for finding convergent regimes. ``rr'' is based on genlasso, a regularized linear regression estimation. ``backward'' is a heuristic method similar to \code{surface_backward} function.
 #'@examples
 #' 
 #'library(l1ou)
@@ -323,16 +415,18 @@ estimate_convergent_regimes_surface  <-  function(model,
 #'
 #'@export
 estimate_convergent_regimes  <-  function(model, 
-                                        criterion=c("AICc", "pBIC"),
+                                        criterion=c("AICc", "pBIC", "BIC"),
                                         method=c("backward", "rr")
                                      ){
     method  <-   match.arg(method)
+    criterion   <-   match.arg(criterion)
     if(method == "backward"){
         return(estimate_convergent_regimes_surface(model, criterion))
     }
 
-    criterion   <-   match.arg(criterion)
-    Y   <-  32*model$Y/norm(model$Y)
+
+    ## doing this for genlasso. FIXME: change the solver as it seems unstable.
+    Y   <-  32*model$Y/lnorm(model$Y,l=2)
     Y   <-  as.matrix(Y)
     tr  <-  model$tree
 
@@ -343,6 +437,8 @@ estimate_convergent_regimes  <-  function(model,
     prev.min.score <- min.score <- Inf
     ar.counter <- 1
     
+    ## similar to "backward" method. But here we may combine several shifts into convergent regimes
+    ## at the same time therefore it is faster.
     for(iter in 1:length(model$shift.configuration) ){
         out  <-  find_convergent_regimes(tr, Y, model$alpha, criterion, regimes = c.regimes )
         for(num.digits in c(12,13,15,16)){
@@ -394,7 +490,7 @@ estimate_convergent_regimes  <-  function(model,
                 all.regimes[[ ar.counter ]] <- regimes
                 ar.counter <- ar.counter + 1
     
-                score <- new.cmp.score(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
+                score <- cmp_model_score_CR(tr, Y, model$shift.configuration, regimes, criterion, model$alpha)
     
                 if( min.score > score ){
                     min.score      <- score
@@ -421,7 +517,7 @@ estimate_convergent_regimes  <-  function(model,
       }
 
       model$shift.configuration <- sc
-      model$score  <-  new.cmp.score(tr, model$Y, model$shift.configuration, c.regimes, criterion, model$alpha)
+      model$score  <-  cmp_model_score_CR(tr, model$Y, model$shift.configuration, c.regimes, criterion, model$alpha)
 
       return(model)
 }

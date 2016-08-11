@@ -10,7 +10,7 @@
 #'@param alpha adaptation rate for the OU model. The default is 0, which corresponds to the BM mode with a fixed ancestral state at the root.
 #'@param root.model ancestral state model at the root.
 #'@param check.order logical. If TRUE, the order will be checked to be in postorder traversal.
-#'@param check.ultramteric logical. If TRUE, the tree will be checked to ultrametric.
+#'@param check.ultrametric logical. If TRUE, the tree will be checked to ultrametric.
 #'
 #'@return 
 #' \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
@@ -34,7 +34,7 @@
 #'
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
-                               check.order=TRUE, check.ultramteric=TRUE){
+                               check.order=TRUE, check.ultrametric=TRUE){
 
     tree       <- multi2di(tree, random=FALSE)
     root.model <- match.arg(root.model) 
@@ -49,7 +49,7 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
     if ( alpha > 0){
         ##NOTE: this step requires that the tree be ultrametric tree. 
         ##NOTE: If the tree is not ultrametric, the function returns a wrong result with no warning
-        if(check.ultramteric){
+        if(check.ultrametric){
             if(!is.ultrametric(tree)){
                 stop("alpha>0, the tree has to be ultrametric") 
             }
