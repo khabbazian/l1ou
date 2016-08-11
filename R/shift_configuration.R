@@ -717,10 +717,10 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     nEdges = Nedge(tree)
     nTips  = length(tree$tip.label)
 
-    resi = mu = alpha = sigma2 = numeric()
+    resi = mu= matrix(data=NA,nrow=nTips, ncol=ncol(Y))
     shift.values = optima = edge.optima = numeric()
-    intercept    = optima.tmp = edge.optima.tmp = numeric()
-    logLik = numeric(ncol(Y))
+    intercept   = alpha = sigma2   = optima.tmp = rep(NA, ncol(Y))
+    logLik = rep(NA, ncol(Y))
     failed.refit <- FALSE
 
     for(i in 1:ncol(Y)){
@@ -751,8 +751,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
             stop("model score is NA in fit_OU_model function! This should not happen.")
         }
 
-        alpha     <- c(alpha,  fit$optpar)
-        sigma2    <- c(sigma2, fit$sigma2)
+        alpha[i]  <- fit$optpar
+        sigma2[i]   <- fit$sigma2
         logLik[i] <- fit$logLik
 
         ## Now we have the alpha hat and we can form the true design matrix. 
@@ -770,12 +770,12 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
             ## E[Y]
             f.v  = as.matrix(Y[,i])
             f.v[!is.na(Y[,i])] = fit$fitted.values
-            mu   = cbind(mu, f.v)
+            mu[,i]   =  f.v
             f.r  = as.matrix(Y[,i])
             f.r[!is.na(Y[,i])] = fit$residuals 
-            resi = cbind(resi, f.r)
+            resi[,i] = f.r
 
-            intercept = c(intercept, fit$coefficients[[1]])
+            intercept[i] = fit$coefficients[[1]]
 
             if( length(shift.configuration) > 0 ){
                 s.v = rep(NA, length(shift.configuration))
@@ -793,14 +793,14 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                     optima.tmp = optima.tmp + opt$Z[,s] * s.v
                 }
 
-            optima <- cbind(optima, optima.tmp)
+            optima <- cbind(optima,optima.tmp)
             #edge.optima <- cbind(edge.optima, edge.optima.tmp)
         }else{
            shift.values  <- cbind(shift.values, rep(NA, length(shift.configuration) ) )
            optima <- cbind(optima, rep(NA, nTips))
            intercept <- c(intercept, NA)
-           mu <- cbind(mu, rep(NA, length(Y[,i]) ))
-           resi <- cbind(resi, rep(NA, length(Y[,i])))
+           mu[,i] <- rep(NA, length(Y[,i]) )
+           resi[,i] <- rep(NA, length(Y[,i]))
         }
     }
 
