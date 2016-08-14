@@ -73,7 +73,12 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     Y     = model$Y
     YY    = C.IH%*%(Y - model$mu )
 
+    #NOTE: It is not memory efficient but need that to have reproduceable results.
+    idx.list <- lapply(rep(nrow(Y),nItrs), 
+                            FUN=function(x) sample(1:x, replace=TRUE) )
+
     detection.vec = rep(0, nrow(tree$edge))
+    all.shift.configurations <- list()
 
     if(quietly==FALSE)
         print(paste0("iteration #:nShifts:shift configuraitons"))
@@ -81,7 +86,8 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     valid.count <- 0
     if(multicore == FALSE){
         for(itr in 1:nItrs){
-            YYstar = sample(YY, replace = TRUE)
+            #YYstar = sample(YY, replace = TRUE)
+            YYstar = YY[ idx.list[[itr]] ]
             Ystar  = (C.H%*%YYstar) + model$mu 
 
             eM  <-  tryCatch({
@@ -94,20 +100,23 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
             valid.count <- valid.count + 1
 
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
+            all.shift.configurations[[itr]] <- eM$shift.configuration
+
             if(quietly==FALSE){
                 print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
                              paste0(eM$shift.configuration, collapse=" ") ) )
             }
 
         }
-        return(detection.vec/valid.count)
+        return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
     }
 
-    shift.configuration.list = 
+
+    all.shift.configurations = 
         mclapply(X=1:nItrs, FUN=function(itr){
 
-                     set.seed( 101 + itr)
-                     YYstar = sample(YY, replace = TRUE)
+                     #YYstar = sample(YY, replace = TRUE)
+                     YYstar = YY[ idx.list[[itr]] ]
                      Ystar  = (C.H%*%YYstar) + model$mu  
 
                      eM  <-  tryCatch({
@@ -126,16 +135,16 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
            }, mc.cores = nCores)
 
     valid.count <- 0
-    for( i in 1:length(shift.configuration.list)){
-        if( all(is.na( shift.configuration.list[[i]] )) ){
+    for( i in 1:length(all.shift.configurations)){
+        if( all(is.na( all.shift.configurations[[i]] )) ){
             next
         }
         valid.count <- valid.count + 1
-        detection.vec[ shift.configuration.list[[i]] ] = 
-            detection.vec[ shift.configuration.list[[i]] ] + 1
+        detection.vec[ all.shift.configurations[[i]] ] = 
+            detection.vec[ all.shift.configurations[[i]] ] + 1
     }
 
-    return(detection.vec/valid.count)
+    return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
 }
 
 bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, nCores=2, quietly=FALSE){
@@ -192,7 +201,6 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
     shift.configuration.list = 
         mclapply(X=1:nItrs, FUN=function(itr){
                      Ystar   = YY
-                     set.seed( 101 + itr)
                      idx.vec = sample(1:nrow(YY), replace = TRUE)
                      for( idx in 1:ncol(YY) ){
                          YYstar        = YY[idx.vec, idx]
