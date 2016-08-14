@@ -73,9 +73,7 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     Y     = model$Y
     YY    = C.IH%*%(Y - model$mu )
 
-    #NOTE: It is not memory efficient but need that to have reproduceable results.
-    idx.list <- lapply(rep(nrow(Y),nItrs), 
-                            FUN=function(x) sample(1:x, replace=TRUE) )
+    seed.vec <- sample(.Machine$integer.max, nItrs+1, replace=TRUE)
 
     detection.vec = rep(0, nrow(tree$edge))
     all.shift.configurations <- list()
@@ -86,8 +84,8 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     valid.count <- 0
     if(multicore == FALSE){
         for(itr in 1:nItrs){
-            #YYstar = sample(YY, replace = TRUE)
-            YYstar = YY[ idx.list[[itr]] ]
+            set.seed(seed.vec[[itr]])
+            YYstar = sample(YY, replace = TRUE)
             Ystar  = (C.H%*%YYstar) + model$mu 
 
             eM  <-  tryCatch({
@@ -108,6 +106,7 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
             }
 
         }
+        set.seed(seed.vec[[nItrs+1]])
         return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
     }
 
@@ -115,8 +114,8 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     all.shift.configurations = 
         mclapply(X=1:nItrs, FUN=function(itr){
 
-                     #YYstar = sample(YY, replace = TRUE)
-                     YYstar = YY[ idx.list[[itr]] ]
+                     set.seed(seed.vec[[itr]])
+                     YYstar = sample(YY, replace = TRUE)
                      Ystar  = (C.H%*%YYstar) + model$mu  
 
                      eM  <-  tryCatch({
@@ -144,6 +143,7 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
             detection.vec[ all.shift.configurations[[i]] ] + 1
     }
 
+    set.seed(seed.vec[[nItrs+1]])
     return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
 }
 
