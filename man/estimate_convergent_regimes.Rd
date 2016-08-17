@@ -12,10 +12,11 @@ estimate_convergent_regimes(model, criterion = c("AICc", "pBIC", "BIC"),
 
 \item{criterion}{information criterion for model selection (see Details in \code{\link{configuration_ic}}).}
 
-\item{method}{method for finding convergent regimes. ``rr'' is based on genlasso, a regularized linear regression estimation. ``backward'' is a heuristic method similar to \code{surface_backward} function.}
+\item{method}{method for finding convergent regimes. ``rr'' is based on genlasso, a regularized linear regression estimation. ``backward'' is a heuristic method similar to \code{surface_backward} function which is from the \code{surface} package. \code{surface_backward} function is to carry out the backward phase of SURFACE’s stepwise AIC routine}
 }
 \description{
-Given estimated evolutionary shift positions this function finds convergent regimes.
+This  function  takes  in  one  or  multiple  traits,  and  automatically  finds convergent regimes given estimated evolutionary shift positions returned by \code{\link{estimate_shift_configuration}}. The model assumes an Ornstein-
+Uhlenbeck process whose parameters are estimated (adaptation ‘strength’ and drift variance2).
 }
 \examples{
 
@@ -23,10 +24,12 @@ library(l1ou)
 data("lizard.traits", "lizard.tree")
 Y <- lizard.traits[, 1:1]
 
-eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
-eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
-eModel
-plot(eModel)
+fit_ind <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
+fit_conv <- estimate_convergent_regimes(fit_ind, criterion = "AICc",method="backward")
+fit_ind
+fit_conv
+plot(fit_ind)
+plot(fit_conv)
 
 }
 \seealso{
