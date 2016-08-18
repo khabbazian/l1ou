@@ -594,7 +594,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
 #'@param Y trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
 #'@param shift.configuration shift positions, i.e. vector of indices of the edges where the shifts occur.
 #'@param criterion an information criterion (see Details).
-#'@param root.model an ancestral state model at the root.
+#'@param root.model model for the ancestral state at the root.
 #'@param alpha.starting.value optional starting value for the optimization of the phylogenetic adaptation rate. 
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
@@ -685,8 +685,8 @@ fit_OU <- function(tree, Y, shift.configuration,
 
     s.c = correct_unidentifiability(tree, shift.configuration, opt)
     if( length(s.c) != length(shift.configuration) )
-        stop(paste0("the input shift configuration is not a parsimony configuration. 
-                    For instance,\n", s.c, "\n is an alternative configuration with fewer shifts."))
+        stop(paste0("the input shift configuration is not parsimonious. For instance, shifts on these edges:\n",
+                    s.c, "provides an alternative equivalent configuration with fewer shifts."))
 
      eModel = fit_OU_model(tree, Y, shift.configuration, opt)
      if(!is.null(cr.regimes) ){
@@ -717,20 +717,19 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     nEdges = Nedge(tree)
     nTips  = length(tree$tip.label)
 
-    resi = mu = alpha = sigma2 = numeric()
-    shift.values = optima = edge.optima = numeric()
-    intercept    = optima.tmp = edge.optima.tmp = numeric()
-    logLik = numeric(ncol(Y))
-    failed.refit <- FALSE
+    resi = mu = optima = matrix(data=NA, nrow=nTips, ncol=ncol(Y))
+    shift.values = numeric() # possibly different # of shifts for different traits if missing values
+    # edge.optima = matrix(NA, nEdges, ncol(Y))
+    intercept = alpha = sigma2 = rep(NA, ncol(Y))
+    logLik = rep(NA, ncol(Y))
 
     for(i in 1:ncol(Y)){
-
         s.c <- c()
         if(!is.null(opt$tree.list)){
             tr <- opt$tree.list[[i]]
             y  <- as.matrix(Y[!is.na(Y[,i]), i])
             if(length(shift.configuration > 0))
-                augmented.s.c <- tr$old.order[shift.configuration]
+                augmented.s.c <- tr$old.order[shift.configuration] # index of shift edges in pruned tree, see gen_tree_array
             else
                 augmented.s.c <- c()
             for(s in shift.configuration){
@@ -751,11 +750,17 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
             stop("model score is NA in fit_OU_model function! This should not happen.")
         }
 
-        alpha     <- c(alpha,  fit$optpar)
-        sigma2    <- c(sigma2, fit$sigma2)
+        alpha[i]  <- fit$optpar
+        sigma2[i]   <- fit$sigma2
         logLik[i] <- fit$logLik
+        ## E[Y] and residuals: Y-EY
+        mu[!is.na(Y[,i]), i]   = fit$fitted.values
+        resi[!is.na(Y[,i]), i] = fit$residuals
+        intercept[i] = fit$coefficients[[1]] # = y0 * e^-T + theta0_root * (1-e^-T), assumes ultrametric tree
 
-        ## Now we have the alpha hat and we can form the true design matrix. 
+        ## Now we have the alpha hat and we can form the true design matrix
+        # fixit: re-code to only rescale the shift values.
+        failed.refit <- FALSE
         refit    <- my_phylolm_interface(tr, y, s.c, opt, recmp.preds=TRUE, alpha=fit$optpar)
         if ( all(is.na(refit)) ){
             warning("computation of EY (mu) and residuals with the estimated alpha failed!
@@ -767,48 +772,31 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         }
 
         if(!failed.refit){
-            ## E[Y]
-            f.v  = as.matrix(Y[,i])
-            f.v[!is.na(Y[,i])] = fit$fitted.values
-            mu   = cbind(mu, f.v)
-            f.r  = as.matrix(Y[,i])
-            f.r[!is.na(Y[,i])] = fit$residuals 
-            resi = cbind(resi, f.r)
-
-            intercept = c(intercept, fit$coefficients[[1]])
-
             if( length(shift.configuration) > 0 ){
                 s.v = rep(NA, length(shift.configuration))
                 s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
                 shift.values = cbind(shift.values, s.v)
             }
 
-            optima.tmp = rep(fit$coefficients[[1]], nTips)
+            optima.tmp = rep(fit$coefficients[[1]], nTips)  # optima at the tips for one trait
             if( length(shift.configuration) > 0 )
-                for(i in 1:length(shift.configuration) ){
-                    s <- shift.configuration[[i]]
-                    if(is.na(augmented.s.c[[i]]))
+                for(ish in 1:length(shift.configuration) ){ # i=index of Y column. ish=index of shift
+                    s <- shift.configuration[[ish]]         # edge number for shift 'ish' in full tree
+                    if(is.na(augmented.s.c[[ish]]))         # shift invisible in pruned tree
                         next;
-                    s.v <- fit$coefficients[which(s.c==augmented.s.c[[i]])+1]
-                    optima.tmp = optima.tmp + opt$Z[,s] * s.v
+                    s.v <- fit$coefficients[which(s.c==augmented.s.c[[ish]])+1] # shift value
+                    optima.tmp = optima.tmp + opt$Z[,s] * s.v # requires Z to have 0/1 values. bug otherwise.
                 }
 
-            optima <- cbind(optima, optima.tmp)
-            #edge.optima <- cbind(edge.optima, edge.optima.tmp)
+            optima[,i] <- optima.tmp
+            # edge.optima[,i] <- edge.optima.tmp
         }else{
            shift.values  <- cbind(shift.values, rep(NA, length(shift.configuration) ) )
-           optima <- cbind(optima, rep(NA, nTips))
-           intercept <- c(intercept, NA)
-           mu <- cbind(mu, rep(NA, length(Y[,i]) ))
-           resi <- cbind(resi, rep(NA, length(Y[,i])))
+           # optima[,i] was already initialized at rep(NA, nTips)
         }
     }
 
-    if(!failed.refit){
-        optima <- as.matrix(optima)
-        rownames(optima) <- tree$tip.label
-        #edge.optima <- as.matrix(edge.optima)
-    }
+    rownames(optima) <- tree$tip.label
 
     ##NOTE: it reads the score from the database 
     ## and do not recompute the score. So it doesn't have any overhead.
