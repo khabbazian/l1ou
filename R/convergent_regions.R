@@ -395,21 +395,30 @@ estimate_convergent_regimes_surface  <-  function(model,
 
 #' Detects convergent regimes under an OU model
 #'
-#' Given estimated evolutionary shift positions this function finds convergent regimes.
+#' Takes a model previously estimated by \code{\link{estimate_shift_configuration}},
+#' including one or more traits and a configuration of evolutionary shifts, and detect which of these regime shifts
+#' are convergent.
 #'
-#'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
+#'@param model fitted object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param criterion information criterion for model selection (see Details in \code{\link{configuration_ic}}).
-#'@param method method for finding convergent regimes. ``rr'' is based on genlasso, a regularized linear regression estimation. ``backward'' is a heuristic method similar to \code{surface_backward} function.
+#'@param method search method for finding convergent regimes. ``rr'' is based on genlasso,
+#'  a regularized linear regression estimation. Currenly, this method can only accept a single trait.
+#'  The default ``backward'' method is a heuristic similar to \code{surface_backward}
+#'  in the \code{surface} package,
+#'  using backward steps to repeatedly merge similar regimes into convergent regimes.
+#'
 #'@examples
 #' 
 #'library(l1ou)
 #'data("lizard.traits", "lizard.tree")
 #'Y <- lizard.traits[, 1:1]
-#'
-#'eModel <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
-#'eModel <- estimate_convergent_regimes(eModel, criterion="AICc")
-#'eModel
-#'plot(eModel)
+#' ## first fit a model to find individual shifts (no convergence assumed):
+#'fit_ind <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
+#'fit_ind
+#' ## then detect which of these shifts are convergent:
+#'fit_conv <- estimate_convergent_regimes(fit_ind, criterion="AICc")
+#'fit_conv
+#'plot(fit_conv)
 #'
 #'@seealso   \code{\link{estimate_shift_configuration}}
 #'
