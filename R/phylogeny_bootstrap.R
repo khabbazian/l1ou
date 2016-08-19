@@ -86,7 +86,8 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
         for(itr in 1:nItrs){
             set.seed(seed.vec[[itr]])
             YYstar = sample(YY, replace = TRUE)
-            Ystar  = (C.H%*%YYstar) + model$mu 
+            Ystar  = as.matrix( (C.H%*%YYstar) + model$mu )
+            rownames(Ystar) <- rownames(Y)
 
             eM  <-  tryCatch({
                 estimate_shift_configuration(tree, Ystar, l1ou.options =model$l1ou.options)
@@ -116,7 +117,8 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
 
                      set.seed(seed.vec[[itr]])
                      YYstar = sample(YY, replace = TRUE)
-                     Ystar  = (C.H%*%YYstar) + model$mu  
+                     Ystar  = as.matrix( (C.H%*%YYstar) + model$mu )
+                     rownames(Ystar) <- rownames(Y)
 
                      eM  <-  tryCatch({
                          estimate_shift_configuration(tree, Ystar, l1ou.options =model$l1ou.options)
@@ -152,6 +154,8 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
     Y = as.matrix(model$Y)
     stopifnot( length(model$alpha) == ncol(Y) )
 
+    seed.vec <- sample(.Machine$integer.max, nItrs+1, replace=TRUE)
+
     YY        = Y
     C.Hlist   = list()
     for( idx in 1:ncol(Y) ){
@@ -172,12 +176,15 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
     if( multicore == FALSE ){
         for(itr in 1:nItrs){
 
+            set.seed(seed.vec[[itr]])
             Ystar   = YY
             idx.vec = sample(1:nrow(YY), replace = TRUE)
             for( idx in 1:ncol(YY) ){
                 YYstar        = YY[idx.vec, idx]
                 Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx] 
             }
+            rownames(Ystar) <- rownames(Y)
+
             eM  <-  tryCatch({
                 estimate_shift_configuration(tree, Ystar,  l1ou.options=model$l1ou.options)
             }, error = function(e) {
@@ -195,12 +202,14 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
         }
         stopifnot( valid.count > 0 )
+        set.seed(seed.vec[[nItrs+1]])
         return(detection.vec/valid.count)
     }
 
     shift.configuration.list = 
         mclapply(X=1:nItrs, FUN=function(itr){
                      Ystar   = YY
+                     set.seed(seed.vec[[itr]])
                      idx.vec = sample(1:nrow(YY), replace = TRUE)
                      for( idx in 1:ncol(YY) ){
                          YYstar        = YY[idx.vec, idx]
@@ -233,5 +242,6 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
             detection.vec[ shift.configuration.list[[i]] ] + 1
     }
 
+    set.seed(seed.vec[[nItrs+1]]) ## To make sure after both mclapply and for-loop we have same seed for the reproducibility  
     return(detection.vec/valid.count)
 }

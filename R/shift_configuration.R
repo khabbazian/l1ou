@@ -200,7 +200,7 @@ estimate_shift_configuration <- function(tree, Y,
         l1ou.options$nCores             <- nCores
         l1ou.options$parallel.computing <- parallel.computing
         ##NOTE: The saving_score functions are unprotected. To avoid race,
-        ## I simply disable them until later that I figure out how to fix it.
+        ## I simply disable them in parallel mode until later that I figure out how to fix it.
         if(parallel.computing)
             l1ou.options$use.saved.scores  <- FALSE
         else
@@ -805,42 +805,26 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         intercept[i] = fit$coefficients[[1]] # = y0 * e^-T + theta0_root * (1-e^-T), assumes ultrametric tree
 
         ## Now we have the alpha hat and we can form the true design matrix
-        # fixit: re-code to only rescale the shift values.
-        failed.refit <- FALSE
-        refit    <- my_phylolm_interface(tr, y, s.c, opt, recmp.preds=TRUE, alpha=fit$optpar)
-        if ( all(is.na(refit)) ){
-            warning("computation of shift values and optimum values!\n
-                    To compute those, try to use fit_OU with different values for alpha.lower/alpha.upper.")
-            failed.refit <- TRUE
-        }else{
-            fit <- refit
-            failed.refit <- FALSE
+        scale.values <- apply( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c], 2, max)^-1
+        fit$coefficients[2:(nShifts+1)] <- scale.values * fit$coefficients[2:(nShifts+1)]
+
+        if( length(shift.configuration) > 0 ){
+            s.v = rep(NA, length(shift.configuration))
+            s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
+            shift.values = cbind(shift.values, s.v)
         }
 
-        if(!failed.refit){
-
-            if( length(shift.configuration) > 0 ){
-                s.v = rep(NA, length(shift.configuration))
-                s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
-                shift.values = cbind(shift.values, s.v)
+        optima.tmp = rep(fit$coefficients[[1]], nTips)  # optima at the tips for one trait
+        if( length(shift.configuration) > 0 )
+            for(ish in 1:length(shift.configuration) ){ # i=index of Y column. ish=index of shift
+                s <- shift.configuration[[ish]]         # edge number for shift 'ish' in full tree
+                if(is.na(augmented.s.c[[ish]]))         # shift invisible in pruned tree
+                    next;
+                s.v <- fit$coefficients[which(s.c==augmented.s.c[[ish]])+1] # shift value
+                optima.tmp = optima.tmp + opt$Z[,s] * s.v # requires Z to have 0/1 values. bug otherwise.
             }
 
-            optima.tmp = rep(fit$coefficients[[1]], nTips)  # optima at the tips for one trait
-            if( length(shift.configuration) > 0 )
-                for(ish in 1:length(shift.configuration) ){ # i=index of Y column. ish=index of shift
-                    s <- shift.configuration[[ish]]         # edge number for shift 'ish' in full tree
-                    if(is.na(augmented.s.c[[ish]]))         # shift invisible in pruned tree
-                        next;
-                    s.v <- fit$coefficients[which(s.c==augmented.s.c[[ish]])+1] # shift value
-                    optima.tmp = optima.tmp + opt$Z[,s] * s.v # requires Z to have 0/1 values. bug otherwise.
-                }
-
-            optima[,i] <- optima.tmp
-            # edge.optima[,i] <- edge.optima.tmp
-        }else{
-           shift.values  <- cbind(shift.values, rep(NA, length(shift.configuration) ) )
-           # optima[,i] was already initialized at rep(NA, nTips)
-        }
+        optima[,i] <- optima.tmp
     }
 
     rownames(optima) <- tree$tip.label
