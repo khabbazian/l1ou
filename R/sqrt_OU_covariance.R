@@ -42,8 +42,10 @@
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
                                check.order=TRUE, check.ultrametric=TRUE){
-
-    tree       <- multi2di(tree, random=FALSE)
+    if( ! is.binary.tree(lizard$tree) ){
+        tree         <- multi2di(tree, random=FALSE)
+        check.order  <- TRUE 
+    }
     root.model <- match.arg(root.model) 
     ##NOTE: the function assumes reordering does not change the order of the 
     ##nodes and it just change the order of edges, so that column i in each 
