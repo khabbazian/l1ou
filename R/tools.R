@@ -417,11 +417,6 @@ plot.l1ou <- function (model, palette = NA,
     Y = as.matrix(model$Y)
     stopifnot(identical(rownames(Y), tree$tip.label))
 
-    ##A dummy plot just to get the plotting order
-    plot.phylo(tree, plot=FALSE)
-    lastPP = get("last_plot.phylo", envir = .PlotPhyloEnv)
-    o = order(lastPP$yy[1:length(tree$tip.label)])
-
     if (bar.axis) 
         par(oma = c(3, 0, 0, 3))
 
@@ -457,6 +452,15 @@ plot.l1ou <- function (model, palette = NA,
             }
             counter = counter + 1
         }
+
+
+
+    ##A dummy plot just to get the plotting order
+    plot.phylo(tree, plot=FALSE)
+    lastPP = get("last_plot.phylo", envir = .PlotPhyloEnv)
+    o = order(lastPP$yy[1:length(tree$tip.label)])
+    par.new.default <- par()$new ##just to be careful with the global variable
+    par(new=TRUE)
 
     #NOTE: plotting bar plot .....
     if (plot.bar) {
@@ -532,6 +536,7 @@ plot.l1ou <- function (model, palette = NA,
                 frame = "none", date = pos)
         }
     }
+    par(new=par.new.default)
 }
 
 #'

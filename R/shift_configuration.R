@@ -490,8 +490,10 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     }
 
     if(opt$parallel.computing){
-        all.res <- mclapply(shift.configuration.list, FUN=search_ith_config, mc.cores=opt$nCores)
-        for (i in 1:length(all.res) ){
+        all.res <- mclapply(rev(shift.configuration.list), 
+                            FUN=search_ith_config, 
+                            mc.cores=opt$nCores)
+        for (i in length(all.res):1 ){
             res <- all.res[[i]] 
             if (min.score > res$score){
                 min.score = res$score
@@ -796,6 +798,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         alpha[i]  <- fit$optpar
         sigma2[i]   <- fit$sigma2
         logLik[i] <- fit$logLik
+
         ## E[Y] and residuals: Y-EY
         mu[!is.na(Y[,i]), i]   = fit$fitted.values
         resi[!is.na(Y[,i]), i] = fit$residuals
@@ -806,8 +809,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         failed.refit <- FALSE
         refit    <- my_phylolm_interface(tr, y, s.c, opt, recmp.preds=TRUE, alpha=fit$optpar)
         if ( all(is.na(refit)) ){
-            warning("computation of EY (mu) and residuals with the estimated alpha failed!
-                    To compute those, try to use fit_OU with different value of alpha.lower/alpha.upper.")
+            warning("computation of shift values and optimum values!\n
+                    To compute those, try to use fit_OU with different values for alpha.lower/alpha.upper.")
             failed.refit <- TRUE
         }else{
             fit <- refit
@@ -815,6 +818,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         }
 
         if(!failed.refit){
+
             if( length(shift.configuration) > 0 ){
                 s.v = rep(NA, length(shift.configuration))
                 s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]

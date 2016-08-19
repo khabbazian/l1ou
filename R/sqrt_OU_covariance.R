@@ -24,6 +24,13 @@
 #' dimnames(Sigma) <- NULL
 #' all.equal(res$sqrtSigma %*% t(res$sqrtSigma), Sigma) # TRUE
 #' all.equal(res$sqrtInvSigma %*% t(res$sqrtInvSigma), solve(Sigma)) # TRUE
+#' 
+#' tr <-  read.tree(text="((((Homo:.21,Pongo:.21):.28,Macaca:.49):.13,Ateles:.62):.38,Galago:1);") 
+#' RE <- sqrt_OU_covariance(tr) 
+#' B <- round( RE$sqrtSigma, digits=3)
+#' D <- round( RE$sqrtInvSigma, digits=3)
+#' print(B)
+#' print(D)
 #'
 #'@references
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
