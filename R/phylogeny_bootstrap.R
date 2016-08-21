@@ -34,7 +34,7 @@
 #' nEdges <- Nedge(lizard.tree)
 #' e.w <- rep(1,nEdges) 
 #' e.w[eModel$shift.configuration] <- 3
-#' e.l <- round(result * 100, digits=1)
+#' e.l <- round(result$detection.rate*100, digits=1)
 #' # to avoid annotating edges with support at or below 10%
 #' e.l <- ifelse(e.l>10, paste0(e.l,"%"), NA)
 #' plot(eModel, edge.label=e.l, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=e.w)
@@ -136,14 +136,19 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
            }, mc.cores = nCores)
 
     valid.count <- 0
+    na.indices <- c()
     for( i in 1:length(all.shift.configurations)){
         if( all(is.na( all.shift.configurations[[i]] )) ){
+            na.indices <- c(na.indices, i)
             next
         }
         valid.count <- valid.count + 1
         detection.vec[ all.shift.configurations[[i]] ] = 
             detection.vec[ all.shift.configurations[[i]] ] + 1
     }
+
+    if(length(na.indices)>0)
+        all.shift.configurations <- all.shift.configurations[-1*na.indices]
 
     set.seed(seed.vec[[nItrs+1]])
     return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
@@ -171,6 +176,7 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
         print(paste0("iteration #:nShifts:shift configuraitons"))
 
     detection.vec = rep(0, nrow(tree$edge))
+    all.shift.configurations <- list()
 
     valid.count <- 0
     if( multicore == FALSE ){
@@ -200,13 +206,14 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
 
             valid.count  <- valid.count + 1
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
+            all.shift.configurations[[itr]] <- eM$shift.configuration
         }
         stopifnot( valid.count > 0 )
         set.seed(seed.vec[[nItrs+1]])
-        return(detection.vec/valid.count)
+        return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
     }
 
-    shift.configuration.list = 
+    all.shift.configurations = 
         mclapply(X=1:nItrs, FUN=function(itr){
                      Ystar   = YY
                      set.seed(seed.vec[[itr]])
@@ -232,16 +239,22 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
                 }, mc.cores = nCores)
 
     valid.count <- 0
-    for( i in 1:length(shift.configuration.list)){
-        if( all(is.na( shift.configuration.list[[i]] )) ){
+    na.indices <- c()
+    for( i in 1:length(all.shift.configurations )){
+        if( all(is.na( all.shift.configurations [[i]] )) ){
+            na.indices <- c(na.indices, i)
             next
         }
         valid.count <- valid.count + 1
+
         stopifnot( valid.count > 0 )
-        detection.vec[ shift.configuration.list[[i]] ] = 
-            detection.vec[ shift.configuration.list[[i]] ] + 1
+        detection.vec[ all.shift.configurations [[i]] ] = 
+            detection.vec[ all.shift.configurations [[i]] ] + 1
     }
+    if(length(na.indices)>0)
+        all.shift.configurations <- all.shift.configurations[-1*na.indices]
 
     set.seed(seed.vec[[nItrs+1]]) ## To make sure after both mclapply and for-loop we have same seed for the reproducibility  
-    return(detection.vec/valid.count)
+    return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
 }
+

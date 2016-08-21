@@ -45,7 +45,7 @@ result <- l1ou_bootstrap_support(eModel, nItrs=2)
 nEdges <- Nedge(lizard.tree)
 e.w <- rep(1,nEdges) 
 e.w[eModel$shift.configuration] <- 3
-e.l <- round(result * 100, digits=1)
+e.l <- round(result$detection.rate*100, digits=1)
 # to avoid annotating edges with support at or below 10\%
 e.l <- ifelse(e.l>10, paste0(e.l,"\%"), NA)
 plot(eModel, edge.label=e.l, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=e.w)
