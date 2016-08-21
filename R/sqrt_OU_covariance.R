@@ -42,7 +42,7 @@
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
                                check.order=TRUE, check.ultrametric=TRUE){
-    if( ! is.binary.tree(lizard$tree) ){
+    if( ! is.binary.tree(tree) ){
         tree         <- multi2di(tree, random=FALSE)
         check.order  <- TRUE 
     }
