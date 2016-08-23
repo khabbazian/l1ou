@@ -55,6 +55,11 @@
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' eModel
+#'  
+#' ## use parallel computing to accelerate the computation
+#' eModel.par <- estimate_shift_configuration(lizard$tree, lizard$Y, nCores=8)
+#'
+#' stopifnot( identical( sort(eModel.par$shift.configuration), sort(eModel$shift.configuration) ) ) ## TRUE
 #'
 #' nEdges <- Nedge(lizard.tree) # total number of edges
 #' ew <- rep(1,nEdges)  # to set default edge width of 1
@@ -805,8 +810,10 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         intercept[i] = fit$coefficients[[1]] # = y0 * e^-T + theta0_root * (1-e^-T), assumes ultrametric tree
 
         ## Now we have the alpha hat and we can form the true design matrix
-        scale.values <- apply( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c], 2, max)^-1
-        fit$coefficients[2:(nShifts+1)] <- scale.values * fit$coefficients[2:(nShifts+1)]
+        if( nShifts > 0 ){
+            scale.values <- apply( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c], 2, max)^-1
+            fit$coefficients[2:(nShifts+1)] <- scale.values * fit$coefficients[2:(nShifts+1)]
+        }
 
         if( length(shift.configuration) > 0 ){
             s.v = rep(NA, length(shift.configuration))

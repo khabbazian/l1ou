@@ -51,6 +51,11 @@ e.l <- ifelse(e.l>10, paste0(e.l,"\%"), NA)
 plot(eModel, edge.label=e.l, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=e.w)
 
 
+Y <- lizard.traits[,1:2] 
+eModel <- estimate_shift_configuration(lizard.tree, Y)
+result <- l1ou_bootstrap_support(eModel, nItrs=2, multicore=TRUE, nCores=4)
+result$detection.rate
+
 }
 \seealso{
 \code{\link{estimate_shift_configuration}}

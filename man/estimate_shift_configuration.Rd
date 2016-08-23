@@ -87,6 +87,11 @@ names(lizard.traits[,1])
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 eModel
+ 
+## use parallel computing to accelerate the computation
+eModel.par <- estimate_shift_configuration(lizard$tree, lizard$Y, nCores=8)
+
+identical( sort(eModel.par$shift.configuration), sort(eModel$shift.configuration) ) ## TRUE
 
 nEdges <- Nedge(lizard.tree) # total number of edges
 ew <- rep(1,nEdges)  # to set default edge width of 1
