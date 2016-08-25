@@ -4,14 +4,14 @@
 \alias{estimate_shift_configuration}
 \title{Detects evolutionary shifts under an OU model}
 \usage{
-estimate_shift_configuration(tree, Y,
-  max.nShifts = floor(length(tree$tip.label)/2), criterion = c("pBIC",
-  "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUfixedRoot",
-  "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
-  alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = NA, lars.alg = c("lasso", "stepwise"), nCores = 1,
-  rescale = TRUE, edge.length.threshold = .Machine$double.eps,
-  grp.delta = 1/16, grp.seq.ub = 5, l1ou.options = NA)
+estimate_shift_configuration(tree, Y, max.nShifts = 10,
+  criterion = c("pBIC", "pBICess", "mBIC", "BIC", "AICc"),
+  root.model = c("OUfixedRoot", "OUrandomRoot"), candid.edges = NA,
+  quietly = TRUE, alpha.starting.value = NA,
+  alpha.upper = alpha_upper_bound(tree), alpha.lower = NA,
+  lars.alg = c("lasso", "stepwise"), nCores = 1, rescale = TRUE,
+  edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
+  grp.seq.ub = 5, l1ou.options = NA)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo with branch lengths, and edges in postorder.}
@@ -91,7 +91,7 @@ eModel
 ## use parallel computing to accelerate the computation
 eModel.par <- estimate_shift_configuration(lizard$tree, lizard$Y, nCores=8)
 
-identical( sort(eModel.par$shift.configuration), sort(eModel$shift.configuration) ) ## TRUE
+stopifnot( identical( sort(eModel.par$shift.configuration), sort(eModel$shift.configuration) ) ) ## TRUE
 
 nEdges <- Nedge(lizard.tree) # total number of edges
 ew <- rep(1,nEdges)  # to set default edge width of 1

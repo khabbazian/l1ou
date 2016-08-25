@@ -362,6 +362,7 @@ normalize_tree <- function(tree, check.ultrametric=TRUE){
     root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode="out", output="epath")$epath
 
     Tval     = sum(tree$edge.length[root2tip[[1]] ])
+    #Tval = mean ( sapply( 1:nTips, FUN=function(x) sum(tree$edge.length[root2tip[[x]]])   )  )
     tree$edge.length = tree$edge.length / Tval
     return(tree)
 }

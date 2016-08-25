@@ -69,24 +69,29 @@ generate_prediction_vec  <-  function(tr,
     return(W)
 }
 
-phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA){
+phylolm_interface_CR  <-  function(tr, Y, shift.configuration, conv.regimes = list(), alpha=NA, fixed.alpha=FALSE){
 
     preds <- generate_prediction_vec(tr, shift.configuration, conv.regimes, alpha)
     prev.val <- options()$warn
     options(warn = -1)
-    #fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
-    #                  starting.value = alpha,
-    #                  lower.bound = alpha, 
-    #                  upper.bound = alpha)
 
-    fit <-  phylolm_CR(Y~preds-1, 
-                       phy  = tr, 
-                       model = "OUfixedRoot",
-                       sc=shift.configuration,
-                       cr=conv.regimes,
-                       starting.value=alpha,
-                       lower.bound=alpha/100
-                     )
+    if(fixed.alpha){
+	    preds <- ifelse(preds>0,1,0)
+	    fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
+			    starting.value = alpha,
+			    lower.bound = alpha, 
+			    upper.bound = alpha)
+
+    }else{
+	    fit <-  phylolm_CR(Y~preds-1, 
+			       phy  = tr, 
+			       model = "OUfixedRoot",
+			       sc=shift.configuration,
+			       cr=conv.regimes,
+			       starting.value=alpha,
+			       lower.bound=alpha/100
+			       )
+    }
     options(warn = prev.val)
     return(fit)
 }
@@ -97,8 +102,7 @@ cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     stopifnot( length(alpha) == ncol(Y) )
 
     nShifts    <- length( shift.configuration )
-    ## -1, cause "conv.regimes" contains the intercept
-    nShiftVals <- length( conv.regimes ) - 1 
+    nShiftVals <- length( conv.regimes ) -1## conv.regimes has intercept as an optimum value
     nTips      <- length( tr$tip.label )
 
     p <- nShifts + (nShiftVals + 2)*ncol(Y)
@@ -151,24 +155,20 @@ cmp_pBIC_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     nTips   = length(tr$tip.label)
 
     df.1   <- 0
-    df.1   <- (nShifts)*log(nEdges-1)
-    for( i in 1:nShifts){
-        df.1 <- df.1 + log(nEdges-1-i)
-        df.1 <- df.1 - log(i)
-    }
+    df.1   <- 2*(nShifts)*log(nEdges-1)
+    score  <- df.1
+    #alpha  <- sigma2 <- logLik <- rep(0, ncol(Y))
 
-    df.1 <- df.1 - sum( log( factorial(unlist(lapply(conv.regimes, length))) ) )
-    df.1 <- 2*df.1
-
-    score   <- df.1
     for(i in 1:ncol(Y)){
         fit   <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]])
+        fit2  <- phylolm_interface_CR(tr, matrix(Y[,i]), shift.configuration, conv.regimes, alpha=alpha[[i]],
+				      fixed.alpha=TRUE)
         if( all( is.na(fit) ) ){
            return(Inf)
         } 
         varY  <- var(Y[,i])
-        ld    <- as.numeric(determinant(fit$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
-        df.2  <- 3*log(nTips) - ld
+        ld    <- as.numeric(determinant(fit2$vcov * (fit$n - fit$d)/(varY*fit$n), log=T)$modulus)
+        df.2  <- 2*log(nTips) - ld
         score <- score  -2*fit$logLik + df.2
     }
     return( score )
