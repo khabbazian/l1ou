@@ -962,7 +962,7 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
     nShifts    <- length(shift.configuration)
     nVariables <- ncol(Y)
 
-    p   <- nShifts + (nShifts + 2)*nVariables
+    p   <- nShifts + (nShifts + 3)*nVariables
     N   <- nTips*nVariables
     d.f <- 2*p + (2*p*(p+1))/(N-p-1) 
     if( p > N-2 )

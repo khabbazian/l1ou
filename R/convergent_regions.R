@@ -105,7 +105,7 @@ cmp_AICc_CR  <-  function(tr, Y, shift.configuration, conv.regimes, alpha){
     nShiftVals <- length( conv.regimes ) -1## conv.regimes has intercept as an optimum value
     nTips      <- length( tr$tip.label )
 
-    p <- nShifts + (nShiftVals + 2)*ncol(Y)
+    p <- nShifts + (nShiftVals + 3)*ncol(Y)
     N <- nTips*ncol(Y)
     df.1 <- 2*p + (2*p*(p+1))/(N-p-1) 
     if( p > N-2)  ##  for this criterion we should have p < N.
