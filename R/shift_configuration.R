@@ -801,7 +801,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         }
 
         alpha[i]  <- fit$optpar
-        sigma2[i]   <- fit$sigma2
+        sigma2[i] <- fit$sigma2
         logLik[i] <- fit$logLik
 
         ## E[Y] and residuals: Y-EY
@@ -811,7 +811,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         ## Now we have the alpha hat and we can form the true design matrix
         if( nShifts > 0 ){
-            scale.values <- apply( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c], 2, max)^-1
+	    mat <- as.matrix( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c] )
+            scale.values <- apply( mat, 2, max)^-1
             fit$coefficients[2:(nShifts+1)] <- scale.values * fit$coefficients[2:(nShifts+1)]
         }
 
