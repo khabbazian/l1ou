@@ -332,34 +332,24 @@ estimate_convergent_regimes_surface  <-  function(model, opt){
                 if(identical(names(sc.tmp), names(sc.prev))){ next }
                 sc.prev <- sc.tmp
 
-		run.list[[list.idx]]=list(elist=elist, regimes=regimes)
-		list.idx <- list.idx+1
+		if(!opt$parallel.computing){
+			score   <-  cmp_model_score_CR(tr, Y, regimes, model$alpha, opt=opt)
+			if( min.score > score ){
+				min.score    <- score
+				min.regimes  <- regimes
+				elist.min    <- elist
+				has.progress <- TRUE
+			}
+		}else{
+			run.list[[list.idx]] <- list(elist=elist, regimes=regimes)
+			list.idx <- list.idx+1
+		}
 
-                #score   <-  cmp_model_score_CR(tr, Y, regimes, model$alpha, opt=opt)
-
-                #if( min.score > score ){
-                #    min.score    <- score
-                #    min.regimes  <- regimes
-                #    elist.min    <- elist
-                #    has.progress <- TRUE
-                #}
 
             }
         }
 
-	if(!opt$parallel.computing){
-		for(idx in 1:length(run.list) ){
-			IN <- run.list[[idx]]
-			score   <-  cmp_model_score_CR(tr, Y, IN$regimes, model$alpha, opt=opt)
-
-			if( min.score > score ){
-				min.score    <- score
-				min.regimes  <- IN$regimes
-				elist.min    <- IN$elist
-				has.progress <- TRUE
-			}
-		}
-	} else{
+	if( length(run.list)>0 && opt$parallel.computing ){
 
 		RE.list <- mclapply( run.list, FUN=function(X){
 					    return ( cmp_model_score_CR(tr, Y, X$regimes, model$alpha, opt=opt) )
