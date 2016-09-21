@@ -309,6 +309,28 @@ get_configuration_in_sol_path <- function(sol.path, index, Y, tidx=1){
 
 
 
+#' Converts shift values to optimum values on the edges.
+#'
+#' Converts a model indicated with shift values to a model with optimum values on the edges.
+#'
+#'@param tree ultrametric tree of class phylo with branch lengths.
+#'@param shift.configuration vector of edge indices with shifts.
+#'@param shift.values vector of shift values.
+#'
+#'@return vector of size number of edges with optimum value of the trait on the corresponding edge.
+#'@examples
+#' 
+#' data(lizard.tree, lizard.traits)
+#' 
+#' sc <- c(55, 98, 118, 74, 14, 77,  32, 164)
+#' sv <- c(2 ,  3,   4,  4,  1,  2, 0.5,   1)
+#'
+#' root.value <- -2
+#'
+#' optimum.values <- convert_shifts2regions(lizard.tree, sc, sv) + root.value
+#'
+#'
+#'@export
 convert_shifts2regions <-function(tree, shift.configuration, shift.values){
 
     stopifnot( length(shift.configuration) == length(shift.values) )
@@ -361,9 +383,14 @@ normalize_tree <- function(tree, check.ultrametric=TRUE){
     g        = graph.edgelist(tree$edge, directed = TRUE)
     root2tip = get.shortest.paths(g, rNode, to=1:nTips, mode="out", output="epath")$epath
 
-    Tval     = sum(tree$edge.length[root2tip[[1]] ])
+    root.edge <- ifelse(is.null(tree$root.edge), 0, tree$root.edge)
+    Tval     = root.edge + sum(tree$edge.length[root2tip[[1]] ])
     #Tval = mean ( sapply( 1:nTips, FUN=function(x) sum(tree$edge.length[root2tip[[x]]])   )  )
+
     tree$edge.length = tree$edge.length / Tval
+    if(!is.null(tree$root.edge)){
+	    tree$root.edge <- tree$root.edge / Tval 
+    }
     return(tree)
 }
 
