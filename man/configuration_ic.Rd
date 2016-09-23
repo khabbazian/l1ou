@@ -45,7 +45,7 @@ pBIC is the phylogenetic BIC for shifts proposed by Khabbazian et al.
 pBICess is a version of pBIC where the determinant term is replaced by a sum of the log of effective sample sizes (ESS), similar to the ESS proposed by Ané (2008).
 }
 \examples{
-library(l1ou)
+
 data(lizard.tree, lizard.traits)
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)

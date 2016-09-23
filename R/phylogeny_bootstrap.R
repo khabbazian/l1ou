@@ -34,11 +34,16 @@
 #' nEdges <- Nedge(lizard.tree)
 #' e.w <- rep(1,nEdges) 
 #' e.w[eModel$shift.configuration] <- 3
-#' e.l <- round(result * 100, digits=1)
+#' e.l <- round(result$detection.rate*100, digits=1)
 #' # to avoid annotating edges with support at or below 10%
 #' e.l <- ifelse(e.l>10, paste0(e.l,"%"), NA)
 #' plot(eModel, edge.label=e.l, edge.ann.cex=0.7, edge.label.ann=TRUE, cex=0.5, label.offset=0.02, edge.width=e.w)
 #'
+#'
+#' Y <- lizard.traits[,1:2] 
+#' eModel <- estimate_shift_configuration(lizard.tree, Y)
+#' result <- l1ou_bootstrap_support(eModel, nItrs=2, multicore=TRUE, nCores=4)
+#' result$detection.rate
 #'
 #'@seealso   \code{\link{estimate_shift_configuration}}
 #'
@@ -73,7 +78,10 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     Y     = model$Y
     YY    = C.IH%*%(Y - model$mu )
 
+    seed.vec <- sample(.Machine$integer.max, nItrs+1, replace=TRUE)
+
     detection.vec = rep(0, nrow(tree$edge))
+    all.shift.configurations <- list()
 
     if(quietly==FALSE)
         print(paste0("iteration #:nShifts:shift configuraitons"))
@@ -81,8 +89,10 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
     valid.count <- 0
     if(multicore == FALSE){
         for(itr in 1:nItrs){
+            set.seed(seed.vec[[itr]])
             YYstar = sample(YY, replace = TRUE)
-            Ystar  = (C.H%*%YYstar) + model$mu 
+            Ystar  = as.matrix( (C.H%*%YYstar) + model$mu )
+            rownames(Ystar) <- rownames(Y)
 
             eM  <-  tryCatch({
                 estimate_shift_configuration(tree, Ystar, l1ou.options =model$l1ou.options)
@@ -94,21 +104,26 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
             valid.count <- valid.count + 1
 
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
+            all.shift.configurations[[itr]] <- eM$shift.configuration
+
             if(quietly==FALSE){
                 print(paste0("iteration ", itr, ":", length(eM$shift.configuration),":", 
                              paste0(eM$shift.configuration, collapse=" ") ) )
             }
 
         }
-        return(detection.vec/valid.count)
+        set.seed(seed.vec[[nItrs+1]])
+        return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
     }
 
-    shift.configuration.list = 
+
+    all.shift.configurations = 
         mclapply(X=1:nItrs, FUN=function(itr){
 
-                     set.seed( 101 + itr)
+                     set.seed(seed.vec[[itr]])
                      YYstar = sample(YY, replace = TRUE)
-                     Ystar  = (C.H%*%YYstar) + model$mu  
+                     Ystar  = as.matrix( (C.H%*%YYstar) + model$mu )
+                     rownames(Ystar) <- rownames(Y)
 
                      eM  <-  tryCatch({
                          estimate_shift_configuration(tree, Ystar, l1ou.options =model$l1ou.options)
@@ -126,16 +141,22 @@ bootstrap_support_univariate <- function(tree, model, nItrs, multicore=FALSE, nC
            }, mc.cores = nCores)
 
     valid.count <- 0
-    for( i in 1:length(shift.configuration.list)){
-        if( all(is.na( shift.configuration.list[[i]] )) ){
+    na.indices <- c()
+    for( i in 1:length(all.shift.configurations)){
+        if( all(is.na( all.shift.configurations[[i]] )) ){
+            na.indices <- c(na.indices, i)
             next
         }
         valid.count <- valid.count + 1
-        detection.vec[ shift.configuration.list[[i]] ] = 
-            detection.vec[ shift.configuration.list[[i]] ] + 1
+        detection.vec[ all.shift.configurations[[i]] ] = 
+            detection.vec[ all.shift.configurations[[i]] ] + 1
     }
 
-    return(detection.vec/valid.count)
+    if(length(na.indices)>0)
+        all.shift.configurations <- all.shift.configurations[-1*na.indices]
+
+    set.seed(seed.vec[[nItrs+1]])
+    return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
 }
 
 bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, nCores=2, quietly=FALSE){
@@ -143,12 +164,14 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
     Y = as.matrix(model$Y)
     stopifnot( length(model$alpha) == ncol(Y) )
 
+    seed.vec <- sample(.Machine$integer.max, nItrs+1, replace=TRUE)
+
     YY        = Y
     C.Hlist   = list()
     for( idx in 1:ncol(Y) ){
         RE    = sqrt_OU_covariance(tree, alpha = model$alpha[[idx]], 
                                    root.model = model$l1ou.options$root.model,
-                                   check.order=F, check.ultrametric=F ) 
+                                   check.order=F, check.ultrametric=F) 
         C.IH  = t(RE$sqrtInvSigma) 
         C.Hlist[[idx]] = RE$sqrtSigma
         YY[, idx]      = C.IH%*%(Y[, idx] - model$mu[ ,idx])
@@ -158,17 +181,21 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
         print(paste0("iteration #:nShifts:shift configuraitons"))
 
     detection.vec = rep(0, nrow(tree$edge))
+    all.shift.configurations <- list()
 
     valid.count <- 0
     if( multicore == FALSE ){
         for(itr in 1:nItrs){
 
+            set.seed(seed.vec[[itr]])
             Ystar   = YY
             idx.vec = sample(1:nrow(YY), replace = TRUE)
             for( idx in 1:ncol(YY) ){
                 YYstar        = YY[idx.vec, idx]
                 Ystar[, idx]  = (C.Hlist[[idx]] %*% YYstar) + model$mu[, idx] 
             }
+            rownames(Ystar) <- rownames(Y)
+
             eM  <-  tryCatch({
                 estimate_shift_configuration(tree, Ystar,  l1ou.options=model$l1ou.options)
             }, error = function(e) {
@@ -184,15 +211,17 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
 
             valid.count  <- valid.count + 1
             detection.vec[eM$shift.configuration] = detection.vec[eM$shift.configuration] + 1
+            all.shift.configurations[[itr]] <- eM$shift.configuration
         }
         stopifnot( valid.count > 0 )
-        return(detection.vec/valid.count)
+        set.seed(seed.vec[[nItrs+1]])
+        return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
     }
 
-    shift.configuration.list = 
+    all.shift.configurations = 
         mclapply(X=1:nItrs, FUN=function(itr){
                      Ystar   = YY
-                     set.seed( 101 + itr)
+                     set.seed(seed.vec[[itr]])
                      idx.vec = sample(1:nrow(YY), replace = TRUE)
                      for( idx in 1:ncol(YY) ){
                          YYstar        = YY[idx.vec, idx]
@@ -215,15 +244,22 @@ bootstrap_support_multivariate <- function(tree, model, nItrs, multicore=FALSE, 
                 }, mc.cores = nCores)
 
     valid.count <- 0
-    for( i in 1:length(shift.configuration.list)){
-        if( all(is.na( shift.configuration.list[[i]] )) ){
+    na.indices <- c()
+    for( i in 1:length(all.shift.configurations )){
+        if( all(is.na( all.shift.configurations [[i]] )) ){
+            na.indices <- c(na.indices, i)
             next
         }
         valid.count <- valid.count + 1
-        stopifnot( valid.count > 0 )
-        detection.vec[ shift.configuration.list[[i]] ] = 
-            detection.vec[ shift.configuration.list[[i]] ] + 1
-    }
 
-    return(detection.vec/valid.count)
+        stopifnot( valid.count > 0 )
+        detection.vec[ all.shift.configurations [[i]] ] = 
+            detection.vec[ all.shift.configurations [[i]] ] + 1
+    }
+    if(length(na.indices)>0)
+        all.shift.configurations <- all.shift.configurations[-1*na.indices]
+
+    set.seed(seed.vec[[nItrs+1]]) ## To make sure after both mclapply and for-loop we have same seed for the reproducibility  
+    return(list( detection.rate=(detection.vec/valid.count), all.shifts=all.shift.configurations))
 }
+

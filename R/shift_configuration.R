@@ -17,6 +17,7 @@
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum branch length connected to tips. 
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
 #'@param lars.alg model selection algorithm for LARS in univariate case. 
+#'@param nCores number of processes to be created for parallel computing. If nCores=1 then it will run sequentially. Otherwise, it creates nCores processes by using mclapply function. For parallel computing it, requires parallel package.
 #'@param rescale logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.
 #'@param edge.length.threshold minimum edge length that is considered non-zero. Branches with shorter length are considered as soft polytomies, disallowing shifts on such branches.
 #'@param grp.delta internal (used when the data contain multiple traits). The input lambda sequence for the group lasso, in `grplasso', will be lambda.max*(0.5^seq(0, grp.seq.ub, grp.delta) ).
@@ -54,6 +55,11 @@
 #' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' eModel
+#'  
+#' ## use parallel computing to accelerate the computation
+#' eModel.par <- estimate_shift_configuration(lizard$tree, lizard$Y, nCores=8)
+#'
+#' stopifnot( identical( sort(eModel.par$shift.configuration), sort(eModel$shift.configuration) ) ) ## TRUE
 #'
 #' nEdges <- Nedge(lizard.tree) # total number of edges
 #' ew <- rep(1,nEdges)  # to set default edge width of 1
@@ -82,6 +88,7 @@ estimate_shift_configuration <- function(tree, Y,
            alpha.upper            = alpha_upper_bound(tree), 
            alpha.lower            = NA,
            lars.alg               = c("lasso", "stepwise"),
+           nCores                 = 1,
            rescale                = TRUE,
            edge.length.threshold  = .Machine$double.eps,
            grp.delta              = 1/16,
@@ -182,9 +189,28 @@ estimate_shift_configuration <- function(tree, Y,
             alpha.upper  <- alpha.lower
         }
 
+    stopifnot( nCores > 0 )
+    parallel.computing <- FALSE
+    if(nCores>1){
+        if(!require(parallel)){
+            warning("parallel package is not available. The process will run sequentially.", immediate=TRUE)
+            nCores <- 1
+        }else{
+            parallel.computing <- TRUE
+        }
+    }
+
     if (all(is.na(l1ou.options))){
         l1ou.options                   <- list()
-        l1ou.options$use.saved.scores  <- TRUE
+        l1ou.options$nCores             <- nCores
+        l1ou.options$parallel.computing <- parallel.computing
+        ##NOTE: The saving_score functions are unprotected. To avoid race,
+        ## I simply disable them in parallel mode until later that I figure out how to fix it.
+        if(parallel.computing)
+            l1ou.options$use.saved.scores  <- FALSE
+        else
+            l1ou.options$use.saved.scores  <- TRUE
+
         l1ou.options$max.nShifts       <- max.nShifts
         l1ou.options$criterion         <- match.arg(criterion)
         l1ou.options$lars.alg          <- match.arg(lars.alg)
@@ -252,11 +278,11 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, root.model = "OUfixedRoot", 
-                                        check.order=F, check.ultrametric=F)$sqrtInvSigma ) 
+                                        check.order=F, check.ultrametric=F, normalize.tree.hight=TRUE)$sqrtInvSigma ) 
     } else{           ## OU model
         X   = generate_design_matrix(tree, "orgX", alpha=alpha )
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, root.model = opt$root.model, 
-                                        check.order=F, check.ultrametric=F)$sqrtInvSigma ) 
+                                        check.order=F, check.ultrametric=F, normalize.tree.hight=TRUE)$sqrtInvSigma ) 
     }
 
     if(!all(is.na(opt$candid.edges))){
@@ -328,12 +354,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
             RE  = sqrt_OU_covariance(tree, root.model = "OUfixedRoot",
-                                     alpha = 0, check.order=F, check.ultrametric=F )
+                                     alpha = 0, check.order=F, check.ultrametric=F, normalize.tree.hight=TRUE )
         } else {
             X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]])
             RE  = sqrt_OU_covariance(tree,  root.model = opt$root.model,   
                                      alpha = alpha[[i]], 
-                                     check.order=F, check.ultrametric=F )
+                                     check.order=F, check.ultrametric=F, normalize.tree.hight=TRUE )
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
 
@@ -438,7 +464,9 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     prev.shift.configuration = NA
     min.score = Inf   
 
-    for(idx in 1:nSols) {
+    candid.idx <- 1
+    shift.configuration.list <- list()
+    for (idx in 1:nSols) {
 
         shift.configuration = get_configuration_in_sol_path(sol.path, idx, Y)
         shift.configuration = correct_unidentifiability(tree, shift.configuration, opt)
@@ -457,14 +485,36 @@ select_best_solution <- function(tree, Y, sol.path, opt){
         }
         names(shift.configuration)  <- freq.shifts
         shift.configuration <- shift.configuration[order(names(shift.configuration), decreasing=TRUE)]
+        shift.configuration.list[[candid.idx]] <- shift.configuration
+        candid.idx <- candid.idx + 1
+    }
 
-        res = do_backward_correction(tree, Y, shift.configuration, opt)
+    search_ith_config <- function(sc){
+        res <- do_backward_correction(tree, Y, sc, opt)
+        return(res)
+    }
 
-        if (min.score > res$score){
-            min.score = res$score
-            best.shift.configuration = res$shift.configuration
+    if(opt$parallel.computing){
+        all.res <- mclapply(rev(shift.configuration.list), 
+                            FUN=search_ith_config, 
+                            mc.cores=opt$nCores)
+        for (i in length(all.res):1 ){
+            res <- all.res[[i]] 
+            if (min.score > res$score){
+                min.score = res$score
+                best.shift.configuration = res$shift.configuration
+            }
+        }
+    }else{
+        for (i in 1:length(shift.configuration.list) ){
+            res <- search_ith_config( shift.configuration.list[[i]] )
+            if (min.score > res$score){
+                min.score = res$score
+                best.shift.configuration = res$shift.configuration
+            }
         }
     }
+
     return ( list(score=min.score, shift.configuration=best.shift.configuration) )
 }
 
@@ -594,7 +644,7 @@ configuration_ic <- function(tree, Y, shift.configuration,
 #'@param Y trait vector/matrix without missing entries. The row names of the data must be in the same order as the tip labels.
 #'@param shift.configuration shift positions, i.e. vector of indices of the edges where the shifts occur.
 #'@param criterion an information criterion (see Details).
-#'@param root.model an ancestral state model at the root.
+#'@param root.model model for the ancestral state at the root.
 #'@param alpha.starting.value optional starting value for the optimization of the phylogenetic adaptation rate. 
 #'@param alpha.upper optional upper bound for the phylogenetic adaptation rate. The default value is log(2) over the minimum length of external branches, corresponding to a half life greater or equal to the minimum external branch length.
 #'@param alpha.lower optional lower bound for the phylogenetic adaptation rate.
@@ -685,8 +735,8 @@ fit_OU <- function(tree, Y, shift.configuration,
 
     s.c = correct_unidentifiability(tree, shift.configuration, opt)
     if( length(s.c) != length(shift.configuration) )
-        stop(paste0("the input shift configuration is not a parsimony configuration. 
-                    For instance,\n", s.c, "\n is an alternative configuration with fewer shifts."))
+        stop(paste0("the input shift configuration is not parsimonious. For instance, shifts on these edges:\n",
+                    s.c, "provides an alternative equivalent configuration with fewer shifts."))
 
      eModel = fit_OU_model(tree, Y, shift.configuration, opt)
      if(!is.null(cr.regimes) ){
@@ -717,20 +767,19 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
     nEdges = Nedge(tree)
     nTips  = length(tree$tip.label)
 
-    resi = mu= matrix(data=NA,nrow=nTips, ncol=ncol(Y))
-    shift.values = optima = edge.optima = numeric()
-    intercept   = alpha = sigma2   = optima.tmp = rep(NA, ncol(Y))
+    resi = mu = optima = matrix(data=NA, nrow=nTips, ncol=ncol(Y))
+    shift.values = numeric() # possibly different # of shifts for different traits if missing values
+    # edge.optima = matrix(NA, nEdges, ncol(Y))
+    intercept = alpha = sigma2 = rep(NA, ncol(Y))
     logLik = rep(NA, ncol(Y))
-    failed.refit <- FALSE
 
     for(i in 1:ncol(Y)){
-
         s.c <- c()
         if(!is.null(opt$tree.list)){
             tr <- opt$tree.list[[i]]
             y  <- as.matrix(Y[!is.na(Y[,i]), i])
             if(length(shift.configuration > 0))
-                augmented.s.c <- tr$old.order[shift.configuration]
+                augmented.s.c <- tr$old.order[shift.configuration] # index of shift edges in pruned tree, see gen_tree_array
             else
                 augmented.s.c <- c()
             for(s in shift.configuration){
@@ -752,63 +801,41 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         }
 
         alpha[i]  <- fit$optpar
-        sigma2[i]   <- fit$sigma2
+        sigma2[i] <- fit$sigma2
         logLik[i] <- fit$logLik
 
-        ## Now we have the alpha hat and we can form the true design matrix. 
-        refit    <- my_phylolm_interface(tr, y, s.c, opt, recmp.preds=TRUE, alpha=fit$optpar)
-        if ( all(is.na(refit)) ){
-            warning("computation of EY (mu) and residuals with the estimated alpha failed!
-                    To compute those, try to use fit_OU with different value of alpha.lower/alpha.upper.")
-            failed.refit <- TRUE
-        }else{
-            fit <- refit
-            failed.refit <- FALSE
+        ## E[Y] and residuals: Y-EY
+        mu[!is.na(Y[,i]), i]   = fit$fitted.values
+        resi[!is.na(Y[,i]), i] = fit$residuals
+        intercept[i] = fit$coefficients[[1]] # = y0 * e^-T + theta0_root * (1-e^-T), assumes ultrametric tree
+
+        ## Now we have the alpha hat and we can form the true design matrix
+        if( nShifts > 0 ){
+	    mat <- as.matrix( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c] )
+            scale.values <- apply( mat, 2, max)^-1
+            fit$coefficients[2:(nShifts+1)] <- scale.values * fit$coefficients[2:(nShifts+1)]
         }
 
-        if(!failed.refit){
-            ## E[Y]
-            f.v  = as.matrix(Y[,i])
-            f.v[!is.na(Y[,i])] = fit$fitted.values
-            mu[,i]   =  f.v
-            f.r  = as.matrix(Y[,i])
-            f.r[!is.na(Y[,i])] = fit$residuals 
-            resi[,i] = f.r
+        if( length(shift.configuration) > 0 ){
+            s.v = rep(NA, length(shift.configuration))
+            s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
+            shift.values = cbind(shift.values, s.v)
+        }
 
-            intercept[i] = fit$coefficients[[1]]
-
-            if( length(shift.configuration) > 0 ){
-                s.v = rep(NA, length(shift.configuration))
-                s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
-                shift.values = cbind(shift.values, s.v)
+        optima.tmp = rep(fit$coefficients[[1]], nTips)  # optima at the tips for one trait
+        if( length(shift.configuration) > 0 )
+            for(ish in 1:length(shift.configuration) ){ # i=index of Y column. ish=index of shift
+                s <- shift.configuration[[ish]]         # edge number for shift 'ish' in full tree
+                if(is.na(augmented.s.c[[ish]]))         # shift invisible in pruned tree
+                    next;
+                s.v <- fit$coefficients[which(s.c==augmented.s.c[[ish]])+1] # shift value
+                optima.tmp = optima.tmp + opt$Z[,s] * s.v # requires Z to have 0/1 values. bug otherwise.
             }
 
-            optima.tmp = rep(fit$coefficients[[1]], nTips)
-            if( length(shift.configuration) > 0 )
-                for(i in 1:length(shift.configuration) ){
-                    s <- shift.configuration[[i]]
-                    if(is.na(augmented.s.c[[i]]))
-                        next;
-                    s.v <- fit$coefficients[which(s.c==augmented.s.c[[i]])+1]
-                    optima.tmp = optima.tmp + opt$Z[,s] * s.v
-                }
-
-            optima <- cbind(optima,optima.tmp)
-            #edge.optima <- cbind(edge.optima, edge.optima.tmp)
-        }else{
-           shift.values  <- cbind(shift.values, rep(NA, length(shift.configuration) ) )
-           optima <- cbind(optima, rep(NA, nTips))
-           intercept <- c(intercept, NA)
-           mu[,i] <- rep(NA, length(Y[,i]) )
-           resi[,i] <- rep(NA, length(Y[,i]))
-        }
+        optima[,i] <- optima.tmp
     }
 
-    if(!failed.refit){
-        optima <- as.matrix(optima)
-        rownames(optima) <- tree$tip.label
-        #edge.optima <- as.matrix(edge.optima)
-    }
+    rownames(optima) <- tree$tip.label
 
     ##NOTE: it reads the score from the database 
     ## and do not recompute the score. So it doesn't have any overhead.
@@ -936,7 +963,7 @@ cmp_AICc <- function(tree, Y, shift.configuration, opt){
     nShifts    <- length(shift.configuration)
     nVariables <- ncol(Y)
 
-    p   <- nShifts + (nShifts + 2)*nVariables
+    p   <- nShifts + (nShifts + 3)*nVariables
     N   <- nTips*nVariables
     d.f <- 2*p + (2*p*(p+1))/(N-p-1) 
     if( p > N-2 )

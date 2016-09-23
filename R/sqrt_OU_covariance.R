@@ -11,6 +11,7 @@
 #'@param root.model ancestral state model at the root.
 #'@param check.order logical. If TRUE, the order will be checked to be in postorder traversal.
 #'@param check.ultrametric logical. If TRUE, the tree will be checked to ultrametric.
+#'@param normalize.tree.hight logical. If TRUE, it class normalize_tree function after transf.branch.lengths.
 #'
 #'@return 
 #' \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
@@ -24,6 +25,16 @@
 #' dimnames(Sigma) <- NULL
 #' all.equal(res$sqrtSigma %*% t(res$sqrtSigma), Sigma) # TRUE
 #' all.equal(res$sqrtInvSigma %*% t(res$sqrtInvSigma), solve(Sigma)) # TRUE
+#' 
+#' 
+#' ##Here's the example from "Eric A. Stone. 2011." (See references)
+#'
+#' tr <-  read.tree(text="((((Homo:.21,Pongo:.21):.28,Macaca:.49):.13,Ateles:.62):.38,Galago:1);") 
+#' RE <- sqrt_OU_covariance(tr) 
+#' B <- round( RE$sqrtSigma, digits=3)
+#' D <- round( RE$sqrtInvSigma, digits=3)
+#' print(B)
+#' print(D)
 #'
 #'@references
 #'Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
@@ -34,9 +45,11 @@
 #'
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
-                               check.order=TRUE, check.ultrametric=TRUE){
-
-    tree       <- multi2di(tree, random=FALSE)
+                               check.order=TRUE, check.ultrametric=TRUE, normalize.tree.hight=FALSE){
+    if( ! is.binary.tree(tree) ){
+        tree         <- multi2di(tree, random=FALSE)
+        check.order  <- TRUE 
+    }
     root.model <- match.arg(root.model) 
     ##NOTE: the function assumes reordering does not change the order of the 
     ##nodes and it just change the order of edges, so that column i in each 
@@ -55,7 +68,9 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
             }
         }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree
-        tre <- normalize_tree(tre)
+	if(normalize.tree.hight){
+		tre <- normalize_tree(tre)
+	}
     }else{
         tre <- tree
         if( root.model == "OUrandomRoot"){
@@ -65,7 +80,7 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
 
     my.edge.list <- cbind(tre$edge-1, tre$edge.length) 
     tre$root.edge <- ifelse(is.null(tre$root.edge), 0, tre$root.edge)
-    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tree$tip.label), tre$root.edge)
+    result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tre$tip.label), tre$root.edge)
     return(result)
 }
 

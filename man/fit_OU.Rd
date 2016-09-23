@@ -19,7 +19,7 @@ fit_OU(tree, Y, shift.configuration, criterion = c("pBIC", "pBICess", "mBIC",
 
 \item{criterion}{an information criterion (see Details).}
 
-\item{root.model}{an ancestral state model at the root.}
+\item{root.model}{model for the ancestral state at the root.}
 
 \item{alpha.starting.value}{optional starting value for the optimization of the phylogenetic adaptation rate.}
 

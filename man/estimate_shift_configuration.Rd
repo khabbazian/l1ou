@@ -9,9 +9,9 @@ estimate_shift_configuration(tree, Y,
   "pBICess", "mBIC", "BIC", "AICc"), root.model = c("OUfixedRoot",
   "OUrandomRoot"), candid.edges = NA, quietly = TRUE,
   alpha.starting.value = NA, alpha.upper = alpha_upper_bound(tree),
-  alpha.lower = NA, lars.alg = c("lasso", "stepwise"), rescale = TRUE,
-  edge.length.threshold = .Machine$double.eps, grp.delta = 1/16,
-  grp.seq.ub = 5, l1ou.options = NA)
+  alpha.lower = NA, lars.alg = c("lasso", "stepwise"), nCores = 1,
+  rescale = TRUE, edge.length.threshold = .Machine$double.eps,
+  grp.delta = 1/16, grp.seq.ub = 5, l1ou.options = NA)
 }
 \arguments{
 \item{tree}{ultrametric tree of class phylo with branch lengths, and edges in postorder.}
@@ -35,6 +35,8 @@ estimate_shift_configuration(tree, Y,
 \item{alpha.lower}{optional lower bound for the phylogenetic adaptation rate.}
 
 \item{lars.alg}{model selection algorithm for LARS in univariate case.}
+
+\item{nCores}{number of processes to be created for parallel computing. If nCores=1 then it will run sequentially. Otherwise, it creates nCores processes by using mclapply function. For parallel computing it, requires parallel package.}
 
 \item{rescale}{logical. If TRUE, the columns of the trait matrix are first rescaled so that all have the same l2-norm. If TRUE, the scores will be based on the rescale one.}
 
@@ -85,6 +87,11 @@ names(lizard.traits[,1])
 lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 eModel
+ 
+## use parallel computing to accelerate the computation
+eModel.par <- estimate_shift_configuration(lizard$tree, lizard$Y, nCores=8)
+
+stopifnot( identical( sort(eModel.par$shift.configuration), sort(eModel$shift.configuration) ) ) ## TRUE
 
 nEdges <- Nedge(lizard.tree) # total number of edges
 ew <- rep(1,nEdges)  # to set default edge width of 1

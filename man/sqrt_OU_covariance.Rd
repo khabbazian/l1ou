@@ -5,7 +5,8 @@
 \title{(inverse) square root of the phylogenetic covariance}
 \usage{
 sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
-  "OUrandomRoot"), check.order = TRUE, check.ultrametric = TRUE)
+  "OUrandomRoot"), check.order = TRUE, check.ultrametric = TRUE,
+  normalize.tree.hight = FALSE)
 }
 \arguments{
 \item{tree}{tree of class phylo with branch lengths. If alpha>0, i.e. under the OU model, the tree has to be ultrametric.}
@@ -17,6 +18,8 @@ sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
 \item{check.order}{logical. If TRUE, the order will be checked to be in postorder traversal.}
 
 \item{check.ultrametric}{logical. If TRUE, the tree will be checked to ultrametric.}
+
+\item{normalize.tree.hight}{logical. If TRUE, it class normalize_tree function after transf.branch.lengths.}
 }
 \value{
 \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
@@ -36,6 +39,16 @@ Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
 all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma), Sigma) # TRUE
 all.equal(res$sqrtInvSigma \%*\% t(res$sqrtInvSigma), solve(Sigma)) # TRUE
+
+
+##Here's the example from "Eric A. Stone. 2011." (See references)
+
+tr <-  read.tree(text="((((Homo:.21,Pongo:.21):.28,Macaca:.49):.13,Ateles:.62):.38,Galago:1);") 
+RE <- sqrt_OU_covariance(tr) 
+B <- round( RE$sqrtSigma, digits=3)
+D <- round( RE$sqrtInvSigma, digits=3)
+print(B)
+print(D)
 
 }
 \references{

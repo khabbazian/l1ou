@@ -5,30 +5,37 @@
 \title{Detects convergent regimes under an OU model}
 \usage{
 estimate_convergent_regimes(model, criterion = c("AICc", "pBIC", "BIC"),
-  method = c("backward", "rr"))
+  method = c("backward", "rr"), nCores = 1)
 }
 \arguments{
-\item{model}{object of class l1ou returned by \code{\link{estimate_shift_configuration}}.}
+\item{model}{fitted object of class l1ou returned by \code{\link{estimate_shift_configuration}}.}
 
 \item{criterion}{information criterion for model selection (see Details in \code{\link{configuration_ic}}).}
 
-\item{method}{method for finding convergent regimes. ``rr'' is based on genlasso, a regularized linear regression estimation. ``backward'' is a heuristic method similar to \code{surface_backward} function which is from the \code{surface} package. \code{surface_backward} function is to carry out the backward phase of SURFACE’s stepwise AIC routine}
+\item{method}{search method for finding convergent regimes. ``rr'' is based on genlasso,
+a regularized linear regression estimation. Currenly, this method can only accept a single trait.
+The default ``backward'' method is a heuristic similar to \code{surface_backward}
+in the \code{surface} package,
+using backward steps to repeatedly merge similar regimes into convergent regimes.}
+
+\item{nCores}{number of processes to be created for parallel computing. If nCores=1 then it will run sequentially. Otherwise, it creates nCores processes by using mclapply function. For parallel computing it, requires parallel package.}
 }
 \description{
-This  function  takes  in  one  or  multiple  traits,  and  automatically  finds convergent regimes given estimated evolutionary shift positions returned by \code{\link{estimate_shift_configuration}}. The model assumes an Ornstein-
-Uhlenbeck process whose parameters are estimated (adaptation ‘strength’ and drift variance2).
+Takes a model previously estimated by \code{\link{estimate_shift_configuration}},
+including one or more traits and a configuration of evolutionary shifts, and detect which of these regime shifts
+are convergent.
 }
 \examples{
 
 library(l1ou)
 data("lizard.traits", "lizard.tree")
 Y <- lizard.traits[, 1:1]
-
+## first fit a model to find individual shifts (no convergence assumed):
 fit_ind <- estimate_shift_configuration(lizard.tree, Y, criterion="AICc")
-fit_conv <- estimate_convergent_regimes(fit_ind, criterion = "AICc",method="backward")
 fit_ind
+## then detect which of these shifts are convergent:
+fit_conv <- estimate_convergent_regimes(fit_ind, criterion="AICc")
 fit_conv
-plot(fit_ind)
 plot(fit_conv)
 
 }
