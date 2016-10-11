@@ -6,7 +6,7 @@
 \usage{
 sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
   "OUrandomRoot"), check.order = TRUE, check.ultrametric = TRUE,
-  normalize.tree.hight = FALSE)
+  normalize.tree.height = FALSE)
 }
 \arguments{
 \item{tree}{tree of class phylo with branch lengths. If alpha>0, i.e. under the OU model, the tree has to be ultrametric.}
@@ -19,7 +19,7 @@ sqrt_OU_covariance(tree, alpha = 0, root.model = c("OUfixedRoot",
 
 \item{check.ultrametric}{logical. If TRUE, the tree will be checked to ultrametric.}
 
-\item{normalize.tree.hight}{logical. If TRUE, it class normalize_tree function after transf.branch.lengths.}
+\item{normalize.tree.height}{logical. If TRUE, it class normalize_tree function after transf.branch.lengths.}
 }
 \value{
 \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}

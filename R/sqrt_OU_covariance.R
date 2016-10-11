@@ -11,7 +11,7 @@
 #'@param root.model ancestral state model at the root.
 #'@param check.order logical. If TRUE, the order will be checked to be in postorder traversal.
 #'@param check.ultrametric logical. If TRUE, the tree will be checked to ultrametric.
-#'@param normalize.tree.hight logical. If TRUE, it class normalize_tree function after transf.branch.lengths.
+#'@param normalize.tree.height logical. If TRUE, it class normalize_tree function after transf.branch.lengths.
 #'
 #'@return 
 #' \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}
@@ -45,7 +45,7 @@
 #'
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
-                               check.order=TRUE, check.ultrametric=TRUE, normalize.tree.hight=FALSE){
+                               check.order=TRUE, check.ultrametric=TRUE, normalize.tree.height=FALSE){
     if( ! is.binary.tree(tree) ){
         tree         <- multi2di(tree, random=FALSE)
         check.order  <- TRUE 
@@ -68,7 +68,7 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
             }
         }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha))$tree
-	if(normalize.tree.hight){
+	if(normalize.tree.height){
 		tre <- normalize_tree(tre)
 	}
     }else{
