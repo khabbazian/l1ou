@@ -15,7 +15,7 @@ generate_prediction_vec  <-  function(tr,
         }
 
         if(designMatrix){
-            Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot", normalize.tree.hight=TRUE)$sqrtInvSigma )
+            Cinvh <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot", normalize.tree.height=TRUE)$sqrtInvSigma )
             X     <- Cinvh%*%X
         }
         preds <- cbind(1, X[,shift.configuration])
@@ -247,7 +247,7 @@ find_convergent_regimes  <-  function(tr, Y, alpha, criterion, regimes){
     stopifnot(all( row.names(Y) == tr$tip.label))
 
     #alpha <- eModel$alpha
-    Cinvh   <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot", normalize.tree.hight=TRUE)$sqrtInvSigma )
+    Cinvh   <- t( sqrt_OU_covariance(tr, alpha=alpha, root.model = "OUfixedRoot", normalize.tree.height=TRUE)$sqrtInvSigma )
     #Cinvh   <- t( cmp.OU.covariance(tr, alpha=alpha)$D ) 
     Y  <- Cinvh%*%Y
 
