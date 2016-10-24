@@ -460,8 +460,13 @@ plot.l1ou <- function (model, palette = NA,
         if( !is.null(names(s.c)) ){
             ids = unique(names(s.c))
             tmp = sample(rainbow(length(ids)))
-            for( id in ids )
-                palette[which(names(s.c)==id)] = tmp[which(ids==id)]
+	    for( id in ids ){
+		    if(id == "0"){
+			    palette[which(names(s.c) == id)] = "gray"  #background 
+			    next
+		    }
+		    palette[which(names(s.c)==id)] = tmp[which(ids==id)]
+	    }
         }
     }
 
