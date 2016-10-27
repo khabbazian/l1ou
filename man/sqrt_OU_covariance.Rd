@@ -34,7 +34,7 @@ and can be applied to very big trees.
 \examples{
 
 data(lizard.tree)
-res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
+res1 <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
 all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma), Sigma) # TRUE
