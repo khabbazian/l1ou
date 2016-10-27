@@ -20,7 +20,7 @@
 #'@examples
 #'
 #' data(lizard.tree)
-#' res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
+#' res1 <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 #' Sigma <- vcv(lizard.tree)
 #' dimnames(Sigma) <- NULL
 #' all.equal(res$sqrtSigma %*% t(res$sqrtSigma), Sigma) # TRUE
@@ -81,6 +81,7 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
     my.edge.list <- cbind(tre$edge-1, tre$edge.length) 
     tre$root.edge <- ifelse(is.null(tre$root.edge), 0, tre$root.edge)
     result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tre$tip.label), tre$root.edge)
+    #result=result.*(1/(2*alpha))
     return(result)
 }
 
