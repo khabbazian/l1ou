@@ -27,7 +27,7 @@
 #' \item{Y}{input trait vector/matrix.}
 #' \item{tree}{input tree.}
 #' \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
-#' \item{shift.optima}{estimates of the shift values.}
+#' \item{shift.values}{estimates of the shift values.}
 #' \item{shift.means}{estimates change of the expectation of the shift values}
 #' \item{nShifts}{estimated number of shifts.}
 #' \item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
@@ -850,7 +850,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  Y                   = Y, 
                  tree                = tree,
                  shift.configuration = shift.configuration, 
-                 shift.optima       = shift.values,
+                 shift.values       = shift.values,
                  shift.means        = shift.means, 
                  nShifts             = length(shift.configuration), 
                  optima              = optima, 

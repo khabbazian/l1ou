@@ -42,7 +42,7 @@
 #' lizard <- adjust_data(lizard.tree, lizard.traits)
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
-#'                              eModel$shift.configuration, eModel$shift.optima)
+#'                              eModel$shift.configuration, eModel$shift.values)
 #' RE <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
 #'                                          root.model = "OUfixedRoot",normalize.tree.height=T,
 #'                                          check.order=F, check.ultrametric=F)
