@@ -51,41 +51,25 @@ print(B)
 print(D)
 
 
-# Here are the examples on how to get the contrasts using sqrt_OU_covariance
-truealpha=0.001
-y0=0.248
-# truetheta=  Can you help me write a function for theta
-RE = sqrt_OU_covariance(lizard.tree, alpha=truealpha, 
-                        root.model = "OUfixedRoot",normalize.tree.hight=T
-                        check.order=F, check.ultrametric=F)
-#`C.IH' represents the transpose of square root of  the inverse matrix of covariance.
-#'C.H' represents the square root of the covariance matrix.
+##Here is the examples on how to get the contrasts using sqrt_OU_covariance
+data(lizard.tree, lizard.traits)
+lizard <- adjust_data(lizard.tree, lizard.traits)
+eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
+                             eModel$shift.configuration, eModel$shift.optima)
+RE <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
+                                         root.model = "OUfixedRoot",normalize.tree.height=T,
+                                         check.order=F, check.ultrametric=F)
+# `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance.
+# `covSqrt` represents the square root of the covariance matrix.
 
-C.IH  = t(RE$sqrtInvSigma)
-C.H   = RE$sqrtSigma
-Y  <- rTraitCont(lizard.tree, "OU", theta=truetheta, 
-                   alpha=truealpha, 
-                   sigma=Sigma, root.value=y0)
-YY    = C.IH%*%(Y - eModel$mu) # the contrast
+ covInverseSqrt  <- t(RE$sqrtInvSigma)
+ covSqrt   <- RE$sqrtSigma
+ Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
+                                     alpha=eModel$alpha, 
+                                     sigma=eModel$sigma, root.value=eModel$intercept)
+ contrast    <-  covInverseSqrt\%*\%(Y - eModel$mu)
 
-
-# Examples on how to generate the variance of contrasts.
-# We will take the root model as OUfixedRoot as an example.
-n_sim=100000
-boot_table=matrix(nrow=n_sim, ncol=n_tips, data=NA)
-RE = sqrt_OU_covariance(lizard.tree, alpha=truealpha, 
-                        root.model = "OUfixedRoot",normalize.tree.hight=T
-                        check.order=F, check.ultrametric=F)
-C.IH  = t(RE$sqrtInvSigma)
-C.H   = RE$sqrtSigma
-for (i in 1:n_sim) {
-  Y  <- rTraitCont(lizard.tree, "OU", theta=truetheta, 
-                   alpha=truealpha, 
-                   sigma=Sigma, root.value=y0)
-  YY    = C.IH%*%(Y - eModel$mu)
-  boot_table[i,]=YY
-}
-convar = mean(apply(boot_table,2,var))
 
 }
 \references{

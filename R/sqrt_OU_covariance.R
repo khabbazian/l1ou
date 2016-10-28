@@ -41,22 +41,22 @@
 #' data(lizard.tree, lizard.traits)
 #' lizard <- adjust_data(lizard.tree, lizard.traits)
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
-#' theta = eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree, 
-#'                              eModel$shift.configuration, eModel$shift.values)  
-#' RE = sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha, 
-#'                                          root.model = "OUfixedRoot",normalize.tree.hight=T
+#' theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
+#'                              eModel$shift.configuration, eModel$shift.optima)
+#' RE <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
+#'                                          root.model = "OUfixedRoot",normalize.tree.height=T,
 #'                                          check.order=F, check.ultrametric=F)
 #' # `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance.
 #' # `covSqrt` represents the square root of the covariance matrix.
 #'
-#'  covInverseSqrt  = t(RE$sqrtInvSigma)
-#'  covSqrt   = RE$sqrtSigma
+#'  covInverseSqrt  <- t(RE$sqrtInvSigma)
+#'  covSqrt   <- RE$sqrtSigma
 #'  Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
 #'                                      alpha=eModel$alpha, 
 #'                                      sigma=eModel$sigma, root.value=eModel$intercept)
-#'  contrast    = C.IH%*%(Y - eModel$mu)
-#'    
-#'    
+#'  contrast    <-  covInverseSqrt%*%(Y - eModel$mu)
+#'
+#'
 #'@references
 #' Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
 #' "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models".
