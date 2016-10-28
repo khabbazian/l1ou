@@ -34,7 +34,7 @@ and can be applied to very big trees.
 \examples{
 
 data(lizard.tree)
-res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
+res1 <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
 all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma), Sigma) # TRUE
@@ -49,6 +49,27 @@ B <- round( RE$sqrtSigma, digits=3)
 D <- round( RE$sqrtInvSigma, digits=3)
 print(B)
 print(D)
+
+
+##Here is the examples on how to get the contrasts using sqrt_OU_covariance
+data(lizard.tree, lizard.traits)
+lizard <- adjust_data(lizard.tree, lizard.traits)
+eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
+theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
+                             eModel$shift.configuration, eModel$shift.optima)
+RE <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
+                                         root.model = "OUfixedRoot",normalize.tree.height=T,
+                                         check.order=F, check.ultrametric=F)
+# `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance.
+# `covSqrt` represents the square root of the covariance matrix.
+
+ covInverseSqrt  <- t(RE$sqrtInvSigma)
+ covSqrt   <- RE$sqrtSigma
+ Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
+                                     alpha=eModel$alpha, 
+                                     sigma=eModel$sigma, root.value=eModel$intercept)
+ contrast    <-  covInverseSqrt\%*\%(Y - eModel$mu)
+
 
 }
 \references{
