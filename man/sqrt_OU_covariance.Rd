@@ -34,7 +34,7 @@ and can be applied to very big trees.
 \examples{
 
 data(lizard.tree)
-res1 <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
+res <- sqrt_OU_covariance(lizard.tree) # alpha not provided: so BM model.
 Sigma <- vcv(lizard.tree)
 dimnames(Sigma) <- NULL
 all.equal(res$sqrtSigma \%*\% t(res$sqrtSigma), Sigma) # TRUE
@@ -56,7 +56,7 @@ data(lizard.tree, lizard.traits)
 lizard <- adjust_data(lizard.tree, lizard.traits)
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
-                             eModel$shift.configuration, eModel$shift.optima)
+                             eModel$shift.configuration, eModel$shift.values)
 RE <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
                                          root.model = "OUfixedRoot",normalize.tree.height=T,
                                          check.order=F, check.ultrametric=F)
