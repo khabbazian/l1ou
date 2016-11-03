@@ -3,7 +3,7 @@ Version: 1.28
 Date: 2015-12-05
 Title: Tools for detecting past changes in the expected mean trait values and
     studying trait evolution from comparative data
-Author: Mohammad Khabbazian [aut], Cecile Ane [ctb], Qing Yu (Sabrina) [cbt]
+Author: Mohammad Khabbazian [aut], Cecile Ane [ctb], Qing Yu (Sabrina) [ctb]
 Maintainer: Mohammad Khabbazian <khabbazian@wisc.edu>
 Description: Provides functions to study trait evolution from comparative data
     and detect past changes in the expected mean trait values. It uses the Ornstein-

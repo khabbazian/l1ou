@@ -1210,9 +1210,9 @@ run_grplasso  <- function (grpX, grpY, nVariables, grpIdx, opt){
             idx = prev.idx = 1
             for (mdf in df.missing) {
 
-                if( length( which(df.vec > mdf) ) > 0 ){ ##that means at the begining or in the middle of the sequence
+                if( length( which(df.vec > mdf) ) > 0 ){ ##that means at the beginning or in the middle of the sequence
                     idx = min(which(df.vec > mdf))
-                    if( idx == 1){ ## that means we should add to the begining
+                    if( idx == 1){ ## that means we should add to the beginning
                         ##TODO: I don't like it
                         lmbdMax    = lmbdMax + 2
                         next
