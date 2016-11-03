@@ -53,6 +53,7 @@ estimate_shift_configuration(tree, Y,
 \item{tree}{input tree.}
 \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 \item{shift.values}{estimates of the shift values.}
+\item{shift.means}{estimates change of the expectation of the shift values}
 \item{nShifts}{estimated number of shifts.}
 \item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 \item{edge.optima}{optimum values of the trait on the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}

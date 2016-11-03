@@ -28,6 +28,7 @@
 #' \item{tree}{input tree.}
 #' \item{shift.configuration}{estimated shift positions, i.e. vector of indices of edges where the estimated shifts occur.}
 #' \item{shift.values}{estimates of the shift values.}
+#' \item{shift.means}{estimates change of the expectation of the shift values}
 #' \item{nShifts}{estimated number of shifts.}
 #' \item{optima}{optimum values of the trait at tips. If the data are multivariate, this is a matrix where each row corresponds to a tip.}
 #' \item{edge.optima}{optimum values of the trait on the edges. If the data are multivariate, this is a matrix where each row corresponds to an edge.}
@@ -811,7 +812,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         ## Now we have the alpha hat and we can form the true design matrix
         if( nShifts > 0 ){
-	    mat <- as.matrix( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c] )
+	          mat <- as.matrix( generate_design_matrix(tr, type="orgX", alpha=alpha[i])[,s.c] )
             scale.values <- apply( mat, 2, max)^-1
             fit$coefficients[2:(nShifts+1)] <- scale.values * fit$coefficients[2:(nShifts+1)]
         }
@@ -821,7 +822,11 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
             s.v[!is.na(augmented.s.c)] = fit$coefficients[2:(nShifts+1)]
             shift.values = cbind(shift.values, s.v)
         }
-
+        
+        # scale.values are the inverse of (1-exp(-alpha*age of the shift))
+        if( length(shift.configuration) > 0 && nShifts > 0  ){
+             shift.means=shift.values/scale.values
+        }
         optima.tmp = rep(fit$coefficients[[1]], nTips)  # optima at the tips for one trait
         if( length(shift.configuration) > 0 )
             for(ish in 1:length(shift.configuration) ){ # i=index of Y column. ish=index of shift
@@ -845,7 +850,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
                  Y                   = Y, 
                  tree                = tree,
                  shift.configuration = shift.configuration, 
-                 shift.values        = shift.values,
+                 shift.values       = shift.values,
+                 shift.means        = shift.means, 
                  nShifts             = length(shift.configuration), 
                  optima              = optima, 
                  alpha               = alpha, 
