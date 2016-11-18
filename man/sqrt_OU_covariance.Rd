@@ -63,8 +63,8 @@ REf <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
 REr <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
                                           root.model = "OUrandomRoot",normalize.tree.height=T,
                                           check.order=F, check.ultrametric=F)
- # `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance.
- # `covSqrt` represents the square root of the covariance matrix.
+ # `covInverseSqrtf` represents the transpose of square root of  the inverse matrix of covariance for fixedRoot model.
+ # `covSqrtf` represents the square root of the covariance matrix for fixedRoot model. 
 
 covInverseSqrtf  <- t(REf$sqrtInvSigma)
 covSqrtf   <- REf$sqrtSigma
@@ -75,14 +75,14 @@ treeheight=max(tij)
 dij=2*(treeheight-tij) 
 vrandom=1/(2*eModel$alpha)*exp(-eModel$alpha*dij) 
 vfix= 1/(2*eModel$alpha)*exp(-eModel$alpha*dij)*(1-exp(-2*eModel$alpha*tij))
-Ind_random=covInverseSqrtr%*%vrandom%*%t(covInverseSqrtr)
-Ind_fix=covInverseSqrtf%*%vfix%*%t(covInverseSqrtf)
+Ind_random=covInverseSqrtr\%*\% vrandom\%*\%t(covInverseSqrtr)
+Ind_fix=covInverseSqrtf\%*\% vfix\%*\% t(covInverseSqrtf)
 all.equal(Ind_random,diag(100))
 all.equal(Ind_fix,diag(100))
 Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
                                      alpha=eModel$alpha, 
                                       sigma=eModel$sigma, root.value=eModel$intercept)
-contrast    <-  covInverseSqrt%*%(Y - eModel$mu)
+contrast    <-  covInverseSqrt\%*\%(Y - eModel$mu)
 
 }
 \references{
