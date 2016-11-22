@@ -39,37 +39,23 @@
 #' 
 #' ##Here is the examples on how to get the contrasts using sqrt_OU_covariance
 #' data(lizard.tree, lizard.traits)
-#' lizard <- adjust_data(lizard.tree, lizard.traits)
+#' lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 #' eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 #' theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
 #'                              eModel$shift.configuration, eModel$shift.values)
 #' REf <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
-#'                                          root.model = "OUfixedRoot",normalize.tree.height=T,
-#'                                          check.order=F, check.ultrametric=F)
-#' REr <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
-#'                                          root.model = "OUrandomRoot",normalize.tree.height=T,
-#'                                          check.order=F, check.ultrametric=F)
-#' # `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance.
-#' # `covSqrt` represents the square root of the covariance matrix.
-#'
+#'                                          root.model = "OUfixedRoot",normalize.tree.height=TRUE,
+#'                                          check.order=FALSE, check.ultrametric=FALSE)
 #'  covInverseSqrtf  <- t(REf$sqrtInvSigma)
 #'  covSqrtf   <- REf$sqrtSigma
-#'  covInverseSqrtr  <- t(REr$sqrtInvSigma)
-#'  covSqrtr   <- REr$sqrtSigma
-#'  tij=vcv(eModel$tree)  # the time spent on each edge
-#'  treeheight=max(tij)   
-#'  dij=2*(treeheight-tij) 
-#'  vrandom=1/(2*eModel$alpha)*exp(-eModel$alpha*dij) 
-#'  vfix= 1/(2*eModel$alpha)*exp(-eModel$alpha*dij)*(1-exp(-2*eModel$alpha*tij))
-#'  Ind_random=covInverseSqrtr%*%vrandom%*%t(covInverseSqrtr)
-#'  Ind_fix=covInverseSqrtf%*%vfix%*%t(covInverseSqrtf)
-#'  all.equal(Ind_random,diag(100))
-#'  all.equal(Ind_fix,diag(100))
+#' # `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance for FixedRoot model.
+#' # `covSqrt` represents the square root of the covariance matrix for FixedRoot model.
+#'
 #'  Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
 #'                                      alpha=eModel$alpha, 
 #'                                      sigma=eModel$sigma, root.value=eModel$intercept)
-#'  contrast    <-  covInverseSqrt%*%(Y - eModel$mu)
-#'
+#'  contrast    <-  covInverseSqrtf%*%(Y - eModel$mu)
+#'  
 #'
 #'@references
 #' Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
@@ -118,13 +104,14 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
     result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tre$tip.label), tre$root.edge)
     tij=vcv(tre)  # the time spent on each edge
     treeheight=max(tij) 
-    if (root.model == "OUrandomRoot"){
-      result$sqrtSigma=result$sqrtSigma/sqrt(2*alpha)
-      result$sqrtInvSigma=result$sqrtInvSigma*sqrt(2*alpha)
-    } else if (root.model == "OUfixedRoot"){
-      result$sqrtSigma=result$sqrtSigma/(sqrt((2*alpha)/(1-exp(-2*alpha*treeheight))))
-      result$sqrtInvSigma=result$sqrtInvSigma*(sqrt((2*alpha)/(1-exp(-2*alpha*treeheight))))
-                             
+    if ( alpha > 0){
+      if (root.model == "OUrandomRoot"){
+        result$sqrtSigma=result$sqrtSigma/sqrt(2*alpha)
+        result$sqrtInvSigma=result$sqrtInvSigma*sqrt(2*alpha)
+      } else if (root.model == "OUfixedRoot"){
+        result$sqrtSigma=result$sqrtSigma/(sqrt((2*alpha)/(1-exp(-2*alpha*treeheight))))
+        result$sqrtInvSigma=result$sqrtInvSigma*(sqrt((2*alpha)/(1-exp(-2*alpha*treeheight))))
+      } 
     }
     return(result)
 }
