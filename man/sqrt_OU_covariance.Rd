@@ -53,24 +53,22 @@ print(D)
 
 ##Here is the examples on how to get the contrasts using sqrt_OU_covariance
 data(lizard.tree, lizard.traits)
-lizard <- adjust_data(lizard.tree, lizard.traits)
+lizard <- adjust_data(lizard.tree, lizard.traits[,1])
 eModel <- estimate_shift_configuration(lizard$tree, lizard$Y)
 theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
-                             eModel$shift.configuration, eModel$shift.values)
-RE <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
-                                         root.model = "OUfixedRoot",normalize.tree.height=T,
-                                         check.order=F, check.ultrametric=F)
-# `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance.
-# `covSqrt` represents the square root of the covariance matrix.
+                                                          eModel$shift.configuration, eModel$shift.values)
+REf <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
+                          root.model = "OUfixedRoot",normalize.tree.height=TRUE,
+                          check.order=FALSE, check.ultrametric=FALSE)
+covInverseSqrtf  <- t(REf$sqrtInvSigma)
+covSqrtf   <- REf$sqrtSigma
+# `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance for FixedRoot model.
+# `covSqrt` represents the square root of the covariance matrix for FixedRoot model.
 
- covInverseSqrt  <- t(RE$sqrtInvSigma)
- covSqrt   <- RE$sqrtSigma
- Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
-                                     alpha=eModel$alpha, 
-                                     sigma=eModel$sigma, root.value=eModel$intercept)
- contrast    <-  covInverseSqrt\%*\%(Y - eModel$mu)
-
-
+Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
+                 alpha=eModel$alpha, 
+                 sigma=eModel$sigma, root.value=eModel$intercept)
+contrast    <-  covInverseSqrtf\%*\%(Y - eModel$mu)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
