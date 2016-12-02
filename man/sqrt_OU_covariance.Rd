@@ -62,13 +62,13 @@ REf <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
                           check.order=FALSE, check.ultrametric=FALSE)
 covInverseSqrtf  <- t(REf$sqrtInvSigma)
 covSqrtf   <- REf$sqrtSigma
-# `covInverseSqrt` represents the transpose of square root of  the inverse matrix of covariance for FixedRoot model.
-# `covSqrt` represents the square root of the covariance matrix for FixedRoot model.
+# `covInverseSqrtf` represents the transpose of square root of  the inverse matrix of covariance for FixedRoot model.
+# `covSqrtf` represents the square root of the covariance matrix for FixedRoot model.
 
 Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
                  alpha=eModel$alpha, 
                  sigma=eModel$sigma, root.value=eModel$intercept)
-contrast    <-  covInverseSqrtf\%*\%(Y - eModel$mu)
+contrast <- covInverseSqrtf\%*\%(Y - eModel$mu)
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).
