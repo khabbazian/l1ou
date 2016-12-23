@@ -824,8 +824,7 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         }
         
         # scale.values are the inverse of (1-exp(-alpha*age of the shift))
-        #if( length(shift.configuration) > 0 && nShifts > 0  ){
-	if( length(shift.configuration) > 0 && nShifts > 0  ){
+        if( length(shift.configuration) > 0 && nShifts > 0  ){
              shift.means=shift.values/scale.values
         } else {
 	     shift.means=NA
