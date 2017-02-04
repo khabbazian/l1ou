@@ -70,7 +70,6 @@ REf <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
                                      sigma=eModel$sigma, root.value=eModel$intercept)
  contrast    <-  covInverseSqrtf\%*\%(Y - eModel$mu)
  
-
 }
 \references{
 Mohammad Khabbazian, Ricardo Kriebel, Karl Rohe, and Cécile Ané (2016).

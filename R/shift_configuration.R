@@ -826,7 +826,9 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
         # scale.values are the inverse of (1-exp(-alpha*age of the shift))
         if( length(shift.configuration) > 0 && nShifts > 0  ){
              shift.means=shift.values/scale.values
-        }
+        } else {
+	     shift.means=c()
+	}
         optima.tmp = rep(fit$coefficients[[1]], nTips)  # optima at the tips for one trait
         if( length(shift.configuration) > 0 )
             for(ish in 1:length(shift.configuration) ){ # i=index of Y column. ish=index of shift
