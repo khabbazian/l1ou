@@ -5,7 +5,7 @@
 \title{Detects convergent regimes under an OU model}
 \usage{
 estimate_convergent_regimes(model, criterion = c("AICc", "pBIC", "BIC"),
-  method = c("backward", "rr"), nCores = 1)
+  method = c("backward", "rr"), fixed.alpha = FALSE, nCores = 1)
 }
 \arguments{
 \item{model}{fitted object of class l1ou returned by \code{\link{estimate_shift_configuration}}.}
@@ -17,6 +17,8 @@ a regularized linear regression estimation. Currenly, this method can only accep
 The default ``backward'' method is a heuristic similar to \code{surface_backward}
 in the \code{surface} package,
 using backward steps to repeatedly merge similar regimes into convergent regimes.}
+
+\item{fixed.alpha}{indicates if the alpha parameters should be optimized while phylolm optimize the likelihood function.}
 
 \item{nCores}{number of processes to be created for parallel computing. If nCores=1 then it will run sequentially. Otherwise, it creates nCores processes by using mclapply function. For parallel computing it, requires parallel package.}
 }

@@ -76,7 +76,10 @@ phylolm_interface_CR  <-  function(tr, Y, conv.regimes = list(), alpha=NA, fixed
     prev.val <- options()$warn
     options(warn = -1)
 
-    if(fixed.alpha){
+    if( is.null(opt$fixed.alpha) ) 
+	    opt$fixed.alpha  <- FALSE;
+
+    if(fixed.alpha || opt$fixed.alpha){
 	    preds <- ifelse(preds>0,1,0)
 	    fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
 			    starting.value = alpha,
@@ -90,6 +93,7 @@ phylolm_interface_CR  <-  function(tr, Y, conv.regimes = list(), alpha=NA, fixed
 			       sc=shift.configuration,
 			       cr=conv.regimes,
 			       starting.value=alpha,
+			       upper.bound=opt$alpha.upper.bound,
 			       lower.bound=alpha/100
 			       )
     }
@@ -437,6 +441,7 @@ estimate_convergent_regimes_surface  <-  function(model, opt){
 #'  The default ``backward'' method is a heuristic similar to \code{surface_backward}
 #'  in the \code{surface} package,
 #'  using backward steps to repeatedly merge similar regimes into convergent regimes.
+#'@param fixed.alpha indicates if the alpha parameters should be optimized while phylolm optimize the likelihood function.
 #'@param nCores number of processes to be created for parallel computing. If nCores=1 then it will run sequentially. Otherwise, it creates nCores processes by using mclapply function. For parallel computing it, requires parallel package.
 #'
 #'@examples
@@ -458,12 +463,15 @@ estimate_convergent_regimes_surface  <-  function(model, opt){
 estimate_convergent_regimes  <-  function(model, 
                                         criterion=c("AICc", "pBIC", "BIC"),
                                         method=c("backward", "rr"),
+					fixed.alpha=FALSE,
 					nCores=1
                                      ){
     opt <- list()
     opt$method <- match.arg(method)
     opt$criterion <- match.arg(criterion)
     opt$shift.configuration <- model$shift.configuration
+    opt$alpha.upper.bound  <- model$l1ou.options$alpha.upper.bound
+    opt$fixed.alpha <- fixed.alpha
 
     opt$nCores <- nCores
     opt$parallel.computing <- FALSE
