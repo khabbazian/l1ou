@@ -7,7 +7,7 @@ Citation:
 
 - M. Khabbazian, R. Kriebel, K. Rohe, and C&eacute;cile An&eacute;. "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models". Methods in Ecology and Evolution. doi:10.1111/2041-210X.12534  
 
-#### [l1ou Reference manual](http://homepages.cae.wisc.edu/~khabbazian/pdfs/l1ou.pdf)
+#### [l1ou Reference manual](http://www.columbia.edu/~mhk2154/pdfs/l1ou.pdf)
 
 ### Version notes 
   Starting with version v1.22, the scores returned by "estimate\_shift\_configuration” function 
