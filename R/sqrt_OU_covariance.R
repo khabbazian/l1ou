@@ -44,7 +44,7 @@
 #' theta <- eModel$intercept + l1ou:::convert_shifts2regions(eModel$tree,
 #'                              eModel$shift.configuration, eModel$shift.values)
 #' REf <- sqrt_OU_covariance(eModel$tree, alpha=eModel$alpha,
-#'                                          root.model = "OUfixedRoot",normalize.tree.height=TRUE,
+#'                                          root.model = "OUfixedRoot",
 #'                                          check.order=FALSE, check.ultrametric=FALSE)
 #'  covInverseSqrtf  <- t(REf$sqrtInvSigma)
 #'  covSqrtf   <- REf$sqrtSigma
@@ -65,7 +65,7 @@
 #'
 #'@export
 sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUrandomRoot"), 
-                               check.order=TRUE, check.ultrametric=TRUE, normalize.tree.height=FALSE){
+                               check.order=TRUE, check.ultrametric=TRUE){
     if( ! is.binary.tree(tree) ){
         tree         <- multi2di(tree, random=FALSE)
         check.order  <- TRUE 
@@ -88,11 +88,9 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
             }
         }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha), check.pruningwise=F)$tree
-	if(normalize.tree.height){
-		coe = 2*alpha 
-          	tre$edge.length=tre$edge.length/coe
-		if(!is.null(tre$root.edge)) tre$root.edge=tre$root.edge/coe
-	}
+	coe = 2*alpha 
+        tre$edge.length=tre$edge.length/coe
+	if(!is.null(tre$root.edge)) tre$root.edge=tre$root.edge/coe
     }else{
         tre <- tree
         if( root.model == "OUrandomRoot"){

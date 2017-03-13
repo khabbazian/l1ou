@@ -279,11 +279,11 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
     if ( est.alpha ){ ## BM model
         X   = generate_design_matrix(tree, "apprX")
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=0, root.model = "OUfixedRoot", 
-                                        check.order=F, check.ultrametric=F, normalize.tree.height=TRUE)$sqrtInvSigma ) 
+                                        check.order=F, check.ultrametric=F)$sqrtInvSigma ) 
     } else{           ## OU model
         X   = generate_design_matrix(tree, "orgX", alpha=alpha )
         Cinvh   = t( sqrt_OU_covariance(tree, alpha=alpha, root.model = opt$root.model, 
-                                        check.order=F, check.ultrametric=F, normalize.tree.height=TRUE)$sqrtInvSigma ) 
+                                        check.order=F, check.ultrametric=F)$sqrtInvSigma ) 
     }
 
     if(!all(is.na(opt$candid.edges))){
@@ -355,12 +355,12 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         if ( est.alpha == TRUE ){
             X   = generate_design_matrix(tree, "apprX")
             RE  = sqrt_OU_covariance(tree, root.model = "OUfixedRoot",
-                                     alpha = 0, check.order=F, check.ultrametric=F, normalize.tree.height=TRUE )
+                                     alpha = 0, check.order=F, check.ultrametric=F)
         } else {
             X   = generate_design_matrix(tree, "orgX", alpha=alpha[[i]])
             RE  = sqrt_OU_covariance(tree,  root.model = opt$root.model,   
                                      alpha = alpha[[i]], 
-                                     check.order=F, check.ultrametric=F, normalize.tree.height=TRUE )
+                                     check.order=F, check.ultrametric=F)
         }
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
 
