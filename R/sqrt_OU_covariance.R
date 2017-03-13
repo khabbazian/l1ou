@@ -50,7 +50,6 @@
 #'  covSqrtf   <- REf$sqrtSigma
 #' # `covInverseSqrtf` represents the transpose of square root of  the inverse matrix of covariance for FixedRoot model.
 #' # `covSqrtf` represents the square root of the covariance matrix for FixedRoot model.
-#'
 #'  Y  <- rTraitCont(eModel$tree, "OU", theta=theta, 
 #'                                      alpha=eModel$alpha, 
 #'                                      sigma=eModel$sigma, root.value=eModel$intercept)
@@ -90,13 +89,7 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
         }
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha), check.pruningwise=F)$tree
 	if(normalize.tree.height){
-		tre <- normalize_tree(tre)
-		coe = 2*alpha # good for "OUrandomRoot"
-		if (root.model == "OUfixedRoot"){
-			# below: assumes tree already in pruningwise = post order
-			treeheight = pruningwise.distFromRoot(tre)[1] # Distance taxon 1 to root: because ultrametric tree
-			coe = (2*alpha)/(1-exp(-2*alpha*treeheight))
- 		}
+		coe = 2*alpha 
           	tre$edge.length=tre$edge.length/coe
 		if(!is.null(tre$root.edge)) tre$root.edge=tre$root.edge/coe
 	}
