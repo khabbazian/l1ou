@@ -91,6 +91,14 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
         tre <- transf.branch.lengths(tree, model=root.model, parameters=list(alpha=alpha), check.pruningwise=F)$tree
 	if(normalize.tree.height){
 		tre <- normalize_tree(tre)
+		coe = 2*alpha # good for "OUrandomRoot"
+		if (root.model == "OUfixedRoot"){
+			# below: assumes tree already in pruningwise = post order
+			treeheight = pruningwise.distFromRoot(tre)[1] # Distance taxon 1 to root: because ultrametric tree
+			coe = (2*alpha)/(1-exp(-2*alpha*treeheight))
+ 		}
+          	tre$edge.length=tre$edge.length/coe
+		if(!is.null(tre$root.edge)) tre$root.edge=tre$root.edge/coe
 	}
     }else{
         tre <- tree
@@ -102,18 +110,6 @@ sqrt_OU_covariance <- function(tree, alpha=0, root.model = c("OUfixedRoot", "OUr
     my.edge.list <- cbind(tre$edge-1, tre$edge.length) 
     tre$root.edge <- ifelse(is.null(tre$root.edge), 0, tre$root.edge)
     result       <- cmp_sqrt_OU_covariance(my.edge.list, length(tre$tip.label), tre$root.edge)
-    
-    if ( alpha > 0){
-      # refactor by 2alpha, because this is NOT done in trans.branch.length
-      coe = sqrt(2*alpha) # good for "OUrandomRoot"
-      if (root.model == "OUfixedRoot"){
-        # below: assumes tree already in pruningwise = post order
-        treeheight = pruningwise.distFromRoot(tre)[1] # Distance taxon 1 to root: because ultrametric tree
-        coe = sqrt((2*alpha)/(1-exp(-2*alpha*treeheight)))
-      }
-      result$sqrtSigma    = result$sqrtSigma / coe
-      result$sqrtInvSigma = result$sqrtInvSigma * coe
-    }
     return(result)
 }
 
