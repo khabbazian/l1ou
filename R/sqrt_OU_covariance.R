@@ -11,7 +11,6 @@
 #'@param root.model ancestral state model at the root.
 #'@param check.order logical. If TRUE, the order will be checked to be in postorder traversal.
 #'@param check.ultrametric logical. If TRUE, the tree will be checked to ultrametric.
-#'@param normalize.tree.height logical. If TRUE, it class normalize_tree function after transf.branch.lengths.
 #'
 #'@return 
 #' \item{sqrtInvSigma}{inverse square root of the phylogenetic covariance matrix.}

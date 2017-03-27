@@ -292,15 +292,24 @@ estimate_shift_configuration_known_alpha <- function(tree, Y, alpha=0, est.alpha
         to.be.removed  = c(length(tree$edge.length), which(tree$edge.length < opt$edge.length.threshold))
     }
 
-    YY  = Cinvh%*%Y
+    # NOTE: below: noise whitening, using contrasts: independent, same variance.
+    # all but the last contrast have mean 0: Cinvh %*% column of ones = column of zeros, except last
+    # last contrast: is about intercept, or ancestral state, should not be penalized.
+    #YY  = as.matrix(Cinvh%*%Y)
+    YY  = (Cinvh%*%Y)
+    YY  = YY[-nrow(YY), ] 
+
     XX  = Cinvh%*%X
 
     nP  = ncol(XX)
     XX  = as.matrix(XX[,-to.be.removed])
+    # NOTE: refer to the above note about whitening.
+    XX  = XX[-nrow(XX), ]
 
     capture.output(
             sol.path  <- lars(XX, YY, type=opt$lars.alg, normalize=FALSE,
-                              intercept=TRUE, max.steps=opt$max.nShifts)
+                              #intercept=TRUE, max.steps=opt$max.nShifts)
+                              intercept=FALSE, max.steps=opt$max.nShifts)
         )
 
     Tmp = matrix(0, nrow(sol.path$beta), nP)
@@ -365,12 +374,19 @@ estimate_shift_configuration_known_alpha_multivariate <- function(tree, Y, alpha
         Cinvh   = t(RE$sqrtInvSigma) #\Sigma^{-1/2}
 
         y.ava        = !is.na(Ymv[,i])
-        YY[y.ava, i] = Cinvh[y.ava, y.ava] %*% Ymv[y.ava, i]
+        YY[y.ava, i] = as.matrix(Cinvh[y.ava, y.ava] %*% Ymv[y.ava, i])
+
 
         ##X     = cbin(Cinvh%*%X,1)
         ##grpX  = adiag(grpX, X)  
-        grpX    = adiag(grpX, Cinvh%*%X)  
+	XX      = Cinvh%*%X
+	#NOTE: refer to whitening note above.
+	XX      = XX[-nrow(XX), ]
+
+	grpX    = adiag(grpX, XX)  
     }
+    #NOTE: refer to the whitening note above.
+    YY  = YY[-nrow(YY), ] 
 
     np     = ncol(grpX)
     grpY   = c(YY)
