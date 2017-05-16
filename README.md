@@ -13,7 +13,13 @@ Citation:
   Starting with version v1.22, the scores returned by "estimate\_shift\_configuration” function 
   are for the non-normalized, original data.  
 
+  Starting with version v1.22, "estimate\_shift\_configuration" function also accepts multiple traits with missing values. 
+
+  Starting with version v1.23, "estimate\_convergent\_regimes" function accepts multiple traits. 
+
   Starting with version v1.25, the penalty term in AICc score considers the intercept as a free variable. The change only affects the final value of the AICc score.
+
+
 
 
 ### Install using the devtools package.
