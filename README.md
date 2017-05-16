@@ -9,41 +9,41 @@ Citation:
 
 #### [l1ou Reference manual](http://www.columbia.edu/~mhk2154/pdfs/l1ou.pdf)
 
-### Version notes 
-  Starting with version v1.22, the scores returned by "estimate\_shift\_configuration” function 
-  are for the non-normalized, original data.  
-
-  Starting with version v1.22, "estimate\_shift\_configuration" function also accepts multiple traits with missing values. 
-
-  Starting with version v1.23, "estimate\_convergent\_regimes" function accepts multiple traits. 
-
-  Starting with version v1.25, the penalty term in AICc score considers the intercept as a free variable. The change only affects the final value of the AICc score.
-
-
-
-
-### Install using the devtools package.
-```
-R> install.packages("devtools")
-R> install_github("khabbazian/l1ou")
+### Install using the devtools package
+from within R:
+```r
+install.packages("devtools")
+install_github("khabbazian/l1ou")
 ```
 Windows users will first need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
 
-### Install without the devtools package.
-To resolve the dependencies, first install the following packages from CRAN
+### Install without the devtools package
+To resolve the dependencies, first install the following packages from CRAN, then the knitr package.
+From within R:
+```r
+install.packages(c("igraph", "phylolm", "lars", "grplasso", "magic", "genlasso", "Rcpp"))
+install.packages("knitr")
 ```
-R> install.packages(c("igraph", "phylolm", "lars", "grplasso", "magic", "genlasso", "Rcpp"))
+Now in the shell, with asterisks to be replaced with the correct version number:
+```shell
+git clone https://github.com/khabbazian/l1ou.git 
+R CMD build l1ou 
+R -e 'install.packages("l1ou_*.**.tar.gz")'
 ```
-Install the knitr package
-```
-R> install.packages("knitr")
-```
-Now in bash
-```
-$> git clone https://github.com/khabbazian/l1ou.git 
-$> R CMD build l1ou 
-$> R -e 'install.packages("l1ou_*.**.tar.gz")'
-```
-Replace the asterisks with the correct version number.
 
+### Version notes 
+
+major changes are indicated below.
+
+- v1.40:
+  * intercept correctly handled after noise-whitening
+  (results may change for variables with a mean far from 0)
+  * bug fix in the function calculating the square-root (and inverse) of the
+  phylogenetic covariance matrix.
+- v1.25: the penalty term in the AICc score now considers the intercept as a free variable.
+  The change only affects the final value of the AICc score.
+- v1.23: "estimate\_convergent\_regimes" function accepts multiple traits. 
+- v1.22: 
+	* the scores returned by "estimate\_shift\_configuration” function are now for the non-normalized, original data.
+	* "estimate\_shift\_configuration" function also accepts multiple traits with missing values. 
 
