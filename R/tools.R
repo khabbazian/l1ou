@@ -180,7 +180,9 @@ rescale_matrix <- function(Y){
     #}
     #Y   = Y%*%(0.1*nrow(Y)*diag(apply(Y,2,lnorm,l=2)^-1))
   
-    Y  <- 0.1*nrow(Y)*scale(Y, center=TRUE, scale=apply(Y,2,lnorm,l=2))
+    scale.values  <- apply(Y, 2, lnorm, l=2)
+    scale.values[scale.values == 0] <- 1
+    Y  <- 0.1*nrow(Y)*scale(Y, center = TRUE, scale = scale.values)
     return(Y)
 }
 
