@@ -742,6 +742,7 @@ fit_OU <- function(tree, Y, shift.configuration,
     }else{
         opt$criterion            <- match.arg(criterion)
         opt$root.model           <- match.arg(root.model)
+        opt$quietly              <- TRUE
         opt$alpha.starting.value <- alpha.starting.value
         opt$alpha.upper.bound    <- alpha.upper
         opt$alpha.lower.bound    <- alpha.lower
