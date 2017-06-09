@@ -100,10 +100,10 @@ phylolm_CR <- function(formula, data=list(), phy,
         comp = list(vec11=tmp[2], y1=tmp[3], yy=tmp[4], X1=tmp[5:(4+d)],
                     XX=matrix(tmp[(5+d):(ole-d)], d,d),Xy=tmp[(ole-d+1):ole],logd=tmp[1])
 
-	if(rcond(comp$XX) < .Machine$double.eps)
-        	return(list(n2llh=-Inf, betahat = NA, sigma2hat=NA, vcov=NA))
+	if(rcond(comp$XX) < 1e-64)
+        	return(list(n2llh=.Machine$double.xmax, betahat = NA, sigma2hat=NA, vcov=NA))
 
-        invXX <- solve(comp$XX, tol=.Machine$double.eps) 
+        invXX <- solve(comp$XX, tol=1e-64) 
         betahat <- invXX%*%comp$Xy
         sigma2hat <- as.numeric((comp$yy - 2*t(betahat)%*%comp$Xy + t(betahat)%*%comp$XX%*%betahat)/n)
         if (sigma2hat<0) { stop("sigma2hat<0") }
