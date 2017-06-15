@@ -74,7 +74,7 @@ phylolm_interface_CR  <-  function(tr, Y, conv.regimes = list(), alpha=NA, fixed
     shift.configuration <- opt$shift.configuration
     preds <- generate_prediction_vec(tr, shift.configuration, conv.regimes, alpha, ageMatrix=opt$ageMatrix)
     prev.val <- options()$warn
-    options(warn = -1)
+    options(warn = -1) # dangerous!
 
     if( is.null(opt$fixed.alpha) ) 
 	    opt$fixed.alpha  <- FALSE;
@@ -119,7 +119,9 @@ cmp_AICc_CR  <-  function(tree, Y, conv.regimes, alpha, opt){
     df.2 <- 0
     score <- df.1
     for( i in 1:ncol(Y)){
-        fit   <- phylolm_interface_CR(tree, matrix(Y[,i]), conv.regimes, alpha=alpha[[i]], opt=opt)
+      # matrix(Y[,i]) keeps the nx1 dimensions, but forgets the row names: no match with tip labels in tree
+      # Y[,i, drop=FALSE] keeps nx1 dim (does not coerce result to lowest dim), and keeps row names
+        fit   <- phylolm_interface_CR(tree, Y[,i,drop=F], conv.regimes, alpha=alpha[[i]], opt=opt)
         if ( all( is.na( fit) ) ){ return(Inf) } 
         score <- score  -2*fit$logLik + df.2
     }
@@ -145,7 +147,7 @@ cmp_BIC_CR <- function(tree, Y, conv.regimes, alpha, opt){
     for( i in 1:nVariables ){
 
         df.2 <- log(nTips)*(nShifts + 3)
-        fit  <- phylolm_interface_CR(tree, matrix(Y[,i]), conv.regimes, alpha=alpha[[i]], opt=opt)
+        fit  <- phylolm_interface_CR(tree, Y[,i,drop=F], conv.regimes, alpha=alpha[[i]], opt=opt)
         if ( all(is.na(fit)) ){ return(Inf) } 
         score <- score  -2*fit$logLik + df.2
     }
@@ -168,8 +170,8 @@ cmp_pBIC_CR  <-  function(tree, Y, conv.regimes, alpha, opt){
     #alpha  <- sigma2 <- logLik <- rep(0, ncol(Y))
 
     for(i in 1:ncol(Y)){
-        fit   <- phylolm_interface_CR(tree, matrix(Y[,i]), conv.regimes, alpha=alpha[[i]], opt=opt)
-        fit2  <- phylolm_interface_CR(tree, matrix(Y[,i]), conv.regimes, alpha=alpha[[i]], fixed.alpha=TRUE, opt=opt)
+        fit   <- phylolm_interface_CR(tree, Y[,i,drop=F], conv.regimes, alpha=alpha[[i]], opt=opt)
+        fit2  <- phylolm_interface_CR(tree, Y[,i,drop=F], conv.regimes, alpha=alpha[[i]], fixed.alpha=TRUE, opt=opt)
         if( all( is.na(fit) ) ){
            return(Inf)
         } 
@@ -289,6 +291,7 @@ find_convergent_regimes  <-  function(tr, Y, alpha, criterion, regimes){
 estimate_convergent_regimes_surface  <-  function(model, opt){
 
     criterion <- opt$criterion
+    model$l1ou.options$criterion = criterion # model is returned. for correct print and summary
     Y         <- as.matrix(model$Y)
     tr        <- model$tree
 
@@ -469,6 +472,7 @@ estimate_convergent_regimes  <-  function(model,
     opt <- list()
     opt$method <- match.arg(method)
     opt$criterion <- match.arg(criterion)
+    model$l1ou.options$criterion = criterion
     opt$shift.configuration <- model$shift.configuration
     opt$alpha.upper.bound  <- model$l1ou.options$alpha.upper.bound
     opt$fixed.alpha <- fixed.alpha

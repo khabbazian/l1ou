@@ -673,14 +673,20 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     cat("\n")
 
     cat("edge indices of the shift configuration (column names) and the corresponding shift values:\n")
-    #cat(model$shift.configuration)
-    #cat(model$shift.values)
-    #cat("\n")
     tmp.mat = t(as.matrix(model$shift.values))
     if(length(model$shift.configuration)>0)
         colnames(tmp.mat) = model$shift.configuration
     if(!all(is.null(colnames(model$Y)))){
         rownames(tmp.mat) = colnames(model$Y)
+    }
+    print(tmp.mat)
+
+    cat("shift edges and corresponding jump in the trait means at the tips:")
+    tmp.mat = t(as.matrix(model$shift.means))
+    if(length(model$shift.configuration)>0)
+      colnames(tmp.mat) = model$shift.configuration
+    if(!all(is.null(colnames(model$Y)))){
+      rownames(tmp.mat) = colnames(model$Y)
     }
     print(tmp.mat)
 
@@ -705,11 +711,14 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
     print(tmp.mat)
     cat("\n")
 
-    cat("\n")
-    cat("optimum values at tips: \n")
-    print(model$optimums)
+    #cat("\n")
+    #cat("optimum values at tips: \n")
+    #print(model$optima) # too long vector: # of tips, could be thousands
+    #cat("\nexpected values at the tips:\n")
+    #print(model$mu)
 
     top.scores = min(nTop.scores, length(model$profile$scores))
+    if (top.scores>0){
     cat(paste0(c("\ntop", top.scores, "best scores among candidate models evaluated during the search:\n")))
     cat("scores\t\tshift.configurations\n")
     for (i in 1:top.scores){
@@ -717,6 +726,7 @@ summary.l1ou <- function(model, nTop.scores=5, ...){
         cat("\t")
         cat(model$profile$configurations[[i]])
         cat("\n")
+    }
     }
 }
 
