@@ -79,6 +79,7 @@ phylolm_interface_CR  <-  function(tr, Y, conv.regimes = list(), alpha=NA, fixed
     if( is.null(opt$fixed.alpha) ) 
 	    opt$fixed.alpha  <- FALSE;
 
+
     if(fixed.alpha || opt$fixed.alpha){
 	    preds <- ifelse(preds>0,1,0)
 	    fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
@@ -93,7 +94,7 @@ phylolm_interface_CR  <-  function(tr, Y, conv.regimes = list(), alpha=NA, fixed
 			       sc=shift.configuration,
 			       cr=conv.regimes,
 			       starting.value=alpha,
-			       upper.bound=opt$alpha.upper.bound,
+			       upper.bound=max(alpha, opt$alpha.upper.bound + .Machine$double.eps),
 			       lower.bound=alpha/100
 			       )
     }
@@ -121,7 +122,7 @@ cmp_AICc_CR  <-  function(tree, Y, conv.regimes, alpha, opt){
     for( i in 1:ncol(Y)){
       # matrix(Y[,i]) keeps the nx1 dimensions, but forgets the row names: no match with tip labels in tree
       # Y[,i, drop=FALSE] keeps nx1 dim (does not coerce result to lowest dim), and keeps row names
-        fit   <- phylolm_interface_CR(tree, Y[,i,drop=F], conv.regimes, alpha=alpha[[i]], opt=opt)
+	fit   <- phylolm_interface_CR(tree, Y[,i,drop=F], conv.regimes, alpha=alpha[[i]], opt=opt)
         if ( all( is.na( fit) ) ){ return(Inf) } 
         score <- score  -2*fit$logLik + df.2
     }

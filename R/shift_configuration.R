@@ -267,6 +267,8 @@ estimate_shift_configuration <- function(tree, Y,
     eModel$profile = list_investigated_configs() 
 
     if (l1ou.options$use.saved.scores) { erase_configuration_score_db() }
+    if ( ! all( eModel$alpha < (alpha.upper - .Machine$double.eps)  ) )
+	    warning('estimated alpha is too close to its upper bound. You may want to increase alpha.upper.\n')
 
     return(eModel)
 }
