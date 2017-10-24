@@ -482,6 +482,7 @@ select_best_solution <- function(tree, Y, sol.path, opt){
     all.shifts = numeric()
     prev.shift.configuration = NA
     min.score = Inf   
+    best.shift.configuration <- numeric()
 
     candid.idx <- 1
     shift.configuration.list <- list()
@@ -817,7 +818,8 @@ fit_OU_model <- function(tree, Y, shift.configuration, opt){
 
         fit <- my_phylolm_interface(tr, y, s.c, opt)
         if ( all(is.na(fit)) ){
-            stop("model score is NA in fit_OU_model function! This should not happen.")
+            stop("model score is NA in fit_OU_model function! 
+		 This should not happen. Please set quietly to false to see the reason.")
         }
 
         alpha[i]  <- fit$optpar
