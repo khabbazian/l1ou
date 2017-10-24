@@ -28,6 +28,9 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
             cat("the new tree edges are ordered differently: in postorder.\n")
         tree  <- reorder(tree, "postorder")
     }
+    if (!is.null(tree$root.edge))
+	    if (tree$root.edge>0)
+		    stop("the tree has a non-zero root edge.")
 
     if( normalize ){
         tree <- normalize_tree(tree)
