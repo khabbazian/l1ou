@@ -11,7 +11,7 @@ Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models.
 Methods in Ecology and Evolution, 7(7):811–824.
 [doi:10.1111/2041-210X.12534](http://dx.doi.org/10.1111/2041-210X.12534)
 
-#### [l1ou Reference manual](http://www.columbia.edu/~mhk2154/pdfs/l1ou.pdf)
+#### [l1ou Reference manual](https://github.com/khabbazian/l1ou/blob/master/l1ou.pdf)
 
 ### Install using the devtools package
 
