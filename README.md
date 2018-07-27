@@ -15,7 +15,12 @@ Methods in Ecology and Evolution, 7(7):811–824.
 
 ### Install using the devtools package
 
-from within R:
+First download genlasso version 1.3 R package from CRAN archive [(link)](https://cran.r-project.org/src/contrib/Archive/genlasso/genlasso_1.3.tar.gz). 
+From within R:
+```r
+install.packages("genlasso_1.3.tar.gz")
+```
+
 ```r
 install.packages("devtools")
 library(devtools)
