@@ -82,8 +82,10 @@ phylolm_interface_CR  <-  function(tr, Y, conv.regimes = list(), alpha=NA, fixed
 
     if(fixed.alpha || opt$fixed.alpha){
 	    preds <- ifelse(preds>0,1,0)
-	    fit <-  phylolm(Y~preds-1, phy  = tr, model = "OUfixedRoot",
-			    starting.value = alpha,
+	    fit <-  phylolm(Y~preds-1,
+			    phy  = tr,
+			    model = "OUfixedRoot",
+			    starting.value = list(alpha=alpha),
 			    lower.bound = alpha, 
 			    upper.bound = alpha)
 
