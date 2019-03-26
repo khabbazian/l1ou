@@ -14,16 +14,11 @@ Methods in Ecology and Evolution, 7(7):811–824.
 #### [l1ou Reference manual](https://github.com/khabbazian/l1ou/blob/master/l1ou.pdf)
 
 ### Install using the devtools package
-
-First download genlasso version 1.3 R package from CRAN archive [(link)](https://cran.r-project.org/src/contrib/Archive/genlasso/genlasso_1.3.tar.gz). 
 From within R:
-```r
-install.packages("genlasso_1.3.tar.gz", repos=NULL, type="source")
-```
-
 ```r
 install.packages("devtools")
 library(devtools)
+install_github("glmgen/genlasso")
 install_github("khabbazian/l1ou")
 ```
 Windows users will first need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/).
@@ -33,9 +28,16 @@ Windows users will first need to install [Rtools](https://cran.r-project.org/bin
 To resolve dependencies, first install the following packages from CRAN, then the knitr package.
 From within R:
 ```r
-install.packages(c("igraph", "phylolm", "lars", "grplasso", "magic", "genlasso", "Rcpp"))
+install.packages(c("igraph", "phylolm", "lars", "grplasso", "magic", "Rcpp"))
 install.packages("knitr")
 ```
+
+Download genlasso version 1.3 R package from CRAN archive [(link)](https://cran.r-project.org/src/contrib/Archive/genlasso/genlasso_1.3.tar.gz). 
+From within R:
+```r
+install.packages("genlasso_1.3.tar.gz")
+```
+
 Now in the shell, with asterisks to be replaced with the correct version number:
 ```shell
 git clone https://github.com/khabbazian/l1ou.git 
