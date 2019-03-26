@@ -35,8 +35,8 @@ install.packages("knitr")
 Download genlasso version 1.3 R package from CRAN archive [(link)](https://cran.r-project.org/src/contrib/Archive/genlasso/genlasso_1.3.tar.gz). 
 From within R:
 ```r
-install.packages("genlasso_1.3.tar.gz")
-```
+ install.packages("genlasso_1.3.tar.gz", repos=NULL, type="source")
+ ```
 
 Now in the shell, with asterisks to be replaced with the correct version number:
 ```shell
