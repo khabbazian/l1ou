@@ -125,7 +125,7 @@ estimate_shift_configuration <- function(tree, Y,
         }
     }
 
-    if( class(Y) != "matrix"){
+    if (!inherits(Y, "matrix")){
         Y <- as.matrix(Y)
     }
 

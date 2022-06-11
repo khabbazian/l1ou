@@ -38,7 +38,7 @@ adjust_data <- function(tree, Y, normalize = TRUE, quietly=FALSE){
             cat("the new tree is normalized: each tip at distance 1 from the root.\n")
     }
 
-    if( class(Y) != "matrix"){
+    if (!inherits(Y, "matrix")){
         Y <- as.matrix(Y)
         if(!quietly)
             cat(paste("new Y: matrix of size", nrow(Y), "x", ncol(Y), "\n" ))
