@@ -1,10 +1,16 @@
 citHeader("To cite package 'l1ou' in publications use:")
 
-citEntry(entry = "Article", 
-  author = personList(as.person("Mohammad Khabbazian"), as.person("Ricardo Kriebel"), as.person("Karl Rohe"), as.person("Cécile Ané")),
-  year = 2015, 
-  journal = "In review",
+citEntry(entry = "Article",
+  author = personList(as.person("Mohammad Khabbazian"),
+                      as.person("Ricardo Kriebel"),
+                      as.person("Karl Rohe"),
+                      as.person("Cécile Ané")),
+  year = 2016,
   title = "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models",
-  textVersion = paste("Khabbazian, M., Kriebel, R., Rohe K., and Ané C.", 
-        "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models", 
-        "In review."))
+  journal = "Methods in Ecology and Evolution",
+  number = "7",
+  pages = "811-824",
+  note = "http://dx.doi.org/10.1111/2041-210X.12534",
+  textVersion = paste("Khabbazian, M., Kriebel, R., Rohe K., and Ané C.",
+    "Fast and accurate detection of evolutionary shifts in Ornstein-Uhlenbeck models",
+    "Methods in Ecology and Evolution, 7(7):811-824."))

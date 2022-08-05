@@ -49,7 +49,10 @@ R -e 'install.packages("l1ou_*.**.tar.gz")'
 
 major changes are indicated below.
 
-- v1.40:
+- v1.43 (2022-08-05): compatibility updates
+- v1.42 (2019-02-10): bug fix
+- v1.41 (2017-06-18): small bug fixes
+- v1.40 (2017-03-27):
   * intercept correctly handled after noise-whitening
   (results may change for variables with a mean far from 0)
   * bug fix in the function calculating the square-root (and inverse) of the

@@ -403,7 +403,13 @@ normalize_tree <- function(tree, check.ultrametric=TRUE){
 #'
 #' Visualizes a shift configuration: tree and trait(s)
 #'
-#' plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
+#' Plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
+#' Each trait is shown standardized, to visually highlight the species with low,
+#' average or high values. In other words, the axis scale shows the values of
+#' (trait - m)/sd where m is the observed trait mean and sd is the observed trait
+#' standard deviation. The values on the left and right side of the axis are the
+#' mininum and maximum of the standardized trait: (min-m)/sd and (max-m)/sd.
+#' The place where the bars start corresponds to the mean of the original trait values.
 #'
 #'@param model object of class l1ou returned by \code{\link{estimate_shift_configuration}}.
 #'@param palette vector of colors, of size the number of shifts plus one. The last element is the color for the background regime (regime at the root).

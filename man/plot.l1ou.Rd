@@ -40,7 +40,13 @@
 none.
 }
 \description{
-plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
+Plots the tree annotated to show the edges with a shift, and the associated trait data side by side.
+Each trait is shown standardized, to visually highlight the species with low,
+average or high values. In other words, the axis scale shows the values of
+(trait - m)/sd where m is the observed trait mean and sd is the observed trait
+standard deviation. The values on the left and right side of the axis are the
+mininum and maximum of the standardized trait: (min-m)/sd and (max-m)/sd.
+The place where the bars start corresponds to the mean of the original trait values.
 }
 \examples{
 
